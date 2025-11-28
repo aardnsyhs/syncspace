@@ -20,18 +20,20 @@ import {
 } from "lucide-react";
 import { toast } from "sonner";
 
+interface PublicSharingResult {
+  publicUrl: string | null;
+}
+
 interface Props {
-  boardId: number;
   isPublic: boolean;
   publicUrl: string | null;
-  onEnable: () => Promise<{ publicUrl: string }>;
+  onEnable: () => Promise<PublicSharingResult>;
   onDisable: () => Promise<void>;
-  onRegenerate: () => Promise<{ publicUrl: string }>;
+  onRegenerate: () => Promise<PublicSharingResult>;
   isLoading: boolean;
 }
 
 export function PublicSharingSettings({
-  boardId,
   isPublic,
   publicUrl,
   onEnable,

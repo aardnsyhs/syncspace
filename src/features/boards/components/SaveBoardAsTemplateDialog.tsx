@@ -14,7 +14,6 @@ import { BookTemplate } from "lucide-react";
 import { toast } from "sonner";
 
 interface Props {
-  boardId: number;
   boardName: string;
   isOpen: boolean;
   onClose: () => void;
@@ -22,7 +21,6 @@ interface Props {
 }
 
 export function SaveBoardAsTemplateDialog({
-  boardId,
   boardName,
   isOpen,
   onClose,

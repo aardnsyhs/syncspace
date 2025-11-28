@@ -18,7 +18,7 @@ export interface FilteredCard {
   position: number;
   due_date: string | null;
   assignee: { id: number; name: string; avatar_url?: string } | null;
-  labels: { id: number; name: string; color: string }[];
+  labels: { id: number; board_id: number; name: string; color: string }[];
   column: { id: number; name: string; position: number };
 }
 

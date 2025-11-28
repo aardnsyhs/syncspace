@@ -13,8 +13,11 @@ export { ColumnWipSettings } from "./components/ColumnWipSettings";
 export { BoardTemplatePicker } from "./components/BoardTemplatePicker";
 export { SaveBoardAsTemplateDialog } from "./components/SaveBoardAsTemplateDialog";
 export { PublicSharingSettings } from "./components/PublicSharingSettings";
+export { BoardSettingsPanel } from "./components/BoardSettingsPanel";
+export { CreateBoardDialog } from "./components/CreateBoardDialog";
 
 // Pages
+export { BoardPage } from "./pages/BoardPage";
 export { PublicBoardPage } from "./pages/PublicBoardPage";
 
 // Hooks

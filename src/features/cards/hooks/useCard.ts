@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from "react";
-import type { CardDetail, Label, Checklist, Attachment } from "../types";
+import type { CardDetail, Checklist } from "../types";
 
 const API_URL = import.meta.env.VITE_API_URL;
 
