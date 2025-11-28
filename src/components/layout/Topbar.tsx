@@ -1,4 +1,6 @@
-import { Bell, Search, Moon, Sun } from "lucide-react";
+import { useState } from "react";
+import { useNavigate } from "react-router-dom";
+import { Bell, Search, Moon, Sun, LogOut, User, Settings } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import {
@@ -14,21 +16,44 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
-import { useState } from "react";
+import { useAuth } from "@/features/auth";
+import { toast } from "sonner";
 
 export function Topbar() {
   const [isDark, setIsDark] = useState(false);
+  const navigate = useNavigate();
+  const { user, logout } = useAuth();
 
   const toggleTheme = () => {
     setIsDark(!isDark);
     document.documentElement.classList.toggle("dark");
   };
 
+  const handleLogout = async () => {
+    try {
+      await logout();
+      toast.success("Logged out successfully");
+      navigate("/login");
+    } catch {
+      toast.error("Failed to logout");
+    }
+  };
+
+  // Get user initials for avatar fallback
+  const getInitials = (name: string) => {
+    return name
+      .split(" ")
+      .map((n) => n[0])
+      .join("")
+      .toUpperCase()
+      .slice(0, 2);
+  };
+
   return (
     <header className="flex h-14 items-center justify-between border-b bg-card px-6">
       {/* Left: Page Title / Breadcrumb */}
       <div className="flex items-center gap-4">
-        <h1 className="text-lg font-semibold">Project Alpha</h1>
+        <h1 className="text-lg font-semibold">Dashboard</h1>
       </div>
 
       {/* Right: Actions */}
@@ -73,25 +98,37 @@ export function Topbar() {
           <DropdownMenuTrigger asChild>
             <Button variant="ghost" className="relative h-8 w-8 rounded-full">
               <Avatar className="h-8 w-8">
-                <AvatarImage src="/avatar.png" alt="User" />
-                <AvatarFallback>JD</AvatarFallback>
+                <AvatarImage src={user?.avatar_url} alt={user?.name} />
+                <AvatarFallback>
+                  {user?.name ? getInitials(user.name) : "U"}
+                </AvatarFallback>
               </Avatar>
             </Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent className="w-56" align="end" forceMount>
             <DropdownMenuLabel className="font-normal">
               <div className="flex flex-col space-y-1">
-                <p className="text-sm font-medium">John Doe</p>
+                <p className="text-sm font-medium">{user?.name || "User"}</p>
                 <p className="text-xs text-muted-foreground">
-                  john@example.com
+                  {user?.email || ""}
                 </p>
               </div>
             </DropdownMenuLabel>
             <DropdownMenuSeparator />
-            <DropdownMenuItem>Profile</DropdownMenuItem>
-            <DropdownMenuItem>Settings</DropdownMenuItem>
+            <DropdownMenuItem>
+              <User className="mr-2 h-4 w-4" />
+              Profile
+            </DropdownMenuItem>
+            <DropdownMenuItem>
+              <Settings className="mr-2 h-4 w-4" />
+              Settings
+            </DropdownMenuItem>
             <DropdownMenuSeparator />
-            <DropdownMenuItem className="text-destructive">
+            <DropdownMenuItem
+              className="text-destructive focus:text-destructive"
+              onClick={handleLogout}
+            >
+              <LogOut className="mr-2 h-4 w-4" />
               Log out
             </DropdownMenuItem>
           </DropdownMenuContent>

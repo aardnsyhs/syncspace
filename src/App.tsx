@@ -1,24 +1,69 @@
-import { BrowserRouter, Routes, Route, useParams } from "react-router-dom";
+import {
+  BrowserRouter,
+  Routes,
+  Route,
+  useParams,
+  Navigate,
+} from "react-router-dom";
+import { Toaster } from "sonner";
+
 import { MainLayout } from "@/components/layout";
 import { BoardPage, PublicBoardPage } from "@/features/boards";
+import {
+  AuthProvider,
+  LoginPage,
+  RegisterPage,
+  ProtectedRoute,
+  GuestRoute,
+} from "@/features/auth";
 
 function App() {
   return (
     <BrowserRouter>
-      <Routes>
-        {/* Public board route - no auth required */}
-        <Route path="/p/:token" element={<PublicBoardWrapper />} />
+      <AuthProvider>
+        <Routes>
+          {/* Public routes */}
+          <Route path="/" element={<Navigate to="/app" replace />} />
 
-        {/* Protected routes */}
-        <Route
-          path="/*"
-          element={
-            <MainLayout>
-              <BoardPage />
-            </MainLayout>
-          }
-        />
-      </Routes>
+          {/* Auth routes (guest only) */}
+          <Route
+            path="/login"
+            element={
+              <GuestRoute>
+                <LoginPage />
+              </GuestRoute>
+            }
+          />
+          <Route
+            path="/register"
+            element={
+              <GuestRoute>
+                <RegisterPage />
+              </GuestRoute>
+            }
+          />
+
+          {/* Public board route - no auth required */}
+          <Route path="/p/:token" element={<PublicBoardWrapper />} />
+
+          {/* Protected routes */}
+          <Route
+            path="/app/*"
+            element={
+              <ProtectedRoute>
+                <MainLayout>
+                  <BoardPage />
+                </MainLayout>
+              </ProtectedRoute>
+            }
+          />
+
+          {/* Catch all - redirect to app */}
+          <Route path="*" element={<Navigate to="/app" replace />} />
+        </Routes>
+
+        <Toaster position="top-right" richColors />
+      </AuthProvider>
     </BrowserRouter>
   );
 }
