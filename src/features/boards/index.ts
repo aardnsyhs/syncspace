@@ -6,9 +6,18 @@ export { BoardAnalyticsSummary } from "./components/BoardAnalyticsSummary";
 export { BoardThroughputChart } from "./components/BoardThroughputChart";
 export { BoardCumulativeFlowChart } from "./components/BoardCumulativeFlowChart";
 export { BoardAssigneeChart } from "./components/BoardAssigneeChart";
+export { BoardFiltersBar } from "./components/BoardFiltersBar";
+export { ColumnHeader } from "./components/ColumnHeader";
+export { ColumnWipSettings } from "./components/ColumnWipSettings";
 export { useBoardChannel } from "./hooks/useBoardChannel";
 export { useBoardPresence } from "./hooks/useBoardPresence";
 export { useBoardActivities } from "./hooks/useBoardActivities";
+export { useBoardFilters } from "./hooks/useBoardFilters";
+export type {
+  FilterState,
+  FilteredCard,
+  ColumnWithWip,
+} from "./hooks/useBoardFilters";
 export {
   useBoardAnalyticsSummary,
   useBoardThroughput,
