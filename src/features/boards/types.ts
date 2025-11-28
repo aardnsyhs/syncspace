@@ -82,4 +82,5 @@ export const BOARD_EVENTS = {
   CARD_DELETED: ".CardDeleted",
   CARD_MOVED: ".CardMoved",
   COMMENT_CREATED: ".CommentCreated",
+  ACTIVITY_CREATED: ".ActivityCreated",
 } as const;
