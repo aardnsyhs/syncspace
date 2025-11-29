@@ -13,14 +13,40 @@ import {
   DropdownMenuContent,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { Calendar as CalendarComponent } from "@/components/ui/calendar";
 import { useCard } from "../hooks/useCard";
 import { useBoardLabels } from "../hooks/useBoardLabels";
 import { LabelBadge } from "./LabelBadge";
 import { LabelPicker } from "./LabelPicker";
 import { ChecklistView } from "./ChecklistView";
 import { AttachmentList } from "./AttachmentList";
-import { Tag, Calendar, User, AlignLeft } from "lucide-react";
+import {
+  Tag,
+  Calendar as CalendarIcon,
+  User,
+  AlignLeft,
+  X,
+} from "lucide-react";
 import { toast } from "sonner";
+import { format } from "date-fns";
+
+interface TeamMember {
+  id: number;
+  name: string;
+  avatar_url?: string;
+}
 
 interface Props {
   cardId: number | null;
@@ -29,6 +55,7 @@ interface Props {
   isOpen: boolean;
   onClose: () => void;
   onCardUpdated?: () => void;
+  teamMembers?: TeamMember[];
 }
 
 export function CardDetailDialog({
@@ -38,6 +65,7 @@ export function CardDetailDialog({
   isOpen,
   onClose,
   onCardUpdated,
+  teamMembers = [],
 }: Props) {
   const {
     card,
@@ -147,7 +175,7 @@ export function CardDetailDialog({
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+      <DialogContent className="sm:max-w-3xl w-[90vw] max-h-[90vh] overflow-y-auto">
         {isLoading || !card ? (
           <CardDetailSkeleton />
         ) : (
@@ -210,26 +238,117 @@ export function CardDetailDialog({
 
               {/* Due Date & Assignee row */}
               <div className="flex gap-6">
-                {card.due_date && (
-                  <div className="space-y-1">
-                    <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                      <Calendar className="h-4 w-4" />
-                      Due date
-                    </div>
-                    <p className="text-sm font-medium">
-                      {new Date(card.due_date).toLocaleDateString()}
-                    </p>
+                {/* Due Date */}
+                <div className="space-y-1">
+                  <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                    <CalendarIcon className="h-4 w-4" />
+                    Due date
                   </div>
-                )}
-                {card.assignee && (
-                  <div className="space-y-1">
-                    <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                      <User className="h-4 w-4" />
-                      Assignee
-                    </div>
-                    <p className="text-sm font-medium">{card.assignee.name}</p>
+                  <Popover>
+                    <PopoverTrigger asChild>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        className="h-8 w-[180px] justify-start text-left font-normal"
+                      >
+                        <CalendarIcon className="mr-2 h-4 w-4" />
+                        {card.due_date ? (
+                          format(new Date(card.due_date), "PPP")
+                        ) : (
+                          <span className="text-muted-foreground">
+                            Set due date
+                          </span>
+                        )}
+                      </Button>
+                    </PopoverTrigger>
+                    <PopoverContent className="w-auto p-0" align="start">
+                      <CalendarComponent
+                        mode="single"
+                        selected={
+                          card.due_date
+                            ? new Date(card.due_date + "T00:00:00")
+                            : undefined
+                        }
+                        onSelect={async (date: Date | undefined) => {
+                          try {
+                            // Format date in local timezone (YYYY-MM-DD)
+                            const formattedDate = date
+                              ? `${date.getFullYear()}-${String(
+                                  date.getMonth() + 1
+                                ).padStart(2, "0")}-${String(
+                                  date.getDate()
+                                ).padStart(2, "0")}`
+                              : null;
+                            await updateCard({
+                              due_date: formattedDate,
+                            });
+                            onCardUpdated?.();
+                          } catch {
+                            toast.error("Failed to update due date");
+                          }
+                        }}
+                        initialFocus
+                      />
+                      {card.due_date && (
+                        <div className="p-2 border-t">
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            className="w-full text-destructive"
+                            onClick={async () => {
+                              try {
+                                await updateCard({ due_date: null });
+                                onCardUpdated?.();
+                              } catch {
+                                toast.error("Failed to remove due date");
+                              }
+                            }}
+                          >
+                            <X className="h-4 w-4 mr-2" />
+                            Remove due date
+                          </Button>
+                        </div>
+                      )}
+                    </PopoverContent>
+                  </Popover>
+                </div>
+
+                {/* Assignee */}
+                <div className="space-y-1">
+                  <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                    <User className="h-4 w-4" />
+                    Assignee
                   </div>
-                )}
+                  <Select
+                    value={card.assignee?.id?.toString() || "unassigned"}
+                    onValueChange={async (value) => {
+                      try {
+                        await updateCard({
+                          assignee_id:
+                            value === "unassigned" ? null : parseInt(value),
+                        });
+                        onCardUpdated?.();
+                      } catch {
+                        toast.error("Failed to update assignee");
+                      }
+                    }}
+                  >
+                    <SelectTrigger className="h-8 w-[180px]">
+                      <SelectValue placeholder="Unassigned" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="unassigned">Unassigned</SelectItem>
+                      {teamMembers.map((member) => (
+                        <SelectItem
+                          key={member.id}
+                          value={member.id.toString()}
+                        >
+                          {member.name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
               </div>
 
               {/* Description */}

@@ -9,7 +9,9 @@ interface UseCardReturn {
   error: string | null;
   refetch: () => Promise<void>;
   // Mutations
-  updateCard: (data: Partial<CardDetail>) => Promise<void>;
+  updateCard: (
+    data: Partial<CardDetail> & { assignee_id?: number | null }
+  ) => Promise<void>;
   attachLabel: (labelIds: number[]) => Promise<void>;
   detachLabel: (labelId: number) => Promise<void>;
   addChecklist: (title: string) => Promise<Checklist>;
@@ -89,7 +91,9 @@ export function useCard(
     fetchCard();
   }, [fetchCard]);
 
-  const updateCard = async (data: Partial<CardDetail>) => {
+  const updateCard = async (
+    data: Partial<CardDetail> & { assignee_id?: number | null }
+  ) => {
     if (!cardId || !token) return;
 
     const res = await fetch(`${API_URL}/api/cards/${cardId}`, {

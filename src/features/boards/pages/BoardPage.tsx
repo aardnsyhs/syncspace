@@ -88,6 +88,11 @@ export function BoardPage({ boardId: propBoardId }: BoardPageProps) {
     column_id: number;
   } | null>(null);
 
+  // Team members state
+  const [teamMembers, setTeamMembers] = useState<
+    Array<{ id: number; name: string; avatar_url?: string }>
+  >([]);
+
   // Get token from localStorage
   const token = localStorage.getItem("token") || "";
   const boardId = propBoardId || 1;
@@ -151,6 +156,34 @@ export function BoardPage({ boardId: propBoardId }: BoardPageProps) {
 
     fetchBoard();
   }, [boardId, token]);
+
+  // Fetch team members when board is loaded
+  useEffect(() => {
+    const fetchTeamMembers = async () => {
+      if (!board?.team_id || !token) return;
+
+      try {
+        const res = await fetch(
+          `${API_URL}/api/teams/${board.team_id}/members`,
+          {
+            headers: {
+              Authorization: `Bearer ${token}`,
+              Accept: "application/json",
+            },
+          }
+        );
+
+        if (res.ok) {
+          const json = await res.json();
+          setTeamMembers(json.data || []);
+        }
+      } catch {
+        console.error("Failed to fetch team members");
+      }
+    };
+
+    fetchTeamMembers();
+  }, [board?.team_id, token]);
 
   // Real-time handlers
   const handleColumnCreated = useCallback(
@@ -345,12 +378,6 @@ export function BoardPage({ boardId: propBoardId }: BoardPageProps) {
     acc[card.column_id].push(card);
     return acc;
   }, {} as Record<number, typeof cards>);
-
-  // Team members for filter (would come from API)
-  const teamMembers = [
-    { id: 1, name: "John Doe" },
-    { id: 2, name: "Jane Smith" },
-  ];
 
   if (isLoadingBoard) {
     return <BoardPageSkeleton />;
@@ -558,6 +585,7 @@ export function BoardPage({ boardId: propBoardId }: BoardPageProps) {
         isOpen={selectedCardId !== null}
         onClose={() => setSelectedCardId(null)}
         onCardUpdated={refetchCards}
+        teamMembers={teamMembers}
       />
 
       {/* Board Settings Panel */}
