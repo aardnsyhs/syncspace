@@ -62,7 +62,10 @@ export function BoardTemplatePicker({
           boardDescription.trim() || undefined
         );
       }
-      handleClose();
+      // Reset state - parent will close dialog
+      setSelectedTemplate(null);
+      setBoardName("");
+      setBoardDescription("");
     } finally {
       setIsCreating(false);
     }

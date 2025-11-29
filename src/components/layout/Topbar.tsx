@@ -20,9 +20,10 @@ import { useAuth } from "@/features/auth";
 import { toast } from "sonner";
 import { SearchDialog } from "@/components/SearchDialog";
 import { NotificationsDropdown } from "@/components/NotificationsDropdown";
+import { useTheme } from "@/hooks/useTheme";
 
 export function Topbar() {
-  const [isDark, setIsDark] = useState(false);
+  const { isDark, toggleTheme } = useTheme();
   const [searchOpen, setSearchOpen] = useState(false);
   const navigate = useNavigate();
   const location = useLocation();
@@ -51,11 +52,6 @@ export function Topbar() {
     if (path === "/app/settings") return "Settings";
     if (path === "/app/profile") return "Profile";
     return "Dashboard";
-  };
-
-  const toggleTheme = () => {
-    setIsDark(!isDark);
-    document.documentElement.classList.toggle("dark");
   };
 
   const handleLogout = async () => {
@@ -109,7 +105,7 @@ export function Topbar() {
         {/* Theme Toggle */}
         <Tooltip>
           <TooltipTrigger asChild>
-            <Button variant="ghost" size="icon" onClick={toggleTheme}>
+            <Button variant="ghost" size="icon" onClick={() => toggleTheme()}>
               {isDark ? (
                 <Sun className="h-4 w-4" />
               ) : (

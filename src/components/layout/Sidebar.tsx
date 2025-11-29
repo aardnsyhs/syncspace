@@ -15,19 +15,12 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from "@/components/ui/dialog";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import { cn } from "@/lib/utils";
 import { api } from "@/lib/api";
 import { toast } from "sonner";
 import { WorkspaceSelector } from "@/components/WorkspaceSelector";
+import { BoardTemplatePicker } from "@/features/boards/components/BoardTemplatePicker";
+import { useBoardTemplates } from "@/features/boards/hooks/useBoardTemplates";
 
 interface Board {
   id: number;
@@ -75,8 +68,13 @@ export function Sidebar() {
   const [teams, setTeams] = useState<Team[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isCreateOpen, setIsCreateOpen] = useState(false);
-  const [newBoardName, setNewBoardName] = useState("");
-  const [isCreating, setIsCreating] = useState(false);
+
+  const token = localStorage.getItem("token") || "";
+  const {
+    templates,
+    isLoading: templatesLoading,
+    createBoardFromTemplate,
+  } = useBoardTemplates(token);
 
   const fetchTeams = async () => {
     try {
@@ -91,31 +89,51 @@ export function Sidebar() {
 
   useEffect(() => {
     fetchTeams();
+
+    // Listen for board-deleted event to refresh sidebar
+    const handleBoardDeleted = () => {
+      fetchTeams();
+    };
+    window.addEventListener("board-deleted", handleBoardDeleted);
+
+    return () => {
+      window.removeEventListener("board-deleted", handleBoardDeleted);
+    };
   }, []);
 
-  const handleCreateBoard = async () => {
-    if (!newBoardName.trim()) return;
+  const teamId = teams[0]?.id;
 
-    const teamId = teams[0]?.id;
+  const handleSelectTemplate = async (
+    templateId: number,
+    name: string,
+    description?: string
+  ) => {
     if (!teamId) return;
 
-    setIsCreating(true);
-    try {
-      const json = await api.post<{ data: { id: number } }>(
-        `/api/teams/${teamId}/boards`,
-        { name: newBoardName }
-      );
+    const board = await createBoardFromTemplate(
+      teamId,
+      templateId,
+      name,
+      description
+    );
+    toast.success("Board created from template!");
+    setIsCreateOpen(false);
+    await fetchTeams();
+    navigate(`/app/boards/${board.id}`);
+  };
 
-      toast.success("Board created!");
-      setIsCreateOpen(false);
-      setNewBoardName("");
-      await fetchTeams();
-      navigate(`/app/boards/${json.data.id}`);
-    } catch {
-      toast.error("Failed to create board");
-    } finally {
-      setIsCreating(false);
-    }
+  const handleCreateBlank = async (name: string, description?: string) => {
+    if (!teamId) return;
+
+    const json = await api.post<{ data: { id: number } }>(
+      `/api/teams/${teamId}/boards`,
+      { name, description }
+    );
+
+    toast.success("Board created!");
+    setIsCreateOpen(false);
+    await fetchTeams();
+    navigate(`/app/boards/${json.data.id}`);
   };
 
   const isActive = (path: string) => location.pathname === path;
@@ -155,42 +173,14 @@ export function Sidebar() {
             <span className="text-xs font-medium text-muted-foreground uppercase tracking-wider">
               Your Boards
             </span>
-            <Dialog open={isCreateOpen} onOpenChange={setIsCreateOpen}>
-              <DialogTrigger asChild>
-                <Button variant="ghost" size="icon" className="h-5 w-5">
-                  <Plus className="h-3 w-3" />
-                </Button>
-              </DialogTrigger>
-              <DialogContent>
-                <DialogHeader>
-                  <DialogTitle>Create New Board</DialogTitle>
-                </DialogHeader>
-                <div className="space-y-4 pt-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="board-name">Board Name</Label>
-                    <Input
-                      id="board-name"
-                      placeholder="Enter board name"
-                      value={newBoardName}
-                      onChange={(e) => setNewBoardName(e.target.value)}
-                      onKeyDown={(e) => {
-                        if (e.key === "Enter") handleCreateBoard();
-                      }}
-                    />
-                  </div>
-                  <Button
-                    className="w-full"
-                    onClick={handleCreateBoard}
-                    disabled={isCreating || !newBoardName.trim()}
-                  >
-                    {isCreating && (
-                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                    )}
-                    Create Board
-                  </Button>
-                </div>
-              </DialogContent>
-            </Dialog>
+            <Button
+              variant="ghost"
+              size="icon"
+              className="h-5 w-5"
+              onClick={() => setIsCreateOpen(true)}
+            >
+              <Plus className="h-3 w-3" />
+            </Button>
           </div>
 
           {isLoading ? (
@@ -231,6 +221,15 @@ export function Sidebar() {
           onClick={() => navigate("/app/settings")}
         />
       </div>
+
+      <BoardTemplatePicker
+        templates={templates}
+        isLoading={templatesLoading}
+        isOpen={isCreateOpen}
+        onClose={() => setIsCreateOpen(false)}
+        onSelectTemplate={handleSelectTemplate}
+        onCreateBlank={handleCreateBlank}
+      />
     </aside>
   );
 }

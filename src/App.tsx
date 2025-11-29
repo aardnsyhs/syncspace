@@ -1,4 +1,4 @@
-import { lazy, Suspense } from "react";
+import { lazy, Suspense, useState, useEffect } from "react";
 import {
   BrowserRouter,
   Routes,
@@ -52,6 +52,28 @@ function PageLoader() {
 }
 
 function App() {
+  const [theme, setTheme] = useState<"light" | "dark">("dark");
+
+  // Listen for theme changes on documentElement
+  useEffect(() => {
+    const checkTheme = () => {
+      const isDark = document.documentElement.classList.contains("dark");
+      setTheme(isDark ? "dark" : "light");
+    };
+
+    // Initial check
+    checkTheme();
+
+    // Observe class changes on html element
+    const observer = new MutationObserver(checkTheme);
+    observer.observe(document.documentElement, {
+      attributes: true,
+      attributeFilter: ["class"],
+    });
+
+    return () => observer.disconnect();
+  }, []);
+
   return (
     <ErrorBoundary>
       <BrowserRouter>
@@ -149,7 +171,23 @@ function App() {
             </Routes>
           </Suspense>
 
-          <Toaster position="top-right" richColors />
+          <Toaster
+            position="top-right"
+            theme={theme}
+            toastOptions={{
+              style: {
+                background: "hsl(var(--card))",
+                border: "1px solid hsl(var(--border))",
+                color: "hsl(var(--card-foreground))",
+              },
+              classNames: {
+                success: "border-green-500/50",
+                error: "border-destructive/50",
+                warning: "border-yellow-500/50",
+                info: "border-blue-500/50",
+              },
+            }}
+          />
         </AuthProvider>
       </BrowserRouter>
     </ErrorBoundary>

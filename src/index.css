@@ -123,3 +123,52 @@
     -moz-osx-font-smoothing: grayscale;
   }
 }
+
+/* Theme transition animation using View Transitions API */
+/* Paint spill effect: top-right corner expanding to bottom-left */
+
+::view-transition-old(root),
+::view-transition-new(root) {
+  animation: none;
+  mix-blend-mode: normal;
+}
+
+/* Going to dark mode: dark paint spills from top-right */
+.theme-to-dark::view-transition-old(root) {
+  z-index: 1;
+}
+
+.theme-to-dark::view-transition-new(root) {
+  z-index: 9999;
+  animation: circle-expand 0.6s ease-out forwards;
+}
+
+/* Going to light mode: light expands from bottom-left */
+.theme-to-light::view-transition-old(root) {
+  z-index: 1;
+}
+
+.theme-to-light::view-transition-new(root) {
+  z-index: 9999;
+  animation: circle-expand-bl 0.6s ease-out forwards;
+}
+
+/* Dark mode: circle from top-right corner */
+@keyframes circle-expand {
+  0% {
+    clip-path: circle(0% at 100% 0%);
+  }
+  100% {
+    clip-path: circle(150% at 100% 0%);
+  }
+}
+
+/* Light mode: circle from bottom-left corner */
+@keyframes circle-expand-bl {
+  0% {
+    clip-path: circle(0% at 0% 100%);
+  }
+  100% {
+    clip-path: circle(150% at 0% 100%);
+  }
+}
