@@ -7,6 +7,7 @@ import {
 } from "react-router-dom";
 import { Toaster } from "sonner";
 
+import { ErrorBoundary } from "@/components/ErrorBoundary";
 import { MainLayout } from "@/components/layout";
 import { BoardPage, PublicBoardPage } from "@/features/boards";
 import {
@@ -19,52 +20,54 @@ import {
 
 function App() {
   return (
-    <BrowserRouter>
-      <AuthProvider>
-        <Routes>
-          {/* Public routes */}
-          <Route path="/" element={<Navigate to="/app" replace />} />
+    <ErrorBoundary>
+      <BrowserRouter>
+        <AuthProvider>
+          <Routes>
+            {/* Public routes */}
+            <Route path="/" element={<Navigate to="/app" replace />} />
 
-          {/* Auth routes (guest only) */}
-          <Route
-            path="/login"
-            element={
-              <GuestRoute>
-                <LoginPage />
-              </GuestRoute>
-            }
-          />
-          <Route
-            path="/register"
-            element={
-              <GuestRoute>
-                <RegisterPage />
-              </GuestRoute>
-            }
-          />
+            {/* Auth routes (guest only) */}
+            <Route
+              path="/login"
+              element={
+                <GuestRoute>
+                  <LoginPage />
+                </GuestRoute>
+              }
+            />
+            <Route
+              path="/register"
+              element={
+                <GuestRoute>
+                  <RegisterPage />
+                </GuestRoute>
+              }
+            />
 
-          {/* Public board route - no auth required */}
-          <Route path="/p/:token" element={<PublicBoardWrapper />} />
+            {/* Public board route - no auth required */}
+            <Route path="/p/:token" element={<PublicBoardWrapper />} />
 
-          {/* Protected routes */}
-          <Route
-            path="/app/*"
-            element={
-              <ProtectedRoute>
-                <MainLayout>
-                  <BoardPage />
-                </MainLayout>
-              </ProtectedRoute>
-            }
-          />
+            {/* Protected routes */}
+            <Route
+              path="/app/*"
+              element={
+                <ProtectedRoute>
+                  <MainLayout>
+                    <BoardPage />
+                  </MainLayout>
+                </ProtectedRoute>
+              }
+            />
 
-          {/* Catch all - redirect to app */}
-          <Route path="*" element={<Navigate to="/app" replace />} />
-        </Routes>
+            {/* Catch all - redirect to app */}
+            <Route path="*" element={<Navigate to="/app" replace />} />
+          </Routes>
 
-        <Toaster position="top-right" richColors />
-      </AuthProvider>
-    </BrowserRouter>
+          <Toaster position="top-right" richColors />
+        </AuthProvider>
+      </BrowserRouter>
+    </ErrorBoundary>
   );
 }
 

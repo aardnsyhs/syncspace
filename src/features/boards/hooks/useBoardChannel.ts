@@ -1,5 +1,5 @@
 import { useEffect, useCallback } from "react";
-import echo from "@/lib/echo";
+import { getEcho, initializeEcho } from "@/lib/echo";
 import {
   BOARD_EVENTS,
   type BoardEventPayload,
@@ -43,6 +43,7 @@ export function useBoardChannel(
   const subscribe = useCallback(() => {
     if (!boardId) return null;
 
+    const echo = getEcho() || initializeEcho();
     const channel = echo.private(`board.${boardId}`);
 
     // Board events
@@ -100,7 +101,10 @@ export function useBoardChannel(
     // Cleanup: unsubscribe when component unmounts or boardId changes
     return () => {
       if (boardId) {
-        echo.leave(`board.${boardId}`);
+        const echo = getEcho();
+        if (echo) {
+          echo.leave(`board.${boardId}`);
+        }
       }
     };
   }, [boardId, subscribe]);

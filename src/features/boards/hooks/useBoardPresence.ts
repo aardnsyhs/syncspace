@@ -1,5 +1,5 @@
 import { useEffect, useState, useCallback } from "react";
-import echo from "@/lib/echo";
+import { getEcho, initializeEcho } from "@/lib/echo";
 
 export interface PresenceMember {
   id: number;
@@ -52,6 +52,8 @@ export function useBoardPresence(
     setIsLoading(true);
     setError(null);
 
+    const echo = getEcho() || initializeEcho();
+
     echo
       .join(`presence-board.${boardId}`)
       .here(handleHere)
@@ -60,7 +62,10 @@ export function useBoardPresence(
       .error(handleError);
 
     return () => {
-      echo.leave(`presence-board.${boardId}`);
+      const echoInstance = getEcho();
+      if (echoInstance) {
+        echoInstance.leave(`presence-board.${boardId}`);
+      }
     };
   }, [boardId, handleHere, handleJoining, handleLeaving, handleError]);
 
