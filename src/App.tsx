@@ -175,12 +175,8 @@ function App() {
             position="top-right"
             theme={theme}
             toastOptions={{
-              style: {
-                background: "hsl(var(--card))",
-                border: "1px solid hsl(var(--border))",
-                color: "hsl(var(--card-foreground))",
-              },
               classNames: {
+                toast: "bg-card text-card-foreground border-border",
                 success: "border-green-500/50",
                 error: "border-destructive/50",
                 warning: "border-yellow-500/50",
