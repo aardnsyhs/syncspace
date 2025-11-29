@@ -183,7 +183,7 @@ export function CommentsSection({
 
         {/* Mentions dropdown */}
         {showMentions && filteredMembers.length > 0 && (
-          <div className="absolute bottom-full left-0 mb-1 w-full max-h-40 overflow-y-auto bg-background border rounded-md shadow-lg z-50">
+          <div className="absolute top-full left-0 mt-1 w-full max-h-40 overflow-y-auto bg-background border rounded-md shadow-lg z-50">
             {filteredMembers.map((member, index) => (
               <button
                 key={member.id}
