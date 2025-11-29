@@ -1,4 +1,5 @@
 import { useState, useCallback, useEffect } from "react";
+import { useSearchParams } from "react-router-dom";
 import { Plus, Settings, Globe, X, Loader2, BarChart3 } from "lucide-react";
 import { useAuth } from "@/features/auth/store/AuthContext";
 import { Button } from "@/components/ui/button";
@@ -62,12 +63,26 @@ interface BoardPageProps {
 
 export function BoardPage({ boardId: propBoardId }: BoardPageProps) {
   const { user } = useAuth();
+  const [searchParams, setSearchParams] = useSearchParams();
 
   // State
   const [board, setBoard] = useState<BoardData | null>(null);
   const [isLoadingBoard, setIsLoadingBoard] = useState(true);
   const [selectedCardId, setSelectedCardId] = useState<number | null>(null);
   const [showSettings, setShowSettings] = useState(false);
+
+  // Handle card query param from notification click
+  useEffect(() => {
+    const cardParam = searchParams.get("card");
+    if (cardParam) {
+      const cardId = parseInt(cardParam);
+      if (!isNaN(cardId)) {
+        setSelectedCardId(cardId);
+        // Clear the query param after opening
+        setSearchParams({}, { replace: true });
+      }
+    }
+  }, [searchParams, setSearchParams]);
   const [showActivity, setShowActivity] = useState(false);
   const [showAnalytics, setShowAnalytics] = useState(false);
 

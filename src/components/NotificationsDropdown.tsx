@@ -1,5 +1,17 @@
+import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { Bell, Check, Trash2, Loader2 } from "lucide-react";
+import {
+  Bell,
+  Check,
+  Trash2,
+  Loader2,
+  MessageSquare,
+  UserPlus,
+  AtSign,
+  Clock,
+  ArrowRight,
+  type LucideIcon,
+} from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
@@ -24,25 +36,43 @@ function formatTime(dateString: string): string {
   return date.toLocaleDateString();
 }
 
-function getNotificationIcon(type: string): string {
+interface NotificationIconConfig {
+  icon: LucideIcon;
+  className: string;
+}
+
+function getNotificationIcon(type: string): NotificationIconConfig {
   switch (type) {
     case "card_assigned":
-      return "👤";
+      return { icon: UserPlus, className: "text-blue-500 bg-blue-500/10" };
     case "comment":
-      return "💬";
+      return {
+        icon: MessageSquare,
+        className: "text-green-500 bg-green-500/10",
+      };
     case "mention":
-      return "@";
+      return { icon: AtSign, className: "text-purple-500 bg-purple-500/10" };
     case "due_soon":
-      return "⏰";
+      return { icon: Clock, className: "text-orange-500 bg-orange-500/10" };
     case "card_moved":
-      return "➡️";
+      return { icon: ArrowRight, className: "text-cyan-500 bg-cyan-500/10" };
     default:
-      return "🔔";
+      return { icon: Bell, className: "text-muted-foreground bg-muted" };
   }
+}
+
+function NotificationIcon({ type }: { type: string }) {
+  const { icon: Icon, className } = getNotificationIcon(type);
+  return (
+    <div className={cn("p-2 rounded-full flex-shrink-0", className)}>
+      <Icon className="h-4 w-4" />
+    </div>
+  );
 }
 
 export function NotificationsDropdown() {
   const navigate = useNavigate();
+  const [isOpen, setIsOpen] = useState(false);
   const {
     notifications,
     unreadCount,
@@ -55,15 +85,23 @@ export function NotificationsDropdown() {
 
   const handleNotificationClick = (notification: (typeof notifications)[0]) => {
     markAsRead(notification.id);
+    setIsOpen(false);
 
-    // Navigate to board if data contains board_id
+    // Navigate to board with card_id as query param to open card detail
     if (notification.data?.board_id) {
-      navigate(`/app/boards/${notification.data.board_id}`);
+      const boardId = notification.data.board_id;
+      const cardId = notification.data.card_id;
+
+      if (cardId) {
+        navigate(`/app/boards/${boardId}?card=${cardId}`);
+      } else {
+        navigate(`/app/boards/${boardId}`);
+      }
     }
   };
 
   return (
-    <DropdownMenu>
+    <DropdownMenu open={isOpen} onOpenChange={setIsOpen}>
       <DropdownMenuTrigger asChild>
         <Button variant="ghost" size="icon" className="relative">
           <Bell className="h-4 w-4" />
@@ -123,10 +161,8 @@ export function NotificationsDropdown() {
                   onClick={() => handleNotificationClick(notification)}
                 >
                   <div className="flex items-start justify-between gap-2">
-                    <div className="flex items-start gap-2 flex-1 min-w-0">
-                      <span className="text-base mt-0.5">
-                        {getNotificationIcon(notification.type)}
-                      </span>
+                    <div className="flex items-start gap-3 flex-1 min-w-0">
+                      <NotificationIcon type={notification.type} />
                       <div className="flex-1 min-w-0">
                         <p className="text-sm font-medium">
                           {notification.title}
