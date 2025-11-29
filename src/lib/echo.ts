@@ -1,39 +1,39 @@
 import Echo from "laravel-echo";
-import Pusher from "pusher-js";
+import * as Ably from "ably";
 
 interface AuthData {
   auth: string;
   channel_data?: string;
 }
 
-// Make Pusher available globally for Laravel Echo
+// Make Ably available globally for Laravel Echo
 declare global {
   interface Window {
-    Pusher: typeof Pusher;
-    Echo: Echo<"reverb"> | null;
+    Ably: typeof Ably;
+    Echo: Echo<"ably"> | null;
   }
 }
 
-window.Pusher = Pusher;
+window.Ably = Ably;
 window.Echo = null;
 
-let echoInstance: Echo<"reverb"> | null = null;
+let echoInstance: Echo<"ably"> | null = null;
 
 // Lazy initialization - only create Echo when authenticated
-export function initializeEcho(): Echo<"reverb"> {
+export function initializeEcho(): Echo<"ably"> {
   if (echoInstance) {
     return echoInstance;
   }
 
   echoInstance = new Echo({
-    broadcaster: "reverb",
-    key: import.meta.env.VITE_REVERB_APP_KEY,
-    wsHost: import.meta.env.VITE_REVERB_HOST,
-    wsPort: Number(import.meta.env.VITE_REVERB_PORT) || 8080,
-    wssPort: Number(import.meta.env.VITE_REVERB_PORT) || 443,
-    forceTLS: (import.meta.env.VITE_REVERB_SCHEME ?? "https") === "https",
-    enabledTransports: ["ws", "wss"],
+    broadcaster: "ably",
     authEndpoint: `${import.meta.env.VITE_API_URL}/api/broadcasting/auth`,
+    auth: {
+      headers: {
+        Authorization: `Bearer ${localStorage.getItem("token")}`,
+        Accept: "application/json",
+      },
+    },
     authorizer: (channel: { name: string }) => ({
       authorize: (
         socketId: string,
@@ -85,7 +85,7 @@ export function disconnectEcho() {
 }
 
 // Get current Echo instance (may be null if not authenticated)
-export function getEcho(): Echo<"reverb"> | null {
+export function getEcho(): Echo<"ably"> | null {
   return echoInstance;
 }
 

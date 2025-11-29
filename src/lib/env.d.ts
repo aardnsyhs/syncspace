@@ -2,10 +2,7 @@
 
 interface ImportMetaEnv {
   readonly VITE_API_URL: string;
-  readonly VITE_REVERB_APP_KEY: string;
-  readonly VITE_REVERB_HOST: string;
-  readonly VITE_REVERB_PORT: string;
-  readonly VITE_REVERB_SCHEME: string;
+  readonly VITE_ABLY_KEY: string;
 }
 
 interface ImportMeta {
