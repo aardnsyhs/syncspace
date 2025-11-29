@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import { Bell, Search, Moon, Sun, LogOut, User, Settings } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -22,7 +22,19 @@ import { toast } from "sonner";
 export function Topbar() {
   const [isDark, setIsDark] = useState(false);
   const navigate = useNavigate();
+  const location = useLocation();
   const { user, logout } = useAuth();
+
+  // Get page title based on route
+  const getPageTitle = () => {
+    const path = location.pathname;
+    if (path === "/app") return "Dashboard";
+    if (path === "/app/boards") return "Boards";
+    if (path.startsWith("/app/boards/")) return "Board";
+    if (path === "/app/members") return "Members";
+    if (path === "/app/settings") return "Settings";
+    return "Dashboard";
+  };
 
   const toggleTheme = () => {
     setIsDark(!isDark);
@@ -53,7 +65,7 @@ export function Topbar() {
     <header className="flex h-14 items-center justify-between border-b bg-card px-6">
       {/* Left: Page Title / Breadcrumb */}
       <div className="flex items-center gap-4">
-        <h1 className="text-lg font-semibold">Dashboard</h1>
+        <h1 className="text-lg font-semibold">{getPageTitle()}</h1>
       </div>
 
       {/* Right: Actions */}

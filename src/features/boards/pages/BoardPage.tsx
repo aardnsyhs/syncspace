@@ -1,7 +1,8 @@
 import { useState, useCallback, useEffect } from "react";
-import { Plus, Settings, Globe } from "lucide-react";
+import { Plus, Settings, Globe, X, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Input } from "@/components/ui/input";
 import { toast } from "sonner";
 
 // Components
@@ -32,9 +33,6 @@ import type {
 
 const API_URL = import.meta.env.VITE_API_URL;
 
-// Demo auth - in real app, this would come from auth context
-const DEMO_TOKEN = localStorage.getItem("token") || "";
-
 interface BoardData {
   id: number;
   team_id: number;
@@ -46,7 +44,11 @@ interface BoardData {
   public_url: string | null;
 }
 
-export function BoardPage() {
+interface BoardPageProps {
+  boardId?: number;
+}
+
+export function BoardPage({ boardId: propBoardId }: BoardPageProps) {
   // State
   const [board, setBoard] = useState<BoardData | null>(null);
   const [isLoadingBoard, setIsLoadingBoard] = useState(true);
@@ -54,10 +56,22 @@ export function BoardPage() {
   const [showSettings, setShowSettings] = useState(false);
   const [showActivity, setShowActivity] = useState(false);
 
-  // For demo - would come from route params or context
-  const boardId = 1;
-  const teamId = 1;
-  const token = DEMO_TOKEN;
+  // Add Card state
+  const [addingCardToColumn, setAddingCardToColumn] = useState<number | null>(
+    null
+  );
+  const [newCardTitle, setNewCardTitle] = useState("");
+  const [isCreatingCard, setIsCreatingCard] = useState(false);
+
+  // Add Column state
+  const [isAddingColumn, setIsAddingColumn] = useState(false);
+  const [newColumnName, setNewColumnName] = useState("");
+  const [isCreatingColumn, setIsCreatingColumn] = useState(false);
+
+  // Get token from localStorage
+  const token = localStorage.getItem("token") || "";
+  const boardId = propBoardId || 1;
+  const teamId = board?.team_id || 1;
   const canManage = true; // Would check RBAC
 
   // Hooks
@@ -161,6 +175,64 @@ export function BoardPage() {
     },
     [refetchCards]
   );
+
+  // Create new card
+  const handleCreateCard = async (columnId: number) => {
+    if (!newCardTitle.trim() || !token) return;
+
+    setIsCreatingCard(true);
+    try {
+      const res = await fetch(`${API_URL}/api/columns/${columnId}/cards`, {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${token}`,
+          Accept: "application/json",
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ title: newCardTitle }),
+      });
+
+      if (!res.ok) throw new Error("Failed to create card");
+
+      toast.success("Card created!");
+      setNewCardTitle("");
+      setAddingCardToColumn(null);
+      refetchCards();
+    } catch {
+      toast.error("Failed to create card");
+    } finally {
+      setIsCreatingCard(false);
+    }
+  };
+
+  // Create new column
+  const handleCreateColumn = async () => {
+    if (!newColumnName.trim() || !token) return;
+
+    setIsCreatingColumn(true);
+    try {
+      const res = await fetch(`${API_URL}/api/boards/${boardId}/columns`, {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${token}`,
+          Accept: "application/json",
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ name: newColumnName }),
+      });
+
+      if (!res.ok) throw new Error("Failed to create column");
+
+      toast.success("Column created!");
+      setNewColumnName("");
+      setIsAddingColumn(false);
+      refetchCards();
+    } catch {
+      toast.error("Failed to create column");
+    } finally {
+      setIsCreatingColumn(false);
+    }
+  };
 
   // Subscribe to real-time updates
   useBoardChannel(boardId, {
@@ -322,24 +394,111 @@ export function BoardPage() {
 
                 {/* Add Card */}
                 <div className="p-2">
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    className="w-full justify-start"
-                  >
-                    <Plus className="h-4 w-4 mr-1" />
-                    Add card
-                  </Button>
+                  {addingCardToColumn === column.id ? (
+                    <div className="space-y-2">
+                      <Input
+                        placeholder="Enter card title..."
+                        value={newCardTitle}
+                        onChange={(e) => setNewCardTitle(e.target.value)}
+                        onKeyDown={(e) => {
+                          if (e.key === "Enter") handleCreateCard(column.id);
+                          if (e.key === "Escape") {
+                            setAddingCardToColumn(null);
+                            setNewCardTitle("");
+                          }
+                        }}
+                        autoFocus
+                        disabled={isCreatingCard}
+                      />
+                      <div className="flex gap-2">
+                        <Button
+                          size="sm"
+                          onClick={() => handleCreateCard(column.id)}
+                          disabled={isCreatingCard || !newCardTitle.trim()}
+                        >
+                          {isCreatingCard && (
+                            <Loader2 className="h-3 w-3 mr-1 animate-spin" />
+                          )}
+                          Add
+                        </Button>
+                        <Button
+                          size="sm"
+                          variant="ghost"
+                          onClick={() => {
+                            setAddingCardToColumn(null);
+                            setNewCardTitle("");
+                          }}
+                        >
+                          <X className="h-4 w-4" />
+                        </Button>
+                      </div>
+                    </div>
+                  ) : (
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="w-full justify-start"
+                      onClick={() => setAddingCardToColumn(column.id)}
+                    >
+                      <Plus className="h-4 w-4 mr-1" />
+                      Add card
+                    </Button>
+                  )}
                 </div>
               </div>
             ))}
 
             {/* Add Column */}
             <div className="w-72 flex-shrink-0">
-              <Button variant="outline" className="w-full justify-start">
-                <Plus className="h-4 w-4 mr-2" />
-                Add column
-              </Button>
+              {isAddingColumn ? (
+                <div className="bg-muted/30 rounded-lg p-3 space-y-2">
+                  <Input
+                    placeholder="Enter column name..."
+                    value={newColumnName}
+                    onChange={(e) => setNewColumnName(e.target.value)}
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter") handleCreateColumn();
+                      if (e.key === "Escape") {
+                        setIsAddingColumn(false);
+                        setNewColumnName("");
+                      }
+                    }}
+                    autoFocus
+                    disabled={isCreatingColumn}
+                  />
+                  <div className="flex gap-2">
+                    <Button
+                      size="sm"
+                      onClick={handleCreateColumn}
+                      disabled={isCreatingColumn || !newColumnName.trim()}
+                    >
+                      {isCreatingColumn && (
+                        <Loader2 className="h-3 w-3 mr-1 animate-spin" />
+                      )}
+                      Add Column
+                    </Button>
+                    <Button
+                      size="sm"
+                      variant="ghost"
+                      onClick={() => {
+                        setIsAddingColumn(false);
+                        setNewColumnName("");
+                      }}
+                    >
+                      <X className="h-4 w-4" />
+                    </Button>
+                  </div>
+                </div>
+              ) : (
+                <Button
+                  variant="outline"
+                  className="w-full justify-start"
+                  onClick={() => setIsAddingColumn(true)}
+                >
+                  <Plus className="h-4 w-4 mr-2" />
+                  Add column
+                </Button>
+              )}
             </div>
           </div>
         </div>

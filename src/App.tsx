@@ -18,6 +18,36 @@ import {
   GuestRoute,
 } from "@/features/auth";
 
+// Simple placeholder pages
+function DashboardPage() {
+  return (
+    <div className="space-y-4">
+      <h1 className="text-2xl font-bold">Dashboard</h1>
+      <p className="text-muted-foreground">Welcome to Syncspace!</p>
+    </div>
+  );
+}
+
+function MembersPage() {
+  return (
+    <div className="space-y-4">
+      <h1 className="text-2xl font-bold">Team Members</h1>
+      <p className="text-muted-foreground">Manage your team members here.</p>
+    </div>
+  );
+}
+
+function SettingsPage() {
+  return (
+    <div className="space-y-4">
+      <h1 className="text-2xl font-bold">Settings</h1>
+      <p className="text-muted-foreground">
+        Configure your workspace settings.
+      </p>
+    </div>
+  );
+}
+
 function App() {
   return (
     <ErrorBoundary>
@@ -50,11 +80,51 @@ function App() {
 
             {/* Protected routes */}
             <Route
-              path="/app/*"
+              path="/app"
               element={
                 <ProtectedRoute>
                   <MainLayout>
-                    <BoardPage />
+                    <DashboardPage />
+                  </MainLayout>
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/app/boards"
+              element={
+                <ProtectedRoute>
+                  <MainLayout>
+                    <DashboardPage />
+                  </MainLayout>
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/app/boards/:boardId"
+              element={
+                <ProtectedRoute>
+                  <MainLayout>
+                    <BoardPageWrapper />
+                  </MainLayout>
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/app/members"
+              element={
+                <ProtectedRoute>
+                  <MainLayout>
+                    <MembersPage />
+                  </MainLayout>
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/app/settings"
+              element={
+                <ProtectedRoute>
+                  <MainLayout>
+                    <SettingsPage />
                   </MainLayout>
                 </ProtectedRoute>
               }
@@ -69,6 +139,12 @@ function App() {
       </BrowserRouter>
     </ErrorBoundary>
   );
+}
+
+// Wrapper to extract boardId from URL params
+function BoardPageWrapper() {
+  const { boardId } = useParams<{ boardId: string }>();
+  return <BoardPage boardId={boardId ? parseInt(boardId) : undefined} />;
 }
 
 // Wrapper to extract token from URL params
