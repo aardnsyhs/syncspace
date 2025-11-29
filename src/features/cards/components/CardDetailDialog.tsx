@@ -28,10 +28,12 @@ import {
 import { Calendar as CalendarComponent } from "@/components/ui/calendar";
 import { useCard } from "../hooks/useCard";
 import { useBoardLabels } from "../hooks/useBoardLabels";
+import { useComments } from "../hooks/useComments";
 import { LabelBadge } from "./LabelBadge";
 import { LabelPicker } from "./LabelPicker";
 import { ChecklistView } from "./ChecklistView";
 import { AttachmentList } from "./AttachmentList";
+import { CommentsSection } from "./CommentsSection";
 import {
   Tag,
   Calendar as CalendarIcon,
@@ -52,6 +54,7 @@ interface Props {
   cardId: number | null;
   boardId: number;
   token: string;
+  currentUserId: number;
   isOpen: boolean;
   onClose: () => void;
   onCardUpdated?: () => void;
@@ -62,6 +65,7 @@ export function CardDetailDialog({
   cardId,
   boardId,
   token,
+  currentUserId,
   isOpen,
   onClose,
   onCardUpdated,
@@ -85,6 +89,13 @@ export function CardDetailDialog({
   } = useCard(cardId, token);
 
   const { labels: boardLabels, createLabel } = useBoardLabels(boardId, token);
+
+  const {
+    comments,
+    isLoading: commentsLoading,
+    addComment,
+    deleteComment,
+  } = useComments(isOpen ? cardId : null);
 
   const [isEditingTitle, setIsEditingTitle] = useState(false);
   const [editedTitle, setEditedTitle] = useState("");
@@ -175,303 +186,336 @@ export function CardDetailDialog({
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="sm:max-w-3xl w-[90vw] max-h-[90vh] overflow-y-auto">
+      <DialogContent className="sm:max-w-5xl w-[95vw] max-h-[90vh] overflow-hidden p-0">
         {isLoading || !card ? (
-          <CardDetailSkeleton />
+          <div className="p-6">
+            <CardDetailSkeleton />
+          </div>
         ) : (
-          <>
-            <DialogHeader className="pr-8">
-              {/* Title */}
-              {isEditingTitle ? (
-                <Input
-                  value={editedTitle}
-                  onChange={(e) => setEditedTitle(e.target.value)}
-                  onBlur={handleSaveTitle}
-                  onKeyDown={(e) => e.key === "Enter" && handleSaveTitle()}
-                  autoFocus
-                  className="text-lg font-semibold"
-                />
-              ) : (
-                <DialogTitle
-                  className="cursor-pointer hover:bg-muted px-2 py-1 -mx-2 rounded"
-                  onClick={() => setIsEditingTitle(true)}
-                >
-                  {card.title}
-                </DialogTitle>
-              )}
-            </DialogHeader>
-
-            <div className="space-y-6 mt-4">
-              {/* Labels */}
-              <div className="space-y-2">
-                <div className="flex items-center gap-2">
-                  <Tag className="h-4 w-4 text-muted-foreground" />
-                  <span className="text-sm font-medium">Labels</span>
-                  <DropdownMenu>
-                    <DropdownMenuTrigger asChild>
-                      <Button variant="ghost" size="sm" className="h-6 px-2">
-                        Edit
-                      </Button>
-                    </DropdownMenuTrigger>
-                    <DropdownMenuContent align="start" className="w-64 p-3">
-                      <LabelPicker
-                        boardLabels={boardLabels}
-                        selectedLabels={card.labels}
-                        onToggle={handleLabelToggle}
-                        onCreate={handleCreateLabel}
-                      />
-                    </DropdownMenuContent>
-                  </DropdownMenu>
-                </div>
-                <div className="flex flex-wrap gap-1">
-                  {card.labels.length === 0 ? (
-                    <span className="text-sm text-muted-foreground">
-                      No labels
-                    </span>
-                  ) : (
-                    card.labels.map((label) => (
-                      <LabelBadge key={label.id} label={label} />
-                    ))
-                  )}
-                </div>
-              </div>
-
-              {/* Due Date & Assignee row */}
-              <div className="flex gap-6">
-                {/* Due Date */}
-                <div className="space-y-1">
-                  <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                    <CalendarIcon className="h-4 w-4" />
-                    Due date
-                  </div>
-                  <Popover>
-                    <PopoverTrigger asChild>
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        className="h-8 w-[180px] justify-start text-left font-normal"
-                      >
-                        <CalendarIcon className="mr-2 h-4 w-4" />
-                        {card.due_date ? (
-                          format(new Date(card.due_date), "PPP")
-                        ) : (
-                          <span className="text-muted-foreground">
-                            Set due date
-                          </span>
-                        )}
-                      </Button>
-                    </PopoverTrigger>
-                    <PopoverContent className="w-auto p-0" align="start">
-                      <CalendarComponent
-                        mode="single"
-                        selected={
-                          card.due_date
-                            ? new Date(card.due_date + "T00:00:00")
-                            : undefined
-                        }
-                        onSelect={async (date: Date | undefined) => {
-                          try {
-                            // Format date in local timezone (YYYY-MM-DD)
-                            const formattedDate = date
-                              ? `${date.getFullYear()}-${String(
-                                  date.getMonth() + 1
-                                ).padStart(2, "0")}-${String(
-                                  date.getDate()
-                                ).padStart(2, "0")}`
-                              : null;
-                            await updateCard({
-                              due_date: formattedDate,
-                            });
-                            onCardUpdated?.();
-                          } catch {
-                            toast.error("Failed to update due date");
-                          }
-                        }}
-                        initialFocus
-                      />
-                      {card.due_date && (
-                        <div className="p-2 border-t">
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            className="w-full text-destructive"
-                            onClick={async () => {
-                              try {
-                                await updateCard({ due_date: null });
-                                onCardUpdated?.();
-                              } catch {
-                                toast.error("Failed to remove due date");
-                              }
-                            }}
-                          >
-                            <X className="h-4 w-4 mr-2" />
-                            Remove due date
-                          </Button>
-                        </div>
-                      )}
-                    </PopoverContent>
-                  </Popover>
-                </div>
-
-                {/* Assignee */}
-                <div className="space-y-1">
-                  <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                    <User className="h-4 w-4" />
-                    Assignee
-                  </div>
-                  <Select
-                    value={card.assignee?.id?.toString() || "unassigned"}
-                    onValueChange={async (value) => {
-                      try {
-                        await updateCard({
-                          assignee_id:
-                            value === "unassigned" ? null : parseInt(value),
-                        });
-                        onCardUpdated?.();
-                      } catch {
-                        toast.error("Failed to update assignee");
-                      }
-                    }}
-                  >
-                    <SelectTrigger className="h-8 w-[180px]">
-                      <SelectValue placeholder="Unassigned" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="unassigned">Unassigned</SelectItem>
-                      {teamMembers.map((member) => (
-                        <SelectItem
-                          key={member.id}
-                          value={member.id.toString()}
-                        >
-                          {member.name}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-              </div>
-
-              {/* Description */}
-              <div className="space-y-2">
-                <div className="flex items-center gap-2">
-                  <AlignLeft className="h-4 w-4 text-muted-foreground" />
-                  <span className="text-sm font-medium">Description</span>
-                </div>
-                {isEditingDescription ? (
-                  <div className="space-y-2">
-                    <textarea
-                      value={editedDescription}
-                      onChange={(e) => setEditedDescription(e.target.value)}
-                      className="w-full min-h-[100px] p-2 border rounded-md text-sm resize-none focus:outline-none focus:ring-2 focus:ring-primary"
-                      placeholder="Add a description..."
-                      autoFocus
-                    />
-                    <div className="flex gap-2">
-                      <Button size="sm" onClick={handleSaveDescription}>
-                        Save
-                      </Button>
-                      <Button
-                        size="sm"
-                        variant="ghost"
-                        onClick={() => {
-                          setEditedDescription(card.description || "");
-                          setIsEditingDescription(false);
-                        }}
-                      >
-                        Cancel
-                      </Button>
-                    </div>
-                  </div>
+          <div className="flex h-[85vh]">
+            {/* Left Panel - Card Details */}
+            <div className="flex-1 overflow-y-auto p-6">
+              <DialogHeader className="pr-8">
+                {/* Title */}
+                {isEditingTitle ? (
+                  <Input
+                    value={editedTitle}
+                    onChange={(e) => setEditedTitle(e.target.value)}
+                    onBlur={handleSaveTitle}
+                    onKeyDown={(e) => e.key === "Enter" && handleSaveTitle()}
+                    autoFocus
+                    className="text-lg font-semibold"
+                  />
                 ) : (
-                  <div
-                    className="min-h-[60px] p-2 bg-muted/50 rounded-md cursor-pointer hover:bg-muted text-sm"
-                    onClick={() => setIsEditingDescription(true)}
+                  <DialogTitle
+                    className="cursor-pointer hover:bg-muted px-2 py-1 -mx-2 rounded"
+                    onClick={() => setIsEditingTitle(true)}
                   >
-                    {card.description || (
-                      <span className="text-muted-foreground">
-                        Click to add a description...
+                    {card.title}
+                  </DialogTitle>
+                )}
+              </DialogHeader>
+
+              <div className="space-y-6 mt-4">
+                {/* Labels */}
+                <div className="space-y-2">
+                  <div className="flex items-center gap-2">
+                    <Tag className="h-4 w-4 text-muted-foreground" />
+                    <span className="text-sm font-medium">Labels</span>
+                    <DropdownMenu>
+                      <DropdownMenuTrigger asChild>
+                        <Button variant="ghost" size="sm" className="h-6 px-2">
+                          Edit
+                        </Button>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent align="start" className="w-64 p-3">
+                        <LabelPicker
+                          boardLabels={boardLabels}
+                          selectedLabels={card.labels}
+                          onToggle={handleLabelToggle}
+                          onCreate={handleCreateLabel}
+                        />
+                      </DropdownMenuContent>
+                    </DropdownMenu>
+                  </div>
+                  <div className="flex flex-wrap gap-1">
+                    {card.labels.length === 0 ? (
+                      <span className="text-sm text-muted-foreground">
+                        No labels
                       </span>
+                    ) : (
+                      card.labels.map((label) => (
+                        <LabelBadge key={label.id} label={label} />
+                      ))
                     )}
                   </div>
-                )}
+                </div>
+
+                {/* Due Date & Assignee row */}
+                <div className="flex gap-6">
+                  {/* Due Date */}
+                  <div className="space-y-1">
+                    <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                      <CalendarIcon className="h-4 w-4" />
+                      Due date
+                    </div>
+                    <Popover>
+                      <PopoverTrigger asChild>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          className="h-8 w-[180px] justify-start text-left font-normal"
+                        >
+                          <CalendarIcon className="mr-2 h-4 w-4" />
+                          {card.due_date ? (
+                            format(new Date(card.due_date), "PPP")
+                          ) : (
+                            <span className="text-muted-foreground">
+                              Set due date
+                            </span>
+                          )}
+                        </Button>
+                      </PopoverTrigger>
+                      <PopoverContent className="w-auto p-0" align="start">
+                        <CalendarComponent
+                          mode="single"
+                          selected={
+                            card.due_date
+                              ? new Date(card.due_date + "T00:00:00")
+                              : undefined
+                          }
+                          onSelect={async (date: Date | undefined) => {
+                            try {
+                              // Format date in local timezone (YYYY-MM-DD)
+                              const formattedDate = date
+                                ? `${date.getFullYear()}-${String(
+                                    date.getMonth() + 1
+                                  ).padStart(2, "0")}-${String(
+                                    date.getDate()
+                                  ).padStart(2, "0")}`
+                                : null;
+                              await updateCard({
+                                due_date: formattedDate,
+                              });
+                              onCardUpdated?.();
+                            } catch {
+                              toast.error("Failed to update due date");
+                            }
+                          }}
+                          initialFocus
+                        />
+                        {card.due_date && (
+                          <div className="p-2 border-t">
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              className="w-full text-destructive"
+                              onClick={async () => {
+                                try {
+                                  await updateCard({ due_date: null });
+                                  onCardUpdated?.();
+                                } catch {
+                                  toast.error("Failed to remove due date");
+                                }
+                              }}
+                            >
+                              <X className="h-4 w-4 mr-2" />
+                              Remove due date
+                            </Button>
+                          </div>
+                        )}
+                      </PopoverContent>
+                    </Popover>
+                  </div>
+
+                  {/* Assignee */}
+                  <div className="space-y-1">
+                    <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                      <User className="h-4 w-4" />
+                      Assignee
+                    </div>
+                    <Select
+                      value={card.assignee?.id?.toString() || "unassigned"}
+                      onValueChange={async (value) => {
+                        try {
+                          await updateCard({
+                            assignee_id:
+                              value === "unassigned" ? null : parseInt(value),
+                          });
+                          onCardUpdated?.();
+                        } catch {
+                          toast.error("Failed to update assignee");
+                        }
+                      }}
+                    >
+                      <SelectTrigger className="h-8 w-[180px]">
+                        <SelectValue placeholder="Unassigned" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="unassigned">Unassigned</SelectItem>
+                        {teamMembers.map((member) => (
+                          <SelectItem
+                            key={member.id}
+                            value={member.id.toString()}
+                          >
+                            {member.name}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </div>
+
+                {/* Description */}
+                <div className="space-y-2">
+                  <div className="flex items-center gap-2">
+                    <AlignLeft className="h-4 w-4 text-muted-foreground" />
+                    <span className="text-sm font-medium">Description</span>
+                  </div>
+                  {isEditingDescription ? (
+                    <div className="space-y-2">
+                      <textarea
+                        value={editedDescription}
+                        onChange={(e) => setEditedDescription(e.target.value)}
+                        className="w-full min-h-[100px] p-2 border rounded-md text-sm resize-none focus:outline-none focus:ring-2 focus:ring-primary"
+                        placeholder="Add a description..."
+                        autoFocus
+                      />
+                      <div className="flex gap-2">
+                        <Button size="sm" onClick={handleSaveDescription}>
+                          Save
+                        </Button>
+                        <Button
+                          size="sm"
+                          variant="ghost"
+                          onClick={() => {
+                            setEditedDescription(card.description || "");
+                            setIsEditingDescription(false);
+                          }}
+                        >
+                          Cancel
+                        </Button>
+                      </div>
+                    </div>
+                  ) : (
+                    <div
+                      className="min-h-[60px] p-2 bg-muted/50 rounded-md cursor-pointer hover:bg-muted text-sm"
+                      onClick={() => setIsEditingDescription(true)}
+                    >
+                      {card.description || (
+                        <span className="text-muted-foreground">
+                          Click to add a description...
+                        </span>
+                      )}
+                    </div>
+                  )}
+                </div>
+
+                {/* Checklists */}
+                <ChecklistView
+                  checklists={card.checklists}
+                  onAddChecklist={async (title) => {
+                    try {
+                      await addChecklist(title);
+                      onCardUpdated?.();
+                    } catch {
+                      toast.error("Failed to add checklist");
+                    }
+                  }}
+                  onDeleteChecklist={async (id) => {
+                    try {
+                      await deleteChecklist(id);
+                      onCardUpdated?.();
+                    } catch {
+                      toast.error("Failed to delete checklist");
+                    }
+                  }}
+                  onAddItem={async (checklistId, title) => {
+                    try {
+                      await addChecklistItem(checklistId, title);
+                    } catch {
+                      toast.error("Failed to add item");
+                    }
+                  }}
+                  onToggleItem={async (itemId, isCompleted) => {
+                    try {
+                      await toggleChecklistItem(itemId, isCompleted);
+                      onCardUpdated?.();
+                    } catch {
+                      toast.error("Failed to update item");
+                    }
+                  }}
+                  onDeleteItem={async (itemId) => {
+                    try {
+                      await deleteChecklistItem(itemId);
+                    } catch {
+                      toast.error("Failed to delete item");
+                    }
+                  }}
+                />
+
+                {/* Attachments */}
+                <AttachmentList
+                  attachments={card.attachments}
+                  onUpload={async (file) => {
+                    try {
+                      await uploadAttachment(file);
+                      onCardUpdated?.();
+                      toast.success("Attachment uploaded");
+                    } catch {
+                      toast.error("Failed to upload attachment");
+                    }
+                  }}
+                  onAddExternal={async (url, fileName) => {
+                    try {
+                      await addExternalAttachment(url, fileName);
+                      onCardUpdated?.();
+                      toast.success("Link added");
+                    } catch {
+                      toast.error("Failed to add link");
+                    }
+                  }}
+                  onDelete={async (id) => {
+                    try {
+                      await deleteAttachment(id);
+                      onCardUpdated?.();
+                      toast.success("Attachment deleted");
+                    } catch {
+                      toast.error("Failed to delete attachment");
+                    }
+                  }}
+                />
               </div>
-
-              {/* Checklists */}
-              <ChecklistView
-                checklists={card.checklists}
-                onAddChecklist={async (title) => {
-                  try {
-                    await addChecklist(title);
-                    onCardUpdated?.();
-                  } catch {
-                    toast.error("Failed to add checklist");
-                  }
-                }}
-                onDeleteChecklist={async (id) => {
-                  try {
-                    await deleteChecklist(id);
-                    onCardUpdated?.();
-                  } catch {
-                    toast.error("Failed to delete checklist");
-                  }
-                }}
-                onAddItem={async (checklistId, title) => {
-                  try {
-                    await addChecklistItem(checklistId, title);
-                  } catch {
-                    toast.error("Failed to add item");
-                  }
-                }}
-                onToggleItem={async (itemId, isCompleted) => {
-                  try {
-                    await toggleChecklistItem(itemId, isCompleted);
-                    onCardUpdated?.();
-                  } catch {
-                    toast.error("Failed to update item");
-                  }
-                }}
-                onDeleteItem={async (itemId) => {
-                  try {
-                    await deleteChecklistItem(itemId);
-                  } catch {
-                    toast.error("Failed to delete item");
-                  }
-                }}
-              />
-
-              {/* Attachments */}
-              <AttachmentList
-                attachments={card.attachments}
-                onUpload={async (file) => {
-                  try {
-                    await uploadAttachment(file);
-                    onCardUpdated?.();
-                    toast.success("Attachment uploaded");
-                  } catch {
-                    toast.error("Failed to upload attachment");
-                  }
-                }}
-                onAddExternal={async (url, fileName) => {
-                  try {
-                    await addExternalAttachment(url, fileName);
-                    onCardUpdated?.();
-                    toast.success("Link added");
-                  } catch {
-                    toast.error("Failed to add link");
-                  }
-                }}
-                onDelete={async (id) => {
-                  try {
-                    await deleteAttachment(id);
-                    onCardUpdated?.();
-                    toast.success("Attachment deleted");
-                  } catch {
-                    toast.error("Failed to delete attachment");
-                  }
-                }}
-              />
             </div>
-          </>
+
+            {/* Right Panel - Comments */}
+            <div className="w-80 border-l bg-muted/20 flex flex-col">
+              <div className="flex-1 overflow-y-auto p-4">
+                <CommentsSection
+                  comments={comments}
+                  currentUserId={currentUserId}
+                  teamMembers={teamMembers}
+                  isLoading={commentsLoading}
+                  onAddComment={async (body) => {
+                    try {
+                      await addComment(body);
+                      toast.success("Comment added");
+                    } catch {
+                      toast.error("Failed to add comment");
+                    }
+                  }}
+                  onDeleteComment={async (commentId) => {
+                    try {
+                      await deleteComment(commentId);
+                      toast.success("Comment deleted");
+                    } catch {
+                      toast.error("Failed to delete comment");
+                    }
+                  }}
+                />
+              </div>
+            </div>
+          </div>
         )}
       </DialogContent>
     </Dialog>

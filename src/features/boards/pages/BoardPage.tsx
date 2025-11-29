@@ -1,5 +1,6 @@
 import { useState, useCallback, useEffect } from "react";
 import { Plus, Settings, Globe, X, Loader2, BarChart3 } from "lucide-react";
+import { useAuth } from "@/features/auth/store/AuthContext";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Input } from "@/components/ui/input";
@@ -60,6 +61,8 @@ interface BoardPageProps {
 }
 
 export function BoardPage({ boardId: propBoardId }: BoardPageProps) {
+  const { user } = useAuth();
+
   // State
   const [board, setBoard] = useState<BoardData | null>(null);
   const [isLoadingBoard, setIsLoadingBoard] = useState(true);
@@ -593,6 +596,7 @@ export function BoardPage({ boardId: propBoardId }: BoardPageProps) {
         cardId={selectedCardId}
         boardId={boardId}
         token={token}
+        currentUserId={user?.id || 0}
         isOpen={selectedCardId !== null}
         onClose={() => setSelectedCardId(null)}
         onCardUpdated={refetchCards}
