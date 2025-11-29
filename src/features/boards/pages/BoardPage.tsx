@@ -35,6 +35,9 @@ import { useBoardLabels } from "@/features/cards/hooks/useBoardLabels";
 import { useBoardPresence } from "../hooks/useBoardPresence";
 import { useBoardActivities } from "../hooks/useBoardActivities";
 
+// API
+import { api } from "@/lib/api";
+
 // Types
 import type {
   CardEventPayload,
@@ -43,8 +46,6 @@ import type {
   ColumnEventPayload,
   ColumnDeletedPayload,
 } from "../types";
-
-const API_URL = import.meta.env.VITE_API_URL;
 
 interface BoardData {
   id: number;
@@ -152,20 +153,11 @@ export function BoardPage({ boardId: propBoardId }: BoardPageProps) {
   // Fetch board data
   useEffect(() => {
     const fetchBoard = async () => {
-      if (!token) return;
-
       setIsLoadingBoard(true);
       try {
-        const res = await fetch(`${API_URL}/api/boards/${boardId}`, {
-          headers: {
-            Authorization: `Bearer ${token}`,
-            Accept: "application/json",
-          },
-        });
-
-        if (!res.ok) throw new Error("Failed to fetch board");
-
-        const json = await res.json();
+        const json = await api.get<{ data: BoardData }>(
+          `/api/boards/${boardId}`
+        );
         setBoard(json.data);
       } catch {
         toast.error("Failed to load board");
@@ -175,35 +167,25 @@ export function BoardPage({ boardId: propBoardId }: BoardPageProps) {
     };
 
     fetchBoard();
-  }, [boardId, token]);
+  }, [boardId]);
 
   // Fetch team members when board is loaded
   useEffect(() => {
     const fetchTeamMembers = async () => {
-      if (!board?.team_id || !token) return;
+      if (!board?.team_id) return;
 
       try {
-        const res = await fetch(
-          `${API_URL}/api/teams/${board.team_id}/members`,
-          {
-            headers: {
-              Authorization: `Bearer ${token}`,
-              Accept: "application/json",
-            },
-          }
-        );
-
-        if (res.ok) {
-          const json = await res.json();
-          setTeamMembers(json.data || []);
-        }
+        const json = await api.get<{
+          data: Array<{ id: number; name: string; avatar_url?: string }>;
+        }>(`/api/teams/${board.team_id}/members`);
+        setTeamMembers(json.data || []);
       } catch {
         console.error("Failed to fetch team members");
       }
     };
 
     fetchTeamMembers();
-  }, [board?.team_id, token]);
+  }, [board?.team_id]);
 
   // Real-time handlers
   const handleColumnCreated = useCallback(
@@ -260,22 +242,11 @@ export function BoardPage({ boardId: propBoardId }: BoardPageProps) {
 
   // Create new card
   const handleCreateCard = async (columnId: number) => {
-    if (!newCardTitle.trim() || !token) return;
+    if (!newCardTitle.trim()) return;
 
     setIsCreatingCard(true);
     try {
-      const res = await fetch(`${API_URL}/api/columns/${columnId}/cards`, {
-        method: "POST",
-        headers: {
-          Authorization: `Bearer ${token}`,
-          Accept: "application/json",
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ title: newCardTitle }),
-      });
-
-      if (!res.ok) throw new Error("Failed to create card");
-
+      await api.post(`/api/columns/${columnId}/cards`, { title: newCardTitle });
       toast.success("Card created!");
       setNewCardTitle("");
       setAddingCardToColumn(null);
@@ -289,22 +260,11 @@ export function BoardPage({ boardId: propBoardId }: BoardPageProps) {
 
   // Create new column
   const handleCreateColumn = async () => {
-    if (!newColumnName.trim() || !token) return;
+    if (!newColumnName.trim()) return;
 
     setIsCreatingColumn(true);
     try {
-      const res = await fetch(`${API_URL}/api/boards/${boardId}/columns`, {
-        method: "POST",
-        headers: {
-          Authorization: `Bearer ${token}`,
-          Accept: "application/json",
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ name: newColumnName }),
-      });
-
-      if (!res.ok) throw new Error("Failed to create column");
-
+      await api.post(`/api/boards/${boardId}/columns`, { name: newColumnName });
       toast.success("Column created!");
       setNewColumnName("");
       setIsAddingColumn(false);
@@ -360,21 +320,10 @@ export function BoardPage({ boardId: propBoardId }: BoardPageProps) {
 
     // Move card via API
     try {
-      const res = await fetch(`${API_URL}/api/cards/${cardId}/move`, {
-        method: "PUT",
-        headers: {
-          Authorization: `Bearer ${token}`,
-          Accept: "application/json",
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          column_id: targetColumnId,
-          position: 0,
-        }),
+      await api.put(`/api/cards/${cardId}/move`, {
+        column_id: targetColumnId,
+        position: 0,
       });
-
-      if (!res.ok) throw new Error("Failed to move card");
-
       refetchCards();
     } catch {
       toast.error("Failed to move card");

@@ -14,8 +14,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Separator } from "@/components/ui/separator";
 import { useAuth } from "@/features/auth";
 import { toast } from "sonner";
-
-const API_URL = import.meta.env.VITE_API_URL;
+import { api } from "@/lib/api";
 
 export function ProfilePage() {
   const { user } = useAuth();
@@ -37,23 +36,9 @@ export function ProfilePage() {
   };
 
   const handleUpdateProfile = async () => {
-    const token = localStorage.getItem("token");
-    if (!token) return;
-
     setIsUpdatingProfile(true);
     try {
-      const res = await fetch(`${API_URL}/api/user/profile`, {
-        method: "PUT",
-        headers: {
-          Authorization: `Bearer ${token}`,
-          Accept: "application/json",
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ name }),
-      });
-
-      if (!res.ok) throw new Error("Failed to update profile");
-
+      await api.put("/api/user/profile", { name });
       toast.success("Profile updated successfully!");
     } catch {
       toast.error("Failed to update profile");
@@ -73,29 +58,13 @@ export function ProfilePage() {
       return;
     }
 
-    const token = localStorage.getItem("token");
-    if (!token) return;
-
     setIsUpdatingPassword(true);
     try {
-      const res = await fetch(`${API_URL}/api/user/password`, {
-        method: "PUT",
-        headers: {
-          Authorization: `Bearer ${token}`,
-          Accept: "application/json",
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          current_password: currentPassword,
-          password: newPassword,
-          password_confirmation: confirmPassword,
-        }),
+      await api.put("/api/user/password", {
+        current_password: currentPassword,
+        password: newPassword,
+        password_confirmation: confirmPassword,
       });
-
-      if (!res.ok) {
-        const data = await res.json();
-        throw new Error(data.message || "Failed to update password");
-      }
 
       toast.success("Password updated successfully!");
       setCurrentPassword("");

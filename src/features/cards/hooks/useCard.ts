@@ -1,14 +1,12 @@
 import { useState, useEffect, useCallback } from "react";
+import { api } from "@/lib/api";
 import type { CardDetail, Checklist } from "../types";
-
-const API_URL = import.meta.env.VITE_API_URL;
 
 interface UseCardReturn {
   card: CardDetail | null;
   isLoading: boolean;
   error: string | null;
   refetch: () => Promise<void>;
-  // Mutations
   updateCard: (
     data: Partial<CardDetail> & { assignee_id?: number | null }
   ) => Promise<void>;
@@ -26,14 +24,14 @@ interface UseCardReturn {
 
 export function useCard(
   cardId: number | null,
-  token: string | null
+  _token: string | null
 ): UseCardReturn {
   const [card, setCard] = useState<CardDetail | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
   const fetchCard = useCallback(async () => {
-    if (!cardId || !token) {
+    if (!cardId) {
       setCard(null);
       setIsLoading(false);
       return;
@@ -43,37 +41,17 @@ export function useCard(
     setError(null);
 
     try {
-      // Fetch card with all relations
-      const [cardRes, checklistsRes, attachmentsRes] = await Promise.all([
-        fetch(`${API_URL}/api/cards/${cardId}`, {
-          headers: {
-            Authorization: `Bearer ${token}`,
-            Accept: "application/json",
-          },
-        }),
-        fetch(`${API_URL}/api/cards/${cardId}/checklists`, {
-          headers: {
-            Authorization: `Bearer ${token}`,
-            Accept: "application/json",
-          },
-        }),
-        fetch(`${API_URL}/api/cards/${cardId}/attachments`, {
-          headers: {
-            Authorization: `Bearer ${token}`,
-            Accept: "application/json",
-          },
-        }),
+      const [cardData, checklistsData, attachmentsData] = await Promise.all([
+        api.get<{ data: CardDetail }>(`/api/cards/${cardId}`),
+        api
+          .get<{ data: Checklist[] }>(`/api/cards/${cardId}/checklists`)
+          .catch(() => ({ data: [] })),
+        api
+          .get<{ data: CardDetail["attachments"] }>(
+            `/api/cards/${cardId}/attachments`
+          )
+          .catch(() => ({ data: [] })),
       ]);
-
-      if (!cardRes.ok) throw new Error("Failed to fetch card");
-
-      const cardData = await cardRes.json();
-      const checklistsData = checklistsRes.ok
-        ? await checklistsRes.json()
-        : { data: [] };
-      const attachmentsData = attachmentsRes.ok
-        ? await attachmentsRes.json()
-        : { data: [] };
 
       setCard({
         ...cardData.data,
@@ -85,7 +63,7 @@ export function useCard(
     } finally {
       setIsLoading(false);
     }
-  }, [cardId, token]);
+  }, [cardId]);
 
   useEffect(() => {
     fetchCard();
@@ -94,56 +72,26 @@ export function useCard(
   const updateCard = async (
     data: Partial<CardDetail> & { assignee_id?: number | null }
   ) => {
-    if (!cardId || !token) return;
-
-    const res = await fetch(`${API_URL}/api/cards/${cardId}`, {
-      method: "PUT",
-      headers: {
-        Authorization: `Bearer ${token}`,
-        "Content-Type": "application/json",
-        Accept: "application/json",
-      },
-      body: JSON.stringify(data),
-    });
-
-    if (!res.ok) throw new Error("Failed to update card");
-
-    const updated = await res.json();
+    if (!cardId) return;
+    const updated = await api.put<{ data: CardDetail }>(
+      `/api/cards/${cardId}`,
+      data
+    );
     setCard((prev) => (prev ? { ...prev, ...updated.data } : null));
   };
 
   const attachLabel = async (labelIds: number[]) => {
-    if (!cardId || !token) return;
-
-    const res = await fetch(`${API_URL}/api/cards/${cardId}/labels`, {
-      method: "POST",
-      headers: {
-        Authorization: `Bearer ${token}`,
-        "Content-Type": "application/json",
-        Accept: "application/json",
-      },
-      body: JSON.stringify({ label_ids: labelIds }),
-    });
-
-    if (!res.ok) throw new Error("Failed to attach labels");
-
-    const updated = await res.json();
+    if (!cardId) return;
+    const updated = await api.post<{ data: { labels: CardDetail["labels"] } }>(
+      `/api/cards/${cardId}/labels`,
+      { label_ids: labelIds }
+    );
     setCard((prev) => (prev ? { ...prev, labels: updated.data.labels } : null));
   };
 
   const detachLabel = async (labelId: number) => {
-    if (!cardId || !token) return;
-
-    const res = await fetch(
-      `${API_URL}/api/cards/${cardId}/labels/${labelId}`,
-      {
-        method: "DELETE",
-        headers: { Authorization: `Bearer ${token}` },
-      }
-    );
-
-    if (!res.ok) throw new Error("Failed to detach label");
-
+    if (!cardId) return;
+    await api.delete(`/api/cards/${cardId}/labels/${labelId}`);
     setCard((prev) =>
       prev
         ? { ...prev, labels: prev.labels.filter((l) => l.id !== labelId) }
@@ -152,43 +100,23 @@ export function useCard(
   };
 
   const addChecklist = async (title: string): Promise<Checklist> => {
-    if (!cardId || !token) throw new Error("No card");
-
-    const res = await fetch(`${API_URL}/api/cards/${cardId}/checklists`, {
-      method: "POST",
-      headers: {
-        Authorization: `Bearer ${token}`,
-        "Content-Type": "application/json",
-        Accept: "application/json",
-      },
-      body: JSON.stringify({ title }),
-    });
-
-    if (!res.ok) throw new Error("Failed to add checklist");
-
-    const data = await res.json();
+    if (!cardId) throw new Error("No card");
+    const data = await api.post<{ data: Checklist }>(
+      `/api/cards/${cardId}/checklists`,
+      { title }
+    );
     const newChecklist = {
       ...data.data,
       progress: { total: 0, completed: 0, percentage: 0 },
     };
-
     setCard((prev) =>
       prev ? { ...prev, checklists: [...prev.checklists, newChecklist] } : null
     );
-
     return newChecklist;
   };
 
   const deleteChecklist = async (checklistId: number) => {
-    if (!token) return;
-
-    const res = await fetch(`${API_URL}/api/checklists/${checklistId}`, {
-      method: "DELETE",
-      headers: { Authorization: `Bearer ${token}` },
-    });
-
-    if (!res.ok) throw new Error("Failed to delete checklist");
-
+    await api.delete(`/api/checklists/${checklistId}`);
     setCard((prev) =>
       prev
         ? {
@@ -200,22 +128,10 @@ export function useCard(
   };
 
   const addChecklistItem = async (checklistId: number, title: string) => {
-    if (!token) return;
-
-    const res = await fetch(`${API_URL}/api/checklists/${checklistId}/items`, {
-      method: "POST",
-      headers: {
-        Authorization: `Bearer ${token}`,
-        "Content-Type": "application/json",
-        Accept: "application/json",
-      },
-      body: JSON.stringify({ title }),
-    });
-
-    if (!res.ok) throw new Error("Failed to add item");
-
-    const data = await res.json();
-
+    const data = await api.post<{ data: Checklist["items"][0] }>(
+      `/api/checklists/${checklistId}/items`,
+      { title }
+    );
     setCard((prev) => {
       if (!prev) return null;
       return {
@@ -226,18 +142,7 @@ export function useCard(
           return {
             ...c,
             items: newItems,
-            progress: {
-              total: newItems.length,
-              completed: newItems.filter((i) => i.is_completed).length,
-              percentage:
-                newItems.length > 0
-                  ? Math.round(
-                      (newItems.filter((i) => i.is_completed).length /
-                        newItems.length) *
-                        100
-                    )
-                  : 0,
-            },
+            progress: calcProgress(newItems),
           };
         }),
       };
@@ -245,20 +150,9 @@ export function useCard(
   };
 
   const toggleChecklistItem = async (itemId: number, isCompleted: boolean) => {
-    if (!token) return;
-
-    const res = await fetch(`${API_URL}/api/checklist-items/${itemId}`, {
-      method: "PATCH",
-      headers: {
-        Authorization: `Bearer ${token}`,
-        "Content-Type": "application/json",
-        Accept: "application/json",
-      },
-      body: JSON.stringify({ is_completed: isCompleted }),
+    await api.patch(`/api/checklist-items/${itemId}`, {
+      is_completed: isCompleted,
     });
-
-    if (!res.ok) throw new Error("Failed to toggle item");
-
     setCard((prev) => {
       if (!prev) return null;
       return {
@@ -266,120 +160,55 @@ export function useCard(
         checklists: prev.checklists.map((c) => {
           const itemIndex = c.items.findIndex((i) => i.id === itemId);
           if (itemIndex === -1) return c;
-
           const newItems = c.items.map((i) =>
             i.id === itemId ? { ...i, is_completed: isCompleted } : i
           );
-
-          return {
-            ...c,
-            items: newItems,
-            progress: {
-              total: newItems.length,
-              completed: newItems.filter((i) => i.is_completed).length,
-              percentage:
-                newItems.length > 0
-                  ? Math.round(
-                      (newItems.filter((i) => i.is_completed).length /
-                        newItems.length) *
-                        100
-                    )
-                  : 0,
-            },
-          };
+          return { ...c, items: newItems, progress: calcProgress(newItems) };
         }),
       };
     });
   };
 
   const deleteChecklistItem = async (itemId: number) => {
-    if (!token) return;
-
-    const res = await fetch(`${API_URL}/api/checklist-items/${itemId}`, {
-      method: "DELETE",
-      headers: { Authorization: `Bearer ${token}` },
-    });
-
-    if (!res.ok) throw new Error("Failed to delete item");
-
+    await api.delete(`/api/checklist-items/${itemId}`);
     setCard((prev) => {
       if (!prev) return null;
       return {
         ...prev,
         checklists: prev.checklists.map((c) => {
           const newItems = c.items.filter((i) => i.id !== itemId);
-          return {
-            ...c,
-            items: newItems,
-            progress: {
-              total: newItems.length,
-              completed: newItems.filter((i) => i.is_completed).length,
-              percentage:
-                newItems.length > 0
-                  ? Math.round(
-                      (newItems.filter((i) => i.is_completed).length /
-                        newItems.length) *
-                        100
-                    )
-                  : 0,
-            },
-          };
+          return { ...c, items: newItems, progress: calcProgress(newItems) };
         }),
       };
     });
   };
 
   const uploadAttachment = async (file: File) => {
-    if (!cardId || !token) return;
-
+    if (!cardId) return;
     const formData = new FormData();
     formData.append("file", file);
-
-    const res = await fetch(`${API_URL}/api/cards/${cardId}/attachments`, {
-      method: "POST",
-      headers: { Authorization: `Bearer ${token}` },
-      body: formData,
-    });
-
-    if (!res.ok) throw new Error("Failed to upload attachment");
-
-    const data = await res.json();
+    const data = await api.upload<{ data: CardDetail["attachments"][0] }>(
+      `/api/cards/${cardId}/attachments`,
+      formData
+    );
     setCard((prev) =>
       prev ? { ...prev, attachments: [data.data, ...prev.attachments] } : null
     );
   };
 
   const addExternalAttachment = async (url: string, fileName: string) => {
-    if (!cardId || !token) return;
-
-    const res = await fetch(`${API_URL}/api/cards/${cardId}/attachments`, {
-      method: "POST",
-      headers: {
-        Authorization: `Bearer ${token}`,
-        "Content-Type": "application/json",
-        Accept: "application/json",
-      },
-      body: JSON.stringify({ url, file_name: fileName }),
-    });
-
-    if (!res.ok) throw new Error("Failed to add attachment");
-
-    const data = await res.json();
+    if (!cardId) return;
+    const data = await api.post<{ data: CardDetail["attachments"][0] }>(
+      `/api/cards/${cardId}/attachments`,
+      { url, file_name: fileName }
+    );
     setCard((prev) =>
       prev ? { ...prev, attachments: [data.data, ...prev.attachments] } : null
     );
   };
 
   const deleteAttachment = async (attachmentId: number) => {
-    if (!token) return;
-
-    const res = await fetch(`${API_URL}/api/attachments/${attachmentId}`, {
-      method: "DELETE",
-      headers: { Authorization: `Bearer ${token}` },
-    });
-
-    if (!res.ok) throw new Error("Failed to delete attachment");
-
+    await api.delete(`/api/attachments/${attachmentId}`);
     setCard((prev) =>
       prev
         ? {
@@ -406,5 +235,15 @@ export function useCard(
     uploadAttachment,
     addExternalAttachment,
     deleteAttachment,
+  };
+}
+
+function calcProgress(items: { is_completed: boolean }[]) {
+  const total = items.length;
+  const completed = items.filter((i) => i.is_completed).length;
+  return {
+    total,
+    completed,
+    percentage: total > 0 ? Math.round((completed / total) * 100) : 0,
   };
 }
