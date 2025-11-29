@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Checkbox } from "@/components/ui/checkbox";
 import {
   CheckSquare,
   Plus,
@@ -233,11 +234,10 @@ interface ChecklistItemRowProps {
 function ChecklistItemRow({ item, onToggle, onDelete }: ChecklistItemRowProps) {
   return (
     <div className="flex items-center gap-2 group">
-      <input
-        type="checkbox"
+      <Checkbox
         checked={item.is_completed}
-        onChange={onToggle}
-        className="h-4 w-4 rounded border-gray-300"
+        onCheckedChange={onToggle}
+        className="h-4 w-4"
       />
       <span
         className={`flex-1 text-sm ${

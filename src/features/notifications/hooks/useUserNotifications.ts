@@ -1,6 +1,6 @@
 import { useEffect, useCallback, useState } from "react";
 import { toast } from "sonner";
-import echo from "@/lib/echo";
+import { initializeEcho, getEcho } from "@/lib/echo";
 
 export interface Notification {
   id: string;
@@ -58,12 +58,16 @@ export function useUserNotifications(
   useEffect(() => {
     if (!userId) return;
 
+    const echo = initializeEcho();
     const channel = echo.private(`user.${userId}`);
     channel.listen(".UserNotification", handleNotification);
 
     return () => {
       channel.stopListening(".UserNotification");
-      echo.leave(`user.${userId}`);
+      const echoInstance = getEcho();
+      if (echoInstance) {
+        echoInstance.leave(`user.${userId}`);
+      }
     };
   }, [userId, handleNotification]);
 

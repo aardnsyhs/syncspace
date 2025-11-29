@@ -59,7 +59,7 @@ interface Team {
 }
 
 export function SettingsPage() {
-  const [teams, setTeams] = useState<Team[]>([]);
+  const [, setTeams] = useState<Team[]>([]);
   const [selectedTeam, setSelectedTeam] = useState<Team | null>(null);
   const [members, setMembers] = useState<TeamMember[]>([]);
   const [isLoading, setIsLoading] = useState(true);
