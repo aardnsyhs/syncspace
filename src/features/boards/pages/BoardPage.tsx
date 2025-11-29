@@ -4,16 +4,26 @@ import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Input } from "@/components/ui/input";
 import { toast } from "sonner";
+import {
+  DndContext,
+  DragOverlay,
+  closestCorners,
+  PointerSensor,
+  useSensor,
+  useSensors,
+  type DragStartEvent,
+  type DragEndEvent,
+} from "@dnd-kit/core";
 
 // Components
 import { BoardFiltersBar } from "../components/BoardFiltersBar";
-import { ColumnHeader } from "../components/ColumnHeader";
 import { BoardSettingsPanel } from "../components/BoardSettingsPanel";
 import { CreateBoardDialog } from "../components/CreateBoardDialog";
 import { CardDetailDialog } from "@/features/cards/components/CardDetailDialog";
 import { CardQuickInfo } from "@/features/cards/components/CardQuickInfo";
 import { ActivityFeed } from "../components/ActivityFeed";
 import { OnlineUsers } from "../components/OnlineUsers";
+import { DroppableColumn } from "../components/DroppableColumn";
 
 // Hooks
 import { useBoardChannel } from "../hooks/useBoardChannel";
@@ -68,9 +78,28 @@ export function BoardPage({ boardId: propBoardId }: BoardPageProps) {
   const [newColumnName, setNewColumnName] = useState("");
   const [isCreatingColumn, setIsCreatingColumn] = useState(false);
 
+  // Drag state
+  const [activeCard, setActiveCard] = useState<{
+    id: number;
+    title: string;
+    description: string | null;
+    due_date: string | null;
+    labels: Array<{ id: number; name: string; color: string }>;
+    column_id: number;
+  } | null>(null);
+
   // Get token from localStorage
   const token = localStorage.getItem("token") || "";
   const boardId = propBoardId || 1;
+
+  // DnD sensors
+  const sensors = useSensors(
+    useSensor(PointerSensor, {
+      activationConstraint: {
+        distance: 8,
+      },
+    })
+  );
   const teamId = board?.team_id || 1;
   const canManage = true; // Would check RBAC
 
@@ -234,6 +263,71 @@ export function BoardPage({ boardId: propBoardId }: BoardPageProps) {
     }
   };
 
+  // Drag handlers
+  const handleDragStart = (event: DragStartEvent) => {
+    const { active } = event;
+    const cardData = active.data.current?.card;
+    if (cardData) {
+      setActiveCard(cardData);
+    }
+  };
+
+  const handleDragEnd = async (event: DragEndEvent) => {
+    const { active, over } = event;
+    setActiveCard(null);
+
+    if (!over) return;
+
+    const activeId = String(active.id);
+    const overId = String(over.id);
+
+    // Extract card ID from "card-123" format
+    const cardId = parseInt(activeId.replace("card-", ""));
+
+    // Determine target column
+    let targetColumnId: number | null = null;
+
+    if (overId.startsWith("column-")) {
+      targetColumnId = parseInt(overId.replace("column-", ""));
+    } else if (overId.startsWith("card-")) {
+      // Dropped on another card - get its column
+      const overCard = cards.find(
+        (c) => c.id === parseInt(overId.replace("card-", ""))
+      );
+      if (overCard) {
+        targetColumnId = overCard.column_id;
+      }
+    }
+
+    if (!targetColumnId) return;
+
+    // Find current card
+    const currentCard = cards.find((c) => c.id === cardId);
+    if (!currentCard || currentCard.column_id === targetColumnId) return;
+
+    // Move card via API
+    try {
+      const res = await fetch(`${API_URL}/api/cards/${cardId}/move`, {
+        method: "PUT",
+        headers: {
+          Authorization: `Bearer ${token}`,
+          Accept: "application/json",
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          column_id: targetColumnId,
+          position: 0,
+        }),
+      });
+
+      if (!res.ok) throw new Error("Failed to move card");
+
+      refetchCards();
+    } catch {
+      toast.error("Failed to move card");
+    }
+  };
+
   // Subscribe to real-time updates
   useBoardChannel(boardId, {
     onColumnCreated: handleColumnCreated,
@@ -342,166 +436,105 @@ export function BoardPage({ boardId: propBoardId }: BoardPageProps) {
       {/* Main Content */}
       <div className="flex-1 flex overflow-hidden">
         {/* Board Columns */}
-        <div className="flex-1 overflow-x-auto p-4">
-          <div className="flex gap-4 h-full">
-            {columns.map((column) => (
-              <div
-                key={column.id}
-                className={`w-72 flex-shrink-0 flex flex-col rounded-lg ${
-                  column.wip_exceeded
-                    ? "bg-red-50 dark:bg-red-900/10"
-                    : "bg-muted/30"
-                }`}
-              >
-                <ColumnHeader
-                  columnId={column.id}
-                  name={column.name}
-                  cardCount={column.card_count}
-                  wipLimit={column.wip_limit}
-                  wipExceeded={column.wip_exceeded}
+        <DndContext
+          sensors={sensors}
+          collisionDetection={closestCorners}
+          onDragStart={handleDragStart}
+          onDragEnd={handleDragEnd}
+        >
+          <div className="flex-1 overflow-x-auto p-4">
+            <div className="flex gap-4 h-full">
+              {columns.map((column) => (
+                <DroppableColumn
+                  key={column.id}
+                  column={column}
+                  cards={cardsByColumn[column.id] || []}
                   token={token}
-                  canEdit={canManage}
+                  canManage={canManage}
+                  hasActiveFilters={hasActiveFilters}
+                  isAddingCard={addingCardToColumn === column.id}
+                  newCardTitle={newCardTitle}
+                  isCreatingCard={isCreatingCard}
+                  onCardClick={(cardId) => setSelectedCardId(cardId)}
                   onUpdate={refetchCards}
+                  onAddCardStart={() => setAddingCardToColumn(column.id)}
+                  onAddCardCancel={() => {
+                    setAddingCardToColumn(null);
+                    setNewCardTitle("");
+                  }}
+                  onCardTitleChange={setNewCardTitle}
+                  onCreateCard={() => handleCreateCard(column.id)}
                 />
+              ))}
 
-                {/* Cards */}
-                <div className="flex-1 p-2 space-y-2 overflow-y-auto">
-                  {(cardsByColumn[column.id] || []).map((card) => (
-                    <div
-                      key={card.id}
-                      className="bg-background rounded-lg border p-3 shadow-sm hover:shadow-md transition-shadow cursor-pointer"
-                      onClick={() => setSelectedCardId(card.id)}
-                    >
-                      <CardQuickInfo
-                        labels={card.labels}
-                        dueDate={card.due_date}
-                      />
-                      <h4 className="text-sm font-medium mt-1">{card.title}</h4>
-                      {card.description && (
-                        <p className="text-xs text-muted-foreground mt-1 line-clamp-2">
-                          {card.description}
-                        </p>
-                      )}
-                    </div>
-                  ))}
-
-                  {(cardsByColumn[column.id] || []).length === 0 && (
-                    <div className="flex h-20 items-center justify-center rounded-md border-2 border-dashed border-muted-foreground/25 text-sm text-muted-foreground">
-                      {hasActiveFilters ? "No matching cards" : "No cards"}
-                    </div>
-                  )}
-                </div>
-
-                {/* Add Card */}
-                <div className="p-2">
-                  {addingCardToColumn === column.id ? (
-                    <div className="space-y-2">
-                      <Input
-                        placeholder="Enter card title..."
-                        value={newCardTitle}
-                        onChange={(e) => setNewCardTitle(e.target.value)}
-                        onKeyDown={(e) => {
-                          if (e.key === "Enter") handleCreateCard(column.id);
-                          if (e.key === "Escape") {
-                            setAddingCardToColumn(null);
-                            setNewCardTitle("");
-                          }
-                        }}
-                        autoFocus
-                        disabled={isCreatingCard}
-                      />
-                      <div className="flex gap-2">
-                        <Button
-                          size="sm"
-                          onClick={() => handleCreateCard(column.id)}
-                          disabled={isCreatingCard || !newCardTitle.trim()}
-                        >
-                          {isCreatingCard && (
-                            <Loader2 className="h-3 w-3 mr-1 animate-spin" />
-                          )}
-                          Add
-                        </Button>
-                        <Button
-                          size="sm"
-                          variant="ghost"
-                          onClick={() => {
-                            setAddingCardToColumn(null);
-                            setNewCardTitle("");
-                          }}
-                        >
-                          <X className="h-4 w-4" />
-                        </Button>
-                      </div>
-                    </div>
-                  ) : (
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      className="w-full justify-start"
-                      onClick={() => setAddingCardToColumn(column.id)}
-                    >
-                      <Plus className="h-4 w-4 mr-1" />
-                      Add card
-                    </Button>
-                  )}
-                </div>
-              </div>
-            ))}
-
-            {/* Add Column */}
-            <div className="w-72 flex-shrink-0">
-              {isAddingColumn ? (
-                <div className="bg-muted/30 rounded-lg p-3 space-y-2">
-                  <Input
-                    placeholder="Enter column name..."
-                    value={newColumnName}
-                    onChange={(e) => setNewColumnName(e.target.value)}
-                    onKeyDown={(e) => {
-                      if (e.key === "Enter") handleCreateColumn();
-                      if (e.key === "Escape") {
-                        setIsAddingColumn(false);
-                        setNewColumnName("");
-                      }
-                    }}
-                    autoFocus
-                    disabled={isCreatingColumn}
-                  />
-                  <div className="flex gap-2">
-                    <Button
-                      size="sm"
-                      onClick={handleCreateColumn}
-                      disabled={isCreatingColumn || !newColumnName.trim()}
-                    >
-                      {isCreatingColumn && (
-                        <Loader2 className="h-3 w-3 mr-1 animate-spin" />
-                      )}
-                      Add Column
-                    </Button>
-                    <Button
-                      size="sm"
-                      variant="ghost"
-                      onClick={() => {
-                        setIsAddingColumn(false);
-                        setNewColumnName("");
+              {/* Add Column */}
+              <div className="w-72 flex-shrink-0">
+                {isAddingColumn ? (
+                  <div className="bg-muted/30 rounded-lg p-3 space-y-2">
+                    <Input
+                      placeholder="Enter column name..."
+                      value={newColumnName}
+                      onChange={(e) => setNewColumnName(e.target.value)}
+                      onKeyDown={(e) => {
+                        if (e.key === "Enter") handleCreateColumn();
+                        if (e.key === "Escape") {
+                          setIsAddingColumn(false);
+                          setNewColumnName("");
+                        }
                       }}
-                    >
-                      <X className="h-4 w-4" />
-                    </Button>
+                      autoFocus
+                      disabled={isCreatingColumn}
+                    />
+                    <div className="flex gap-2">
+                      <Button
+                        size="sm"
+                        onClick={handleCreateColumn}
+                        disabled={isCreatingColumn || !newColumnName.trim()}
+                      >
+                        {isCreatingColumn && (
+                          <Loader2 className="h-3 w-3 mr-1 animate-spin" />
+                        )}
+                        Add Column
+                      </Button>
+                      <Button
+                        size="sm"
+                        variant="ghost"
+                        onClick={() => {
+                          setIsAddingColumn(false);
+                          setNewColumnName("");
+                        }}
+                      >
+                        <X className="h-4 w-4" />
+                      </Button>
+                    </div>
                   </div>
-                </div>
-              ) : (
-                <Button
-                  variant="outline"
-                  className="w-full justify-start"
-                  onClick={() => setIsAddingColumn(true)}
-                >
-                  <Plus className="h-4 w-4 mr-2" />
-                  Add column
-                </Button>
-              )}
+                ) : (
+                  <Button
+                    variant="outline"
+                    className="w-full justify-start"
+                    onClick={() => setIsAddingColumn(true)}
+                  >
+                    <Plus className="h-4 w-4 mr-2" />
+                    Add column
+                  </Button>
+                )}
+              </div>
             </div>
           </div>
-        </div>
+
+          {/* Drag Overlay */}
+          <DragOverlay>
+            {activeCard && (
+              <div className="bg-background rounded-lg border p-3 shadow-lg w-72 opacity-90">
+                <CardQuickInfo
+                  labels={activeCard.labels}
+                  dueDate={activeCard.due_date}
+                />
+                <h4 className="text-sm font-medium mt-1">{activeCard.title}</h4>
+              </div>
+            )}
+          </DragOverlay>
+        </DndContext>
 
         {/* Activity Sidebar */}
         {showActivity && (

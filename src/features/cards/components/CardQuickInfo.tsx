@@ -1,8 +1,13 @@
 import { CheckSquare, Paperclip, MessageSquare, Calendar } from "lucide-react";
-import type { Label } from "../types";
+
+interface CardLabel {
+  id: number;
+  name: string;
+  color: string;
+}
 
 interface Props {
-  labels?: Label[];
+  labels?: CardLabel[];
   checklistProgress?: { completed: number; total: number };
   attachmentCount?: number;
   commentCount?: number;
