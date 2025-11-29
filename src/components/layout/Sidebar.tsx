@@ -6,7 +6,6 @@ import {
   Users,
   Settings,
   Plus,
-  ChevronDown,
   Loader2,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -27,6 +26,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
+import { WorkspaceSelector } from "@/components/WorkspaceSelector";
 
 const API_URL = import.meta.env.VITE_API_URL;
 
@@ -164,15 +164,7 @@ export function Sidebar() {
   return (
     <aside className="flex h-screen w-64 flex-col border-r bg-card">
       {/* Workspace Selector */}
-      <div className="flex h-14 items-center gap-2 border-b px-4 cursor-pointer hover:bg-accent/50 transition-colors">
-        <div className="flex h-8 w-8 items-center justify-center rounded-md bg-primary text-primary-foreground font-semibold">
-          S
-        </div>
-        <div className="flex flex-1 items-center justify-between">
-          <span className="font-semibold">Syncspace</span>
-          <ChevronDown className="h-4 w-4 text-muted-foreground" />
-        </div>
-      </div>
+      <WorkspaceSelector />
 
       {/* Navigation */}
       <nav className="flex-1 space-y-1 p-3 overflow-y-auto">

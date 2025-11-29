@@ -1,6 +1,6 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
-import { Bell, Search, Moon, Sun, LogOut, User, Settings } from "lucide-react";
+import { Search, Moon, Sun, LogOut, User, Settings } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import {
@@ -18,12 +18,28 @@ import {
 } from "@/components/ui/tooltip";
 import { useAuth } from "@/features/auth";
 import { toast } from "sonner";
+import { SearchDialog } from "@/components/SearchDialog";
+import { NotificationsDropdown } from "@/components/NotificationsDropdown";
 
 export function Topbar() {
   const [isDark, setIsDark] = useState(false);
+  const [searchOpen, setSearchOpen] = useState(false);
   const navigate = useNavigate();
   const location = useLocation();
   const { user, logout } = useAuth();
+
+  // Keyboard shortcut for search (Cmd+K or Ctrl+K)
+  useEffect(() => {
+    const down = (e: KeyboardEvent) => {
+      if (e.key === "k" && (e.metaKey || e.ctrlKey)) {
+        e.preventDefault();
+        setSearchOpen((open) => !open);
+      }
+    };
+
+    document.addEventListener("keydown", down);
+    return () => document.removeEventListener("keydown", down);
+  }, []);
 
   // Get page title based on route
   const getPageTitle = () => {
@@ -33,6 +49,7 @@ export function Topbar() {
     if (path.startsWith("/app/boards/")) return "Board";
     if (path === "/app/members") return "Members";
     if (path === "/app/settings") return "Settings";
+    if (path === "/app/profile") return "Profile";
     return "Dashboard";
   };
 
@@ -73,23 +90,21 @@ export function Topbar() {
         {/* Search */}
         <Tooltip>
           <TooltipTrigger asChild>
-            <Button variant="ghost" size="icon">
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={() => setSearchOpen(true)}
+            >
               <Search className="h-4 w-4" />
             </Button>
           </TooltipTrigger>
-          <TooltipContent>Search</TooltipContent>
+          <TooltipContent>
+            Search <kbd className="ml-1 text-xs">⌘K</kbd>
+          </TooltipContent>
         </Tooltip>
 
         {/* Notifications */}
-        <Tooltip>
-          <TooltipTrigger asChild>
-            <Button variant="ghost" size="icon" className="relative">
-              <Bell className="h-4 w-4" />
-              <span className="absolute -top-0.5 -right-0.5 h-2 w-2 rounded-full bg-destructive" />
-            </Button>
-          </TooltipTrigger>
-          <TooltipContent>Notifications</TooltipContent>
-        </Tooltip>
+        <NotificationsDropdown />
 
         {/* Theme Toggle */}
         <Tooltip>
@@ -127,11 +142,11 @@ export function Topbar() {
               </div>
             </DropdownMenuLabel>
             <DropdownMenuSeparator />
-            <DropdownMenuItem>
+            <DropdownMenuItem onClick={() => navigate("/app/profile")}>
               <User className="mr-2 h-4 w-4" />
               Profile
             </DropdownMenuItem>
-            <DropdownMenuItem>
+            <DropdownMenuItem onClick={() => navigate("/app/settings")}>
               <Settings className="mr-2 h-4 w-4" />
               Settings
             </DropdownMenuItem>
@@ -146,6 +161,9 @@ export function Topbar() {
           </DropdownMenuContent>
         </DropdownMenu>
       </div>
+
+      {/* Search Dialog */}
+      <SearchDialog open={searchOpen} onOpenChange={setSearchOpen} />
     </header>
   );
 }

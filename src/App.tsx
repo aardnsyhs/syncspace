@@ -17,6 +17,8 @@ import {
   ProtectedRoute,
   GuestRoute,
 } from "@/features/auth";
+import { ProfilePage } from "@/features/profile";
+import { SettingsPage } from "@/features/settings";
 
 // Simple placeholder pages
 function DashboardPage() {
@@ -33,17 +35,6 @@ function MembersPage() {
     <div className="space-y-4">
       <h1 className="text-2xl font-bold">Team Members</h1>
       <p className="text-muted-foreground">Manage your team members here.</p>
-    </div>
-  );
-}
-
-function SettingsPage() {
-  return (
-    <div className="space-y-4">
-      <h1 className="text-2xl font-bold">Settings</h1>
-      <p className="text-muted-foreground">
-        Configure your workspace settings.
-      </p>
     </div>
   );
 }
@@ -125,6 +116,16 @@ function App() {
                 <ProtectedRoute>
                   <MainLayout>
                     <SettingsPage />
+                  </MainLayout>
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/app/profile"
+              element={
+                <ProtectedRoute>
+                  <MainLayout>
+                    <ProfilePage />
                   </MainLayout>
                 </ProtectedRoute>
               }
