@@ -9,7 +9,7 @@ import { Toaster } from "sonner";
 
 import { ErrorBoundary } from "@/components/ErrorBoundary";
 import { MainLayout } from "@/components/layout";
-import { BoardPage, PublicBoardPage } from "@/features/boards";
+import { BoardPage, BoardsListPage, PublicBoardPage } from "@/features/boards";
 import {
   AuthProvider,
   LoginPage,
@@ -19,25 +19,8 @@ import {
 } from "@/features/auth";
 import { ProfilePage } from "@/features/profile";
 import { SettingsPage } from "@/features/settings";
-
-// Simple placeholder pages
-function DashboardPage() {
-  return (
-    <div className="space-y-4">
-      <h1 className="text-2xl font-bold">Dashboard</h1>
-      <p className="text-muted-foreground">Welcome to Syncspace!</p>
-    </div>
-  );
-}
-
-function MembersPage() {
-  return (
-    <div className="space-y-4">
-      <h1 className="text-2xl font-bold">Team Members</h1>
-      <p className="text-muted-foreground">Manage your team members here.</p>
-    </div>
-  );
-}
+import { DashboardPage } from "@/features/dashboard";
+import { MembersPage } from "@/features/members";
 
 function App() {
   return (
@@ -85,7 +68,7 @@ function App() {
               element={
                 <ProtectedRoute>
                   <MainLayout>
-                    <DashboardPage />
+                    <BoardsListPage />
                   </MainLayout>
                 </ProtectedRoute>
               }

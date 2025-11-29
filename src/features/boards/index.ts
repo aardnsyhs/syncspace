@@ -18,6 +18,7 @@ export { CreateBoardDialog } from "./components/CreateBoardDialog";
 
 // Pages
 export { BoardPage } from "./pages/BoardPage";
+export { BoardsListPage } from "./pages/BoardsListPage";
 export { PublicBoardPage } from "./pages/PublicBoardPage";
 
 // Hooks
