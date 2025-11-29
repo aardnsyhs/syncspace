@@ -1,6 +1,7 @@
 import { useState, useRef, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { ScrollArea } from "@/components/ui/scroll-area";
 import { MessageSquare, Send, Trash2, Loader2 } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
 
@@ -183,24 +184,26 @@ export function CommentsSection({
 
         {/* Mentions dropdown */}
         {showMentions && filteredMembers.length > 0 && (
-          <div className="absolute top-full left-0 mt-1 w-full max-h-40 overflow-y-auto bg-background border rounded-md shadow-lg z-50">
-            {filteredMembers.map((member, index) => (
-              <button
-                key={member.id}
-                type="button"
-                className={`w-full flex items-center gap-2 px-3 py-2 text-sm text-left hover:bg-muted ${
-                  index === mentionIndex ? "bg-muted" : ""
-                }`}
-                onClick={() => insertMention(member)}
-              >
-                <Avatar className="h-6 w-6">
-                  <AvatarFallback className="text-xs">
-                    {getInitials(member.name)}
-                  </AvatarFallback>
-                </Avatar>
-                <span>{member.name}</span>
-              </button>
-            ))}
+          <div className="absolute top-full left-0 mt-1 w-full bg-background border rounded-md shadow-lg z-50">
+            <ScrollArea className="max-h-40">
+              {filteredMembers.map((member, index) => (
+                <button
+                  key={member.id}
+                  type="button"
+                  className={`w-full flex items-center gap-2 px-3 py-2 text-sm text-left hover:bg-muted ${
+                    index === mentionIndex ? "bg-muted" : ""
+                  }`}
+                  onClick={() => insertMention(member)}
+                >
+                  <Avatar className="h-6 w-6">
+                    <AvatarFallback className="text-xs">
+                      {getInitials(member.name)}
+                    </AvatarFallback>
+                  </Avatar>
+                  <span>{member.name}</span>
+                </button>
+              ))}
+            </ScrollArea>
           </div>
         )}
       </div>

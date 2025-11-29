@@ -10,6 +10,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Skeleton } from "@/components/ui/skeleton";
+import { ScrollArea } from "@/components/ui/scroll-area";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Layout, Globe, Users, ChevronRight, Columns } from "lucide-react";
 import type { BoardTemplate } from "../hooks/useBoardTemplates";
@@ -90,78 +91,80 @@ export function BoardTemplatePicker({
             <TabsTrigger value="blank">Blank Board</TabsTrigger>
           </TabsList>
 
-          <TabsContent value="templates" className="flex-1 overflow-auto mt-4">
-            {isLoading ? (
-              <div className="grid grid-cols-2 gap-3">
-                {[...Array(4)].map((_, i) => (
-                  <Skeleton key={i} className="h-24" />
-                ))}
-              </div>
-            ) : (
-              <div className="space-y-4">
-                {/* Global Templates */}
-                {globalTemplates.length > 0 && (
-                  <div>
-                    <h4 className="text-sm font-medium text-muted-foreground mb-2 flex items-center gap-1">
-                      <Globe className="h-4 w-4" />
-                      Global Templates
-                    </h4>
-                    <div className="grid grid-cols-2 gap-3">
-                      {globalTemplates.map((template) => (
-                        <TemplateCard
-                          key={template.id}
-                          template={template}
-                          isSelected={selectedTemplate?.id === template.id}
-                          onSelect={() => setSelectedTemplate(template)}
-                        />
-                      ))}
-                    </div>
-                  </div>
-                )}
-
-                {/* Team Templates */}
-                {teamTemplates.length > 0 && (
-                  <div>
-                    <h4 className="text-sm font-medium text-muted-foreground mb-2 flex items-center gap-1">
-                      <Users className="h-4 w-4" />
-                      Team Templates
-                    </h4>
-                    <div className="grid grid-cols-2 gap-3">
-                      {teamTemplates.map((template) => (
-                        <TemplateCard
-                          key={template.id}
-                          template={template}
-                          isSelected={selectedTemplate?.id === template.id}
-                          onSelect={() => setSelectedTemplate(template)}
-                        />
-                      ))}
-                    </div>
-                  </div>
-                )}
-
-                {templates.length === 0 && (
-                  <div className="text-center py-8 text-muted-foreground">
-                    No templates available
-                  </div>
-                )}
-              </div>
-            )}
-
-            {/* Selected template preview */}
-            {selectedTemplate && (
-              <div className="mt-4 p-4 border rounded-lg bg-muted/30">
-                <h4 className="font-medium mb-2">{selectedTemplate.name}</h4>
-                {selectedTemplate.description && (
-                  <p className="text-sm text-muted-foreground mb-3">
-                    {selectedTemplate.description}
-                  </p>
-                )}
-                <div className="flex items-center gap-1 text-sm text-muted-foreground">
-                  <Columns className="h-4 w-4" />
-                  {selectedTemplate.column_count} columns
+          <TabsContent value="templates" className="flex-1 mt-4">
+            <ScrollArea className="h-[300px]">
+              {isLoading ? (
+                <div className="grid grid-cols-2 gap-3">
+                  {[...Array(4)].map((_, i) => (
+                    <Skeleton key={i} className="h-24" />
+                  ))}
                 </div>
-              </div>
-            )}
+              ) : (
+                <div className="space-y-4">
+                  {/* Global Templates */}
+                  {globalTemplates.length > 0 && (
+                    <div>
+                      <h4 className="text-sm font-medium text-muted-foreground mb-2 flex items-center gap-1">
+                        <Globe className="h-4 w-4" />
+                        Global Templates
+                      </h4>
+                      <div className="grid grid-cols-2 gap-3">
+                        {globalTemplates.map((template) => (
+                          <TemplateCard
+                            key={template.id}
+                            template={template}
+                            isSelected={selectedTemplate?.id === template.id}
+                            onSelect={() => setSelectedTemplate(template)}
+                          />
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Team Templates */}
+                  {teamTemplates.length > 0 && (
+                    <div>
+                      <h4 className="text-sm font-medium text-muted-foreground mb-2 flex items-center gap-1">
+                        <Users className="h-4 w-4" />
+                        Team Templates
+                      </h4>
+                      <div className="grid grid-cols-2 gap-3">
+                        {teamTemplates.map((template) => (
+                          <TemplateCard
+                            key={template.id}
+                            template={template}
+                            isSelected={selectedTemplate?.id === template.id}
+                            onSelect={() => setSelectedTemplate(template)}
+                          />
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                  {templates.length === 0 && (
+                    <div className="text-center py-8 text-muted-foreground">
+                      No templates available
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {/* Selected template preview */}
+              {selectedTemplate && (
+                <div className="mt-4 p-4 border rounded-lg bg-muted/30">
+                  <h4 className="font-medium mb-2">{selectedTemplate.name}</h4>
+                  {selectedTemplate.description && (
+                    <p className="text-sm text-muted-foreground mb-3">
+                      {selectedTemplate.description}
+                    </p>
+                  )}
+                  <div className="flex items-center gap-1 text-sm text-muted-foreground">
+                    <Columns className="h-4 w-4" />
+                    {selectedTemplate.column_count} columns
+                  </div>
+                </div>
+              )}
+            </ScrollArea>
           </TabsContent>
 
           <TabsContent value="blank" className="mt-4">
