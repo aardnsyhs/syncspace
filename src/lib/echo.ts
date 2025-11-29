@@ -1,39 +1,47 @@
 import Echo from "laravel-echo";
-import * as Ably from "ably";
+import Pusher from "pusher-js";
 
 interface AuthData {
   auth: string;
   channel_data?: string;
 }
 
-// Make Ably available globally for Laravel Echo
+// Make Pusher available globally for Laravel Echo (Ably uses Pusher protocol)
 declare global {
   interface Window {
-    Ably: typeof Ably;
-    Echo: Echo<"ably"> | null;
+    Pusher: typeof Pusher;
+    Echo: Echo<"pusher"> | null;
   }
 }
 
-window.Ably = Ably;
+window.Pusher = Pusher;
 window.Echo = null;
 
-let echoInstance: Echo<"ably"> | null = null;
+let echoInstance: Echo<"pusher"> | null = null;
 
 // Lazy initialization - only create Echo when authenticated
-export function initializeEcho(): Echo<"ably"> {
+export function initializeEcho(): Echo<"pusher"> {
   if (echoInstance) {
     return echoInstance;
   }
 
+  // Ably uses Pusher protocol adapter
+  // Key format: appKey.clientId (we only need the appKey part for client)
+  const ablyKey = import.meta.env.VITE_ABLY_KEY || "";
+  const appKey = ablyKey.split(":")[0]; // Get the public part before ":"
+
   echoInstance = new Echo({
-    broadcaster: "ably",
+    broadcaster: "pusher",
+    key: appKey,
+    wsHost: "realtime-pusher.ably.io",
+    wsPort: 443,
+    wssPort: 443,
+    forceTLS: true,
+    encrypted: true,
+    disableStats: true,
+    enabledTransports: ["ws", "wss"],
+    cluster: "eu", // Ably ignores this but Pusher requires it
     authEndpoint: `${import.meta.env.VITE_API_URL}/api/broadcasting/auth`,
-    auth: {
-      headers: {
-        Authorization: `Bearer ${localStorage.getItem("token")}`,
-        Accept: "application/json",
-      },
-    },
     authorizer: (channel: { name: string }) => ({
       authorize: (
         socketId: string,
@@ -85,7 +93,7 @@ export function disconnectEcho() {
 }
 
 // Get current Echo instance (may be null if not authenticated)
-export function getEcho(): Echo<"ably"> | null {
+export function getEcho(): Echo<"pusher"> | null {
   return echoInstance;
 }
 
