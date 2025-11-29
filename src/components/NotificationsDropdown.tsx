@@ -1,5 +1,5 @@
-import { useState } from "react";
-import { Bell, Check, Trash2 } from "lucide-react";
+import { useNavigate } from "react-router-dom";
+import { Bell, Check, Trash2, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
@@ -8,73 +8,58 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { cn } from "@/lib/utils";
+import { useNotifications } from "@/features/notifications/hooks/useNotifications";
 
-interface Notification {
-  id: string;
-  type: "card_assigned" | "comment" | "mention" | "due_soon";
-  title: string;
-  message: string;
-  read: boolean;
-  createdAt: Date;
+function formatTime(dateString: string): string {
+  const date = new Date(dateString);
+  const diff = Date.now() - date.getTime();
+  const minutes = Math.floor(diff / 60000);
+  const hours = Math.floor(diff / 3600000);
+  const days = Math.floor(diff / 86400000);
+
+  if (minutes < 1) return "Just now";
+  if (minutes < 60) return `${minutes}m ago`;
+  if (hours < 24) return `${hours}h ago`;
+  if (days < 7) return `${days}d ago`;
+  return date.toLocaleDateString();
 }
 
-// Mock notifications - in real app, fetch from API
-const mockNotifications: Notification[] = [
-  {
-    id: "1",
-    type: "card_assigned",
-    title: "Card Assigned",
-    message: "You were assigned to 'Implement login page'",
-    read: false,
-    createdAt: new Date(Date.now() - 1000 * 60 * 5),
-  },
-  {
-    id: "2",
-    type: "comment",
-    title: "New Comment",
-    message: "John commented on 'API Integration'",
-    read: false,
-    createdAt: new Date(Date.now() - 1000 * 60 * 30),
-  },
-  {
-    id: "3",
-    type: "due_soon",
-    title: "Due Soon",
-    message: "'Design review' is due tomorrow",
-    read: true,
-    createdAt: new Date(Date.now() - 1000 * 60 * 60 * 2),
-  },
-];
+function getNotificationIcon(type: string): string {
+  switch (type) {
+    case "card_assigned":
+      return "👤";
+    case "comment":
+      return "💬";
+    case "mention":
+      return "@";
+    case "due_soon":
+      return "⏰";
+    case "card_moved":
+      return "➡️";
+    default:
+      return "🔔";
+  }
+}
 
 export function NotificationsDropdown() {
-  const [notifications, setNotifications] =
-    useState<Notification[]>(mockNotifications);
+  const navigate = useNavigate();
+  const {
+    notifications,
+    unreadCount,
+    isLoading,
+    markAsRead,
+    markAllAsRead,
+    deleteNotification,
+    clearAll,
+  } = useNotifications();
 
-  const unreadCount = notifications.filter((n) => !n.read).length;
+  const handleNotificationClick = (notification: (typeof notifications)[0]) => {
+    markAsRead(notification.id);
 
-  const markAsRead = (id: string) => {
-    setNotifications((prev) =>
-      prev.map((n) => (n.id === id ? { ...n, read: true } : n))
-    );
-  };
-
-  const markAllAsRead = () => {
-    setNotifications((prev) => prev.map((n) => ({ ...n, read: true })));
-  };
-
-  const deleteNotification = (id: string) => {
-    setNotifications((prev) => prev.filter((n) => n.id !== id));
-  };
-
-  const formatTime = (date: Date) => {
-    const diff = Date.now() - date.getTime();
-    const minutes = Math.floor(diff / 60000);
-    const hours = Math.floor(diff / 3600000);
-    const days = Math.floor(diff / 86400000);
-
-    if (minutes < 60) return `${minutes}m ago`;
-    if (hours < 24) return `${hours}h ago`;
-    return `${days}d ago`;
+    // Navigate to board if data contains board_id
+    if (notification.data?.board_id) {
+      navigate(`/app/boards/${notification.data.board_id}`);
+    }
   };
 
   return (
@@ -92,20 +77,36 @@ export function NotificationsDropdown() {
       <DropdownMenuContent align="end" className="w-80">
         <div className="flex items-center justify-between px-4 py-2 border-b">
           <h4 className="font-semibold">Notifications</h4>
-          {unreadCount > 0 && (
-            <Button
-              variant="ghost"
-              size="sm"
-              className="text-xs h-auto py-1"
-              onClick={markAllAsRead}
-            >
-              Mark all read
-            </Button>
-          )}
+          <div className="flex items-center gap-1">
+            {unreadCount > 0 && (
+              <Button
+                variant="ghost"
+                size="sm"
+                className="text-xs h-auto py-1"
+                onClick={markAllAsRead}
+              >
+                Mark all read
+              </Button>
+            )}
+            {notifications.length > 0 && (
+              <Button
+                variant="ghost"
+                size="sm"
+                className="text-xs h-auto py-1 text-muted-foreground"
+                onClick={clearAll}
+              >
+                Clear
+              </Button>
+            )}
+          </div>
         </div>
 
         <ScrollArea className="h-[300px]">
-          {notifications.length === 0 ? (
+          {isLoading ? (
+            <div className="flex items-center justify-center py-8">
+              <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+            </div>
+          ) : notifications.length === 0 ? (
             <div className="flex flex-col items-center justify-center py-8 text-muted-foreground">
               <Bell className="h-8 w-8 mb-2 opacity-50" />
               <p className="text-sm">No notifications</p>
@@ -116,29 +117,38 @@ export function NotificationsDropdown() {
                 <div
                   key={notification.id}
                   className={cn(
-                    "px-4 py-3 hover:bg-muted/50 transition-colors",
+                    "px-4 py-3 hover:bg-muted/50 transition-colors cursor-pointer",
                     !notification.read && "bg-blue-50 dark:bg-blue-950/20"
                   )}
+                  onClick={() => handleNotificationClick(notification)}
                 >
                   <div className="flex items-start justify-between gap-2">
-                    <div className="flex-1 min-w-0">
-                      <p className="text-sm font-medium">
-                        {notification.title}
-                      </p>
-                      <p className="text-xs text-muted-foreground truncate">
-                        {notification.message}
-                      </p>
-                      <p className="text-xs text-muted-foreground mt-1">
-                        {formatTime(notification.createdAt)}
-                      </p>
+                    <div className="flex items-start gap-2 flex-1 min-w-0">
+                      <span className="text-base mt-0.5">
+                        {getNotificationIcon(notification.type)}
+                      </span>
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm font-medium">
+                          {notification.title}
+                        </p>
+                        <p className="text-xs text-muted-foreground line-clamp-2">
+                          {notification.message}
+                        </p>
+                        <p className="text-xs text-muted-foreground mt-1">
+                          {formatTime(notification.created_at)}
+                        </p>
+                      </div>
                     </div>
-                    <div className="flex items-center gap-1">
+                    <div className="flex items-center gap-1 flex-shrink-0">
                       {!notification.read && (
                         <Button
                           variant="ghost"
                           size="icon"
                           className="h-6 w-6"
-                          onClick={() => markAsRead(notification.id)}
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            markAsRead(notification.id);
+                          }}
                         >
                           <Check className="h-3 w-3" />
                         </Button>
@@ -147,7 +157,10 @@ export function NotificationsDropdown() {
                         variant="ghost"
                         size="icon"
                         className="h-6 w-6 text-muted-foreground hover:text-destructive"
-                        onClick={() => deleteNotification(notification.id)}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          deleteNotification(notification.id);
+                        }}
                       >
                         <Trash2 className="h-3 w-3" />
                       </Button>

@@ -1,5 +1,5 @@
 import { useState, useCallback, useEffect } from "react";
-import { Plus, Settings, Globe, X, Loader2 } from "lucide-react";
+import { Plus, Settings, Globe, X, Loader2, BarChart3 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Input } from "@/components/ui/input";
@@ -24,6 +24,7 @@ import { CardQuickInfo } from "@/features/cards/components/CardQuickInfo";
 import { ActivityFeed } from "../components/ActivityFeed";
 import { OnlineUsers } from "../components/OnlineUsers";
 import { DroppableColumn } from "../components/DroppableColumn";
+import { BoardAnalyticsDialog } from "../components/BoardAnalyticsDialog";
 
 // Hooks
 import { useBoardChannel } from "../hooks/useBoardChannel";
@@ -65,6 +66,7 @@ export function BoardPage({ boardId: propBoardId }: BoardPageProps) {
   const [selectedCardId, setSelectedCardId] = useState<number | null>(null);
   const [showSettings, setShowSettings] = useState(false);
   const [showActivity, setShowActivity] = useState(false);
+  const [showAnalytics, setShowAnalytics] = useState(false);
 
   // Add Card state
   const [addingCardToColumn, setAddingCardToColumn] = useState<number | null>(
@@ -425,6 +427,15 @@ export function BoardPage({ boardId: propBoardId }: BoardPageProps) {
             Activity
           </Button>
 
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => setShowAnalytics(true)}
+          >
+            <BarChart3 className="h-4 w-4 mr-1" />
+            Analytics
+          </Button>
+
           {canManage && (
             <Button
               variant="outline"
@@ -602,6 +613,15 @@ export function BoardPage({ boardId: propBoardId }: BoardPageProps) {
         onBoardUpdated={() => {
           // Refetch board data
         }}
+      />
+
+      {/* Board Analytics Dialog */}
+      <BoardAnalyticsDialog
+        boardId={boardId}
+        boardName={board.name}
+        token={token}
+        isOpen={showAnalytics}
+        onClose={() => setShowAnalytics(false)}
       />
     </div>
   );

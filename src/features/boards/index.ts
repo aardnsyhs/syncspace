@@ -14,6 +14,7 @@ export { BoardTemplatePicker } from "./components/BoardTemplatePicker";
 export { SaveBoardAsTemplateDialog } from "./components/SaveBoardAsTemplateDialog";
 export { PublicSharingSettings } from "./components/PublicSharingSettings";
 export { BoardSettingsPanel } from "./components/BoardSettingsPanel";
+export { BoardAnalyticsDialog } from "./components/BoardAnalyticsDialog";
 export { CreateBoardDialog } from "./components/CreateBoardDialog";
 
 // Pages
