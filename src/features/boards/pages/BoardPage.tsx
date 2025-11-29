@@ -78,10 +78,8 @@ export function BoardPage() {
 
   const { labels: boardLabels } = useBoardLabels(boardId, token);
   const { members: onlineMembers } = useBoardPresence(boardId);
-  const { activities, isLoading: isLoadingActivities } = useBoardActivities(
-    boardId,
-    token
-  );
+  const { activities, isLoading: isLoadingActivities } =
+    useBoardActivities(boardId);
 
   // Fetch board data
   useEffect(() => {

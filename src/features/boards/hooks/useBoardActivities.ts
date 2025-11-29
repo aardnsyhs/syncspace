@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from "react";
-import echo from "@/lib/echo";
+import { getEcho, initializeEcho } from "@/lib/echo";
 
 export interface ActivityUser {
   id: number;
@@ -38,15 +38,14 @@ interface UseBoardActivitiesReturn {
 const API_URL = import.meta.env.VITE_API_URL;
 
 export function useBoardActivities(
-  boardId: number | null,
-  token: string | null
+  boardId: number | null
 ): UseBoardActivitiesReturn {
   const [activities, setActivities] = useState<Activity[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
   const fetchActivities = useCallback(async () => {
-    if (!boardId || !token) {
+    if (!boardId) {
       setActivities([]);
       setIsLoading(false);
       return;
@@ -56,13 +55,15 @@ export function useBoardActivities(
     setError(null);
 
     try {
+      const token = localStorage.getItem("token");
       const response = await fetch(
         `${API_URL}/api/boards/${boardId}/activities`,
         {
           headers: {
-            Authorization: `Bearer ${token}`,
             Accept: "application/json",
+            ...(token ? { Authorization: `Bearer ${token}` } : {}),
           },
+          credentials: "include",
         }
       );
 
@@ -77,7 +78,7 @@ export function useBoardActivities(
     } finally {
       setIsLoading(false);
     }
-  }, [boardId, token]);
+  }, [boardId]);
 
   // Handle real-time activity updates
   const handleActivityCreated = useCallback(
@@ -95,11 +96,13 @@ export function useBoardActivities(
   useEffect(() => {
     if (!boardId) return;
 
+    const echo = getEcho() || initializeEcho();
     const channel = echo.private(`board.${boardId}`);
     channel.listen(".ActivityCreated", handleActivityCreated);
 
     return () => {
       channel.stopListening(".ActivityCreated");
+      echo.leave(`board.${boardId}`);
     };
   }, [boardId, handleActivityCreated]);
 

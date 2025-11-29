@@ -39,12 +39,14 @@ export function initializeEcho(): Echo<"reverb"> {
         socketId: string,
         callback: (error: Error | null, data: AuthData | null) => void
       ) => {
+        const token = localStorage.getItem("token");
         fetch(`${import.meta.env.VITE_API_URL}/api/broadcasting/auth`, {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
             Accept: "application/json",
             "X-Socket-ID": socketId,
+            ...(token ? { Authorization: `Bearer ${token}` } : {}),
           },
           credentials: "include",
           body: JSON.stringify({
