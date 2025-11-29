@@ -49,9 +49,7 @@ interface Member {
   name: string;
   email: string;
   avatar_url?: string;
-  pivot: {
-    role: TeamRole;
-  };
+  role: TeamRole;
 }
 
 interface Team {
@@ -162,7 +160,7 @@ export function MembersPage() {
     fetchMembers();
   }, [selectedTeamId]);
 
-  const currentUserRole = members.find((m) => m.id === user?.id)?.pivot.role;
+  const currentUserRole = members.find((m) => m.id === user?.id)?.role;
   const canManageMembers =
     currentUserRole === "owner" || currentUserRole === "admin";
 
@@ -244,9 +242,7 @@ export function MembersPage() {
 
       toast.success("Role updated!");
       setMembers((prev) =>
-        prev.map((m) =>
-          m.id === memberId ? { ...m, pivot: { ...m.pivot, role: newRole } } : m
-        )
+        prev.map((m) => (m.id === memberId ? { ...m, role: newRole } : m))
       );
     } catch {
       toast.error("Failed to update role");
@@ -403,9 +399,8 @@ export function MembersPage() {
           <CardContent>
             <div className="text-2xl font-bold">
               {
-                members.filter(
-                  (m) => m.pivot.role === "admin" || m.pivot.role === "owner"
-                ).length
+                members.filter((m) => m.role === "admin" || m.role === "owner")
+                  .length
               }
             </div>
           </CardContent>
@@ -417,7 +412,7 @@ export function MembersPage() {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">
-              {members.filter((m) => m.pivot.role === "member").length}
+              {members.filter((m) => m.role === "member").length}
             </div>
           </CardContent>
         </Card>
@@ -463,15 +458,15 @@ export function MembersPage() {
                   <div className="flex items-center gap-2">
                     <span
                       className={`rounded-full px-2 py-1 text-xs font-medium ${getRoleBadgeColor(
-                        member.pivot.role
+                        member.role
                       )}`}
                     >
-                      {getRoleLabel(member.pivot.role)}
+                      {getRoleLabel(member.role)}
                     </span>
 
                     {canManageMembers &&
                       member.id !== user?.id &&
-                      member.pivot.role !== "owner" && (
+                      member.role !== "owner" && (
                         <DropdownMenu>
                           <DropdownMenuTrigger asChild>
                             <Button variant="ghost" size="icon">
@@ -483,7 +478,7 @@ export function MembersPage() {
                             <DropdownMenuSeparator />
 
                             {currentUserRole === "owner" &&
-                              member.pivot.role !== "admin" && (
+                              member.role !== "admin" && (
                                 <DropdownMenuItem
                                   onClick={() =>
                                     handleChangeRole(member.id, "admin")
@@ -493,7 +488,7 @@ export function MembersPage() {
                                   Make Admin
                                 </DropdownMenuItem>
                               )}
-                            {member.pivot.role !== "member" && (
+                            {member.role !== "member" && (
                               <DropdownMenuItem
                                 onClick={() =>
                                   handleChangeRole(member.id, "member")
@@ -502,7 +497,7 @@ export function MembersPage() {
                                 Make Member
                               </DropdownMenuItem>
                             )}
-                            {member.pivot.role !== "viewer" && (
+                            {member.role !== "viewer" && (
                               <DropdownMenuItem
                                 onClick={() =>
                                   handleChangeRole(member.id, "viewer")
