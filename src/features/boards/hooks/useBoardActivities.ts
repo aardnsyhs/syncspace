@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback } from "react";
+import { api } from "@/lib/api";
 import { getEcho, initializeEcho } from "@/lib/echo";
 
 export interface ActivityUser {
@@ -35,8 +36,6 @@ interface UseBoardActivitiesReturn {
   refetch: () => Promise<void>;
 }
 
-const API_URL = import.meta.env.VITE_API_URL;
-
 export function useBoardActivities(
   boardId: number | null
 ): UseBoardActivitiesReturn {
@@ -55,23 +54,9 @@ export function useBoardActivities(
     setError(null);
 
     try {
-      const token = localStorage.getItem("token");
-      const response = await fetch(
-        `${API_URL}/api/boards/${boardId}/activities`,
-        {
-          headers: {
-            Accept: "application/json",
-            ...(token ? { Authorization: `Bearer ${token}` } : {}),
-          },
-          credentials: "include",
-        }
+      const json = await api.get<{ data: Activity[] }>(
+        `/api/boards/${boardId}/activities`
       );
-
-      if (!response.ok) {
-        throw new Error("Failed to fetch activities");
-      }
-
-      const json = await response.json();
       setActivities(json.data);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Unknown error");
@@ -80,7 +65,6 @@ export function useBoardActivities(
     }
   }, [boardId]);
 
-  // Handle real-time activity updates
   const handleActivityCreated = useCallback(
     (payload: { activity: Activity }) => {
       setActivities((prev) => [payload.activity, ...prev].slice(0, 50));
@@ -92,7 +76,6 @@ export function useBoardActivities(
     fetchActivities();
   }, [fetchActivities]);
 
-  // Subscribe to real-time updates
   useEffect(() => {
     if (!boardId) return;
 

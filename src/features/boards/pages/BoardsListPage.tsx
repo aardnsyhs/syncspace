@@ -28,9 +28,8 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
+import { api } from "@/lib/api";
 import { toast } from "sonner";
-
-const API_URL = import.meta.env.VITE_API_URL;
 
 interface Board {
   id: number;
@@ -60,20 +59,8 @@ export function BoardsListPage() {
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const fetchTeams = async () => {
-    const token = localStorage.getItem("token");
-    if (!token) return;
-
     try {
-      const res = await fetch(`${API_URL}/api/teams`, {
-        headers: {
-          Authorization: `Bearer ${token}`,
-          Accept: "application/json",
-        },
-      });
-
-      if (!res.ok) throw new Error("Failed to fetch teams");
-
-      const json = await res.json();
+      const json = await api.get<{ data: Team[] }>("/api/teams");
       setTeams(json.data || []);
     } catch {
       toast.error("Failed to load boards");
@@ -89,28 +76,19 @@ export function BoardsListPage() {
   const handleCreateBoard = async () => {
     if (!newBoardName.trim()) return;
 
-    const token = localStorage.getItem("token");
     const teamId = teams[0]?.id;
-    if (!token || !teamId) return;
+    if (!teamId) return;
 
     setIsSubmitting(true);
     try {
-      const res = await fetch(`${API_URL}/api/teams/${teamId}/boards`, {
-        method: "POST",
-        headers: {
-          Authorization: `Bearer ${token}`,
-          Accept: "application/json",
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
+      const json = await api.post<{ data: { id: number } }>(
+        `/api/teams/${teamId}/boards`,
+        {
           name: newBoardName,
           description: newBoardDescription || null,
-        }),
-      });
+        }
+      );
 
-      if (!res.ok) throw new Error("Failed to create board");
-
-      const json = await res.json();
       toast.success("Board created!");
       setIsCreateOpen(false);
       setNewBoardName("");
@@ -127,25 +105,12 @@ export function BoardsListPage() {
   const handleEditBoard = async () => {
     if (!editingBoard || !newBoardName.trim()) return;
 
-    const token = localStorage.getItem("token");
-    if (!token) return;
-
     setIsSubmitting(true);
     try {
-      const res = await fetch(`${API_URL}/api/boards/${editingBoard.id}`, {
-        method: "PUT",
-        headers: {
-          Authorization: `Bearer ${token}`,
-          Accept: "application/json",
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          name: newBoardName,
-          description: newBoardDescription || null,
-        }),
+      await api.put(`/api/boards/${editingBoard.id}`, {
+        name: newBoardName,
+        description: newBoardDescription || null,
       });
-
-      if (!res.ok) throw new Error("Failed to update board");
 
       toast.success("Board updated!");
       setIsEditOpen(false);
@@ -163,20 +128,8 @@ export function BoardsListPage() {
   const handleDeleteBoard = async (boardId: number) => {
     if (!confirm("Are you sure you want to delete this board?")) return;
 
-    const token = localStorage.getItem("token");
-    if (!token) return;
-
     try {
-      const res = await fetch(`${API_URL}/api/boards/${boardId}`, {
-        method: "DELETE",
-        headers: {
-          Authorization: `Bearer ${token}`,
-          Accept: "application/json",
-        },
-      });
-
-      if (!res.ok) throw new Error("Failed to delete board");
-
+      await api.delete(`/api/boards/${boardId}`);
       toast.success("Board deleted!");
       await fetchTeams();
     } catch {
@@ -344,7 +297,6 @@ export function BoardsListPage() {
         </div>
       )}
 
-      {/* Edit Dialog */}
       <Dialog open={isEditOpen} onOpenChange={setIsEditOpen}>
         <DialogContent>
           <DialogHeader>

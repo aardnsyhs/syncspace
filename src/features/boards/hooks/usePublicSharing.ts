@@ -1,4 +1,5 @@
-import { useState, useCallback } from "react";
+import { useState, useCallback, useEffect } from "react";
+import { api } from "@/lib/api";
 
 const API_URL = import.meta.env.VITE_API_URL;
 
@@ -6,6 +7,14 @@ interface PublicSharingState {
   isPublic: boolean;
   publicToken: string | null;
   publicUrl: string | null;
+}
+
+interface BoardPublicResponse {
+  data: {
+    is_public: boolean;
+    public_token: string | null;
+    public_url: string | null;
+  };
 }
 
 interface UsePublicSharingReturn {
@@ -16,32 +25,21 @@ interface UsePublicSharingReturn {
   regenerate: (boardId: number) => Promise<PublicSharingState>;
 }
 
-export function usePublicSharing(token: string | null): UsePublicSharingReturn {
+export function usePublicSharing(
+  _token: string | null
+): UsePublicSharingReturn {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   const enable = useCallback(
     async (boardId: number): Promise<PublicSharingState> => {
-      if (!token) throw new Error("Not authenticated");
-
       setIsLoading(true);
       setError(null);
 
       try {
-        const res = await fetch(
-          `${API_URL}/api/boards/${boardId}/public/enable`,
-          {
-            method: "POST",
-            headers: {
-              Authorization: `Bearer ${token}`,
-              Accept: "application/json",
-            },
-          }
+        const json = await api.post<BoardPublicResponse>(
+          `/api/boards/${boardId}/public/enable`
         );
-
-        if (!res.ok) throw new Error("Failed to enable public sharing");
-
-        const json = await res.json();
         return {
           isPublic: json.data.is_public,
           publicToken: json.data.public_token,
@@ -55,62 +53,33 @@ export function usePublicSharing(token: string | null): UsePublicSharingReturn {
         setIsLoading(false);
       }
     },
-    [token]
+    []
   );
 
-  const disable = useCallback(
-    async (boardId: number): Promise<void> => {
-      if (!token) throw new Error("Not authenticated");
+  const disable = useCallback(async (boardId: number): Promise<void> => {
+    setIsLoading(true);
+    setError(null);
 
-      setIsLoading(true);
-      setError(null);
-
-      try {
-        const res = await fetch(
-          `${API_URL}/api/boards/${boardId}/public/disable`,
-          {
-            method: "POST",
-            headers: {
-              Authorization: `Bearer ${token}`,
-              Accept: "application/json",
-            },
-          }
-        );
-
-        if (!res.ok) throw new Error("Failed to disable public sharing");
-      } catch (err) {
-        const message = err instanceof Error ? err.message : "Unknown error";
-        setError(message);
-        throw err;
-      } finally {
-        setIsLoading(false);
-      }
-    },
-    [token]
-  );
+    try {
+      await api.post(`/api/boards/${boardId}/public/disable`);
+    } catch (err) {
+      const message = err instanceof Error ? err.message : "Unknown error";
+      setError(message);
+      throw err;
+    } finally {
+      setIsLoading(false);
+    }
+  }, []);
 
   const regenerate = useCallback(
     async (boardId: number): Promise<PublicSharingState> => {
-      if (!token) throw new Error("Not authenticated");
-
       setIsLoading(true);
       setError(null);
 
       try {
-        const res = await fetch(
-          `${API_URL}/api/boards/${boardId}/public/regenerate`,
-          {
-            method: "POST",
-            headers: {
-              Authorization: `Bearer ${token}`,
-              Accept: "application/json",
-            },
-          }
+        const json = await api.post<BoardPublicResponse>(
+          `/api/boards/${boardId}/public/regenerate`
         );
-
-        if (!res.ok) throw new Error("Failed to regenerate public link");
-
-        const json = await res.json();
         return {
           isPublic: true,
           publicToken: json.data.public_token,
@@ -124,7 +93,7 @@ export function usePublicSharing(token: string | null): UsePublicSharingReturn {
         setIsLoading(false);
       }
     },
-    [token]
+    []
   );
 
   return {
@@ -136,7 +105,7 @@ export function usePublicSharing(token: string | null): UsePublicSharingReturn {
   };
 }
 
-// Hook for fetching public board (no auth)
+// Hook for fetching public board (no auth required)
 export function usePublicBoard(publicToken: string | null) {
   const [board, setBoard] = useState<PublicBoardData | null>(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -153,6 +122,7 @@ export function usePublicBoard(publicToken: string | null) {
     setError(null);
 
     try {
+      // Public endpoint - no auth needed, use raw fetch
       const res = await fetch(`${API_URL}/api/public/boards/${publicToken}`, {
         headers: { Accept: "application/json" },
       });
@@ -173,9 +143,9 @@ export function usePublicBoard(publicToken: string | null) {
     }
   }, [publicToken]);
 
-  useState(() => {
+  useEffect(() => {
     fetchBoard();
-  });
+  }, [fetchBoard]);
 
   return { board, isLoading, error, refetch: fetchBoard };
 }

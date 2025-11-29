@@ -1,6 +1,5 @@
 import { useState, useEffect, useCallback } from "react";
-
-const API_URL = import.meta.env.VITE_API_URL;
+import { api } from "@/lib/api";
 
 // Types
 export interface ColumnStat {
@@ -46,14 +45,14 @@ export interface AssigneeData {
 // Hook for summary analytics
 export function useBoardAnalyticsSummary(
   boardId: number | null,
-  token: string | null
+  _token: string | null
 ) {
   const [data, setData] = useState<AnalyticsSummary | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
   const fetchData = useCallback(async () => {
-    if (!boardId || !token) {
+    if (!boardId) {
       setData(null);
       setIsLoading(false);
       return;
@@ -63,26 +62,16 @@ export function useBoardAnalyticsSummary(
     setError(null);
 
     try {
-      const response = await fetch(
-        `${API_URL}/api/boards/${boardId}/analytics/summary`,
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-            Accept: "application/json",
-          },
-        }
+      const json = await api.get<{ data: AnalyticsSummary }>(
+        `/api/boards/${boardId}/analytics/summary`
       );
-
-      if (!response.ok) throw new Error("Failed to fetch analytics summary");
-
-      const json = await response.json();
       setData(json.data);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Unknown error");
     } finally {
       setIsLoading(false);
     }
-  }, [boardId, token]);
+  }, [boardId]);
 
   useEffect(() => {
     fetchData();
@@ -94,7 +83,7 @@ export function useBoardAnalyticsSummary(
 // Hook for throughput data
 export function useBoardThroughput(
   boardId: number | null,
-  token: string | null,
+  _token: string | null,
   weeks = 6
 ) {
   const [data, setData] = useState<ThroughputData[]>([]);
@@ -102,7 +91,7 @@ export function useBoardThroughput(
   const [error, setError] = useState<string | null>(null);
 
   const fetchData = useCallback(async () => {
-    if (!boardId || !token) {
+    if (!boardId) {
       setData([]);
       setIsLoading(false);
       return;
@@ -112,26 +101,17 @@ export function useBoardThroughput(
     setError(null);
 
     try {
-      const response = await fetch(
-        `${API_URL}/api/boards/${boardId}/analytics/throughput?weeks=${weeks}`,
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-            Accept: "application/json",
-          },
-        }
+      const json = await api.get<{ data: ThroughputData[] }>(
+        `/api/boards/${boardId}/analytics/throughput`,
+        { weeks }
       );
-
-      if (!response.ok) throw new Error("Failed to fetch throughput data");
-
-      const json = await response.json();
       setData(json.data);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Unknown error");
     } finally {
       setIsLoading(false);
     }
-  }, [boardId, token, weeks]);
+  }, [boardId, weeks]);
 
   useEffect(() => {
     fetchData();
@@ -143,7 +123,7 @@ export function useBoardThroughput(
 // Hook for cumulative flow data
 export function useBoardCumulativeFlow(
   boardId: number | null,
-  token: string | null,
+  _token: string | null,
   days = 30
 ) {
   const [data, setData] = useState<CumulativeFlowData | null>(null);
@@ -151,7 +131,7 @@ export function useBoardCumulativeFlow(
   const [error, setError] = useState<string | null>(null);
 
   const fetchData = useCallback(async () => {
-    if (!boardId || !token) {
+    if (!boardId) {
       setData(null);
       setIsLoading(false);
       return;
@@ -161,26 +141,17 @@ export function useBoardCumulativeFlow(
     setError(null);
 
     try {
-      const response = await fetch(
-        `${API_URL}/api/boards/${boardId}/analytics/cumulative-flow?days=${days}`,
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-            Accept: "application/json",
-          },
-        }
+      const json = await api.get<CumulativeFlowData>(
+        `/api/boards/${boardId}/analytics/cumulative-flow`,
+        { days }
       );
-
-      if (!response.ok) throw new Error("Failed to fetch cumulative flow data");
-
-      const json = await response.json();
       setData(json);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Unknown error");
     } finally {
       setIsLoading(false);
     }
-  }, [boardId, token, days]);
+  }, [boardId, days]);
 
   useEffect(() => {
     fetchData();
@@ -192,14 +163,14 @@ export function useBoardCumulativeFlow(
 // Hook for assignee distribution
 export function useBoardAssigneeDistribution(
   boardId: number | null,
-  token: string | null
+  _token: string | null
 ) {
   const [data, setData] = useState<AssigneeData[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
   const fetchData = useCallback(async () => {
-    if (!boardId || !token) {
+    if (!boardId) {
       setData([]);
       setIsLoading(false);
       return;
@@ -209,27 +180,16 @@ export function useBoardAssigneeDistribution(
     setError(null);
 
     try {
-      const response = await fetch(
-        `${API_URL}/api/boards/${boardId}/analytics/assignees`,
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-            Accept: "application/json",
-          },
-        }
+      const json = await api.get<{ data: AssigneeData[] }>(
+        `/api/boards/${boardId}/analytics/assignees`
       );
-
-      if (!response.ok)
-        throw new Error("Failed to fetch assignee distribution");
-
-      const json = await response.json();
       setData(json.data);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Unknown error");
     } finally {
       setIsLoading(false);
     }
-  }, [boardId, token]);
+  }, [boardId]);
 
   useEffect(() => {
     fetchData();

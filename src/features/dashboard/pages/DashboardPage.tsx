@@ -11,9 +11,8 @@ import {
 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { api } from "@/lib/api";
 import { useAuth } from "@/features/auth";
-
-const API_URL = import.meta.env.VITE_API_URL;
 
 interface DashboardStats {
   total_boards: number;
@@ -83,36 +82,20 @@ export function DashboardPage() {
 
   useEffect(() => {
     const fetchDashboardData = async () => {
-      const token = localStorage.getItem("token");
-      if (!token) return;
-
       try {
-        const headers = {
-          Authorization: `Bearer ${token}`,
-          Accept: "application/json",
-        };
-
-        // Fetch stats, activities, and assigned cards in parallel
         const [statsRes, activitiesRes, cardsRes] = await Promise.all([
-          fetch(`${API_URL}/api/dashboard/stats`, { headers }),
-          fetch(`${API_URL}/api/dashboard/activities?limit=5`, { headers }),
-          fetch(`${API_URL}/api/dashboard/my-cards?limit=5`, { headers }),
+          api.get<{ data: DashboardStats }>("/api/dashboard/stats"),
+          api.get<{ data: RecentActivity[] }>("/api/dashboard/activities", {
+            limit: 5,
+          }),
+          api.get<{ data: AssignedCard[] }>("/api/dashboard/my-cards", {
+            limit: 5,
+          }),
         ]);
 
-        if (statsRes.ok) {
-          const data = await statsRes.json();
-          setStats(data.data);
-        }
-
-        if (activitiesRes.ok) {
-          const data = await activitiesRes.json();
-          setActivities(data.data || []);
-        }
-
-        if (cardsRes.ok) {
-          const data = await cardsRes.json();
-          setAssignedCards(data.data || []);
-        }
+        setStats(statsRes.data);
+        setActivities(activitiesRes.data || []);
+        setAssignedCards(cardsRes.data || []);
       } catch (error) {
         console.error("Failed to fetch dashboard data:", error);
       } finally {
@@ -140,7 +123,6 @@ export function DashboardPage() {
         </p>
       </div>
 
-      {/* Stats Cards */}
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
         <Card>
           <CardHeader className="flex flex-row items-center justify-between pb-2">
@@ -188,7 +170,6 @@ export function DashboardPage() {
       </div>
 
       <div className="grid gap-6 md:grid-cols-2">
-        {/* My Cards */}
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
@@ -227,7 +208,6 @@ export function DashboardPage() {
           </CardContent>
         </Card>
 
-        {/* Recent Activity */}
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2">

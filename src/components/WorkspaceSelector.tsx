@@ -24,9 +24,8 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { cn } from "@/lib/utils";
+import { api } from "@/lib/api";
 import { toast } from "sonner";
-
-const API_URL = import.meta.env.VITE_API_URL;
 
 interface Team {
   id: number;
@@ -45,23 +44,11 @@ export function WorkspaceSelector() {
 
   useEffect(() => {
     const fetchTeams = async () => {
-      const token = localStorage.getItem("token");
-      if (!token) return;
-
       try {
-        const res = await fetch(`${API_URL}/api/teams`, {
-          headers: {
-            Authorization: `Bearer ${token}`,
-            Accept: "application/json",
-          },
-        });
-
-        if (res.ok) {
-          const data = await res.json();
-          setTeams(data.data || []);
-          if (data.data?.length > 0 && !selectedTeam) {
-            setSelectedTeam(data.data[0]);
-          }
+        const data = await api.get<{ data: Team[] }>("/api/teams");
+        setTeams(data.data || []);
+        if (data.data?.length > 0 && !selectedTeam) {
+          setSelectedTeam(data.data[0]);
         }
       } catch {
         console.error("Failed to fetch teams");
@@ -76,24 +63,11 @@ export function WorkspaceSelector() {
   const handleCreateTeam = async () => {
     if (!newTeamName.trim()) return;
 
-    const token = localStorage.getItem("token");
-    if (!token) return;
-
     setIsCreating(true);
     try {
-      const res = await fetch(`${API_URL}/api/teams`, {
-        method: "POST",
-        headers: {
-          Authorization: `Bearer ${token}`,
-          Accept: "application/json",
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ name: newTeamName }),
+      const data = await api.post<{ data: Team }>("/api/teams", {
+        name: newTeamName,
       });
-
-      if (!res.ok) throw new Error("Failed to create team");
-
-      const data = await res.json();
       setTeams((prev) => [...prev, data.data]);
       setSelectedTeam(data.data);
       setIsCreateOpen(false);

@@ -37,10 +37,9 @@ import {
 } from "@/components/ui/select";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { api } from "@/lib/api";
 import { toast } from "sonner";
 import { useAuth } from "@/features/auth";
-
-const API_URL = import.meta.env.VITE_API_URL;
 
 type TeamRole = "owner" | "admin" | "member" | "viewer";
 
@@ -97,23 +96,10 @@ export function MembersPage() {
   const [inviteRole, setInviteRole] = useState<TeamRole>("member");
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  // Fetch teams
   useEffect(() => {
     const fetchTeams = async () => {
-      const token = localStorage.getItem("token");
-      if (!token) return;
-
       try {
-        const res = await fetch(`${API_URL}/api/teams`, {
-          headers: {
-            Authorization: `Bearer ${token}`,
-            Accept: "application/json",
-          },
-        });
-
-        if (!res.ok) throw new Error("Failed to fetch teams");
-
-        const json = await res.json();
+        const json = await api.get<{ data: Team[] }>("/api/teams");
         setTeams(json.data || []);
         if (json.data?.length > 0) {
           setSelectedTeamId(json.data[0].id);
@@ -126,29 +112,15 @@ export function MembersPage() {
     fetchTeams();
   }, []);
 
-  // Fetch members when team changes
   useEffect(() => {
     const fetchMembers = async () => {
       if (!selectedTeamId) return;
 
-      const token = localStorage.getItem("token");
-      if (!token) return;
-
       setIsLoading(true);
       try {
-        const res = await fetch(
-          `${API_URL}/api/teams/${selectedTeamId}/members`,
-          {
-            headers: {
-              Authorization: `Bearer ${token}`,
-              Accept: "application/json",
-            },
-          }
+        const json = await api.get<{ data: Member[] }>(
+          `/api/teams/${selectedTeamId}/members`
         );
-
-        if (!res.ok) throw new Error("Failed to fetch members");
-
-        const json = await res.json();
         setMembers(json.data || []);
       } catch {
         toast.error("Failed to load members");
@@ -167,48 +139,22 @@ export function MembersPage() {
   const handleInvite = async () => {
     if (!inviteEmail || !selectedTeamId) return;
 
-    const token = localStorage.getItem("token");
-    if (!token) return;
-
     setIsSubmitting(true);
     try {
-      const res = await fetch(
-        `${API_URL}/api/teams/${selectedTeamId}/members`,
-        {
-          method: "POST",
-          headers: {
-            Authorization: `Bearer ${token}`,
-            Accept: "application/json",
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({ email: inviteEmail, role: inviteRole }),
-        }
-      );
-
-      if (!res.ok) {
-        const error = await res.json();
-        throw new Error(error.message || "Failed to invite member");
-      }
+      await api.post(`/api/teams/${selectedTeamId}/members`, {
+        email: inviteEmail,
+        role: inviteRole,
+      });
 
       toast.success("Member invited successfully!");
       setInviteEmail("");
       setInviteRole("member");
       setInviteOpen(false);
 
-      // Refresh members
-      const membersRes = await fetch(
-        `${API_URL}/api/teams/${selectedTeamId}/members`,
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-            Accept: "application/json",
-          },
-        }
+      const json = await api.get<{ data: Member[] }>(
+        `/api/teams/${selectedTeamId}/members`
       );
-      if (membersRes.ok) {
-        const json = await membersRes.json();
-        setMembers(json.data || []);
-      }
+      setMembers(json.data || []);
     } catch (error) {
       toast.error(
         error instanceof Error ? error.message : "Failed to invite member"
@@ -221,24 +167,10 @@ export function MembersPage() {
   const handleChangeRole = async (memberId: number, newRole: TeamRole) => {
     if (!selectedTeamId) return;
 
-    const token = localStorage.getItem("token");
-    if (!token) return;
-
     try {
-      const res = await fetch(
-        `${API_URL}/api/teams/${selectedTeamId}/members/${memberId}`,
-        {
-          method: "PUT",
-          headers: {
-            Authorization: `Bearer ${token}`,
-            Accept: "application/json",
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({ role: newRole }),
-        }
-      );
-
-      if (!res.ok) throw new Error("Failed to update role");
+      await api.put(`/api/teams/${selectedTeamId}/members/${memberId}`, {
+        role: newRole,
+      });
 
       toast.success("Role updated!");
       setMembers((prev) =>
@@ -253,23 +185,8 @@ export function MembersPage() {
     if (!confirm("Are you sure you want to remove this member?")) return;
     if (!selectedTeamId) return;
 
-    const token = localStorage.getItem("token");
-    if (!token) return;
-
     try {
-      const res = await fetch(
-        `${API_URL}/api/teams/${selectedTeamId}/members/${memberId}`,
-        {
-          method: "DELETE",
-          headers: {
-            Authorization: `Bearer ${token}`,
-            Accept: "application/json",
-          },
-        }
-      );
-
-      if (!res.ok) throw new Error("Failed to remove member");
-
+      await api.delete(`/api/teams/${selectedTeamId}/members/${memberId}`);
       toast.success("Member removed!");
       setMembers((prev) => prev.filter((m) => m.id !== memberId));
     } catch {
@@ -358,7 +275,6 @@ export function MembersPage() {
         )}
       </div>
 
-      {/* Team Selector */}
       {teams.length > 1 && (
         <div className="flex items-center gap-2">
           <Label>Team:</Label>
@@ -380,7 +296,6 @@ export function MembersPage() {
         </div>
       )}
 
-      {/* Stats */}
       <div className="grid gap-4 md:grid-cols-3">
         <Card>
           <CardHeader className="flex flex-row items-center justify-between pb-2">
@@ -418,7 +333,6 @@ export function MembersPage() {
         </Card>
       </div>
 
-      {/* Members List */}
       <Card>
         <CardHeader>
           <CardTitle>Members</CardTitle>

@@ -1,6 +1,5 @@
 import { useState, useCallback, useEffect, useMemo } from "react";
-
-const API_URL = import.meta.env.VITE_API_URL;
+import { api } from "@/lib/api";
 
 export interface FilterState {
   search: string;
@@ -31,6 +30,13 @@ export interface ColumnWithWip {
   wip_exceeded: boolean;
 }
 
+interface BoardCardsResponse {
+  data: {
+    cards: FilteredCard[];
+    columns: ColumnWithWip[];
+  };
+}
+
 interface UseBoardFiltersReturn {
   filters: FilterState;
   setSearch: (search: string) => void;
@@ -40,7 +46,6 @@ interface UseBoardFiltersReturn {
   setMyCards: (myCards: boolean) => void;
   clearFilters: () => void;
   hasActiveFilters: boolean;
-  // Data
   cards: FilteredCard[];
   columns: ColumnWithWip[];
   isLoading: boolean;
@@ -58,7 +63,7 @@ const DEFAULT_FILTERS: FilterState = {
 
 export function useBoardFilters(
   boardId: number | null,
-  token: string | null
+  _token: string | null
 ): UseBoardFiltersReturn {
   const [filters, setFilters] = useState<FilterState>(DEFAULT_FILTERS);
   const [cards, setCards] = useState<FilteredCard[]>([]);
@@ -66,7 +71,6 @@ export function useBoardFilters(
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  // Reset filters when board changes
   useEffect(() => {
     setFilters(DEFAULT_FILTERS);
   }, [boardId]);
@@ -105,9 +109,8 @@ export function useBoardFilters(
     );
   }, [filters]);
 
-  // Fetch filtered cards
   const fetchCards = useCallback(async () => {
-    if (!boardId || !token) {
+    if (!boardId) {
       setCards([]);
       setColumns([]);
       return;
@@ -117,25 +120,17 @@ export function useBoardFilters(
     setError(null);
 
     try {
-      const params = new URLSearchParams();
-      if (filters.search) params.set("search", filters.search);
-      if (filters.assigneeId)
-        params.set("assignee_id", String(filters.assigneeId));
-      if (filters.labels.length) params.set("labels", filters.labels.join(","));
-      if (filters.due !== "any") params.set("due", filters.due);
-      if (filters.myCards) params.set("my_cards", "true");
+      const params: Record<string, string | number | boolean | undefined> = {};
+      if (filters.search) params.search = filters.search;
+      if (filters.assigneeId) params.assignee_id = filters.assigneeId;
+      if (filters.labels.length) params.labels = filters.labels.join(",");
+      if (filters.due !== "any") params.due = filters.due;
+      if (filters.myCards) params.my_cards = true;
 
-      const url = `${API_URL}/api/boards/${boardId}/cards?${params.toString()}`;
-      const res = await fetch(url, {
-        headers: {
-          Authorization: `Bearer ${token}`,
-          Accept: "application/json",
-        },
-      });
-
-      if (!res.ok) throw new Error("Failed to fetch cards");
-
-      const json = await res.json();
+      const json = await api.get<BoardCardsResponse>(
+        `/api/boards/${boardId}/cards`,
+        params
+      );
       setCards(json.data.cards);
       setColumns(json.data.columns);
     } catch (err) {
@@ -143,9 +138,8 @@ export function useBoardFilters(
     } finally {
       setIsLoading(false);
     }
-  }, [boardId, token, filters]);
+  }, [boardId, filters]);
 
-  // Debounced fetch for search
   useEffect(() => {
     const timer = setTimeout(() => {
       fetchCards();

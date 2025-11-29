@@ -1,6 +1,5 @@
 import { useState, useEffect, useCallback } from "react";
-
-const API_URL = import.meta.env.VITE_API_URL;
+import { api } from "@/lib/api";
 
 export interface BoardTemplate {
   id: number;
@@ -41,58 +40,36 @@ interface UseBoardTemplatesReturn {
 }
 
 export function useBoardTemplates(
-  token: string | null
+  _token: string | null
 ): UseBoardTemplatesReturn {
   const [templates, setTemplates] = useState<BoardTemplate[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
   const fetchTemplates = useCallback(async () => {
-    if (!token) {
-      setTemplates([]);
-      setIsLoading(false);
-      return;
-    }
-
     setIsLoading(true);
     setError(null);
 
     try {
-      const res = await fetch(`${API_URL}/api/board-templates`, {
-        headers: {
-          Authorization: `Bearer ${token}`,
-          Accept: "application/json",
-        },
-      });
-
-      if (!res.ok) throw new Error("Failed to fetch templates");
-
-      const json = await res.json();
+      const json = await api.get<{ data: BoardTemplate[] }>(
+        "/api/board-templates"
+      );
       setTemplates(json.data);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Unknown error");
     } finally {
       setIsLoading(false);
     }
-  }, [token]);
+  }, []);
 
   useEffect(() => {
     fetchTemplates();
   }, [fetchTemplates]);
 
   const getTemplate = async (id: number): Promise<BoardTemplate> => {
-    if (!token) throw new Error("Not authenticated");
-
-    const res = await fetch(`${API_URL}/api/board-templates/${id}`, {
-      headers: {
-        Authorization: `Bearer ${token}`,
-        Accept: "application/json",
-      },
-    });
-
-    if (!res.ok) throw new Error("Failed to fetch template");
-
-    const json = await res.json();
+    const json = await api.get<{ data: BoardTemplate }>(
+      `/api/board-templates/${id}`
+    );
     return json.data;
   };
 
@@ -103,29 +80,15 @@ export function useBoardTemplates(
     description?: string,
     color?: string
   ): Promise<{ id: number }> => {
-    if (!token) throw new Error("Not authenticated");
-
-    const res = await fetch(
-      `${API_URL}/api/teams/${teamId}/boards/from-template`,
+    const json = await api.post<{ data: { id: number } }>(
+      `/api/teams/${teamId}/boards/from-template`,
       {
-        method: "POST",
-        headers: {
-          Authorization: `Bearer ${token}`,
-          "Content-Type": "application/json",
-          Accept: "application/json",
-        },
-        body: JSON.stringify({
-          template_id: templateId,
-          name,
-          description,
-          color,
-        }),
+        template_id: templateId,
+        name,
+        description,
+        color,
       }
     );
-
-    if (!res.ok) throw new Error("Failed to create board from template");
-
-    const json = await res.json();
     return json.data;
   };
 
@@ -135,25 +98,14 @@ export function useBoardTemplates(
     name: string,
     description?: string
   ): Promise<BoardTemplate> => {
-    if (!token) throw new Error("Not authenticated");
-
-    const res = await fetch(`${API_URL}/api/teams/${teamId}/board-templates`, {
-      method: "POST",
-      headers: {
-        Authorization: `Bearer ${token}`,
-        "Content-Type": "application/json",
-        Accept: "application/json",
-      },
-      body: JSON.stringify({
+    const json = await api.post<{ data: BoardTemplate }>(
+      `/api/teams/${teamId}/board-templates`,
+      {
         board_id: boardId,
         name,
         description,
-      }),
-    });
-
-    if (!res.ok) throw new Error("Failed to save as template");
-
-    const json = await res.json();
+      }
+    );
     setTemplates((prev) => [...prev, json.data]);
     return json.data;
   };

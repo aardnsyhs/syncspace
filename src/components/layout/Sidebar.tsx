@@ -25,10 +25,9 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { cn } from "@/lib/utils";
+import { api } from "@/lib/api";
 import { toast } from "sonner";
 import { WorkspaceSelector } from "@/components/WorkspaceSelector";
-
-const API_URL = import.meta.env.VITE_API_URL;
 
 interface Board {
   id: number;
@@ -79,73 +78,38 @@ export function Sidebar() {
   const [newBoardName, setNewBoardName] = useState("");
   const [isCreating, setIsCreating] = useState(false);
 
-  // Fetch teams and boards
+  const fetchTeams = async () => {
+    try {
+      const json = await api.get<{ data: Team[] }>("/api/teams");
+      setTeams(json.data || []);
+    } catch {
+      console.error("Failed to fetch teams");
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   useEffect(() => {
-    const fetchTeams = async () => {
-      const token = localStorage.getItem("token");
-      if (!token) return;
-
-      try {
-        const res = await fetch(`${API_URL}/api/teams`, {
-          headers: {
-            Authorization: `Bearer ${token}`,
-            Accept: "application/json",
-          },
-        });
-
-        if (!res.ok) throw new Error("Failed to fetch teams");
-
-        const json = await res.json();
-        setTeams(json.data || []);
-      } catch {
-        console.error("Failed to fetch teams");
-      } finally {
-        setIsLoading(false);
-      }
-    };
-
     fetchTeams();
   }, []);
 
   const handleCreateBoard = async () => {
     if (!newBoardName.trim()) return;
 
-    const token = localStorage.getItem("token");
     const teamId = teams[0]?.id;
-    if (!token || !teamId) return;
+    if (!teamId) return;
 
     setIsCreating(true);
     try {
-      const res = await fetch(`${API_URL}/api/teams/${teamId}/boards`, {
-        method: "POST",
-        headers: {
-          Authorization: `Bearer ${token}`,
-          Accept: "application/json",
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ name: newBoardName }),
-      });
+      const json = await api.post<{ data: { id: number } }>(
+        `/api/teams/${teamId}/boards`,
+        { name: newBoardName }
+      );
 
-      if (!res.ok) throw new Error("Failed to create board");
-
-      const json = await res.json();
       toast.success("Board created!");
       setIsCreateOpen(false);
       setNewBoardName("");
-
-      // Refresh teams
-      const teamsRes = await fetch(`${API_URL}/api/teams`, {
-        headers: {
-          Authorization: `Bearer ${token}`,
-          Accept: "application/json",
-        },
-      });
-      if (teamsRes.ok) {
-        const teamsJson = await teamsRes.json();
-        setTeams(teamsJson.data || []);
-      }
-
-      // Navigate to new board
+      await fetchTeams();
       navigate(`/app/boards/${json.data.id}`);
     } catch {
       toast.error("Failed to create board");
@@ -158,15 +122,12 @@ export function Sidebar() {
   const isBoardActive = (boardId: number) =>
     location.pathname === `/app/boards/${boardId}`;
 
-  // Get all boards from all teams
   const allBoards = teams.flatMap((team) => team.boards || []);
 
   return (
     <aside className="flex h-screen w-64 flex-col border-r bg-card">
-      {/* Workspace Selector */}
       <WorkspaceSelector />
 
-      {/* Navigation */}
       <nav className="flex-1 space-y-1 p-3 overflow-y-auto">
         <NavItem
           icon={<LayoutDashboard className="h-4 w-4" />}
@@ -189,7 +150,6 @@ export function Sidebar() {
 
         <Separator className="my-3" />
 
-        {/* Boards List */}
         <div className="space-y-1">
           <div className="flex items-center justify-between px-3 py-2">
             <span className="text-xs font-medium text-muted-foreground uppercase tracking-wider">
@@ -263,7 +223,6 @@ export function Sidebar() {
         </div>
       </nav>
 
-      {/* Bottom Settings */}
       <div className="border-t p-3">
         <NavItem
           icon={<Settings className="h-4 w-4" />}

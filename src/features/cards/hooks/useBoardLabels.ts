@@ -1,7 +1,6 @@
 import { useState, useEffect, useCallback } from "react";
+import { api } from "@/lib/api";
 import type { Label } from "../types";
-
-const API_URL = import.meta.env.VITE_API_URL;
 
 interface UseBoardLabelsReturn {
   labels: Label[];
@@ -18,14 +17,14 @@ interface UseBoardLabelsReturn {
 
 export function useBoardLabels(
   boardId: number | null,
-  token: string | null
+  _token: string | null // kept for backward compatibility
 ): UseBoardLabelsReturn {
   const [labels, setLabels] = useState<Label[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
   const fetchLabels = useCallback(async () => {
-    if (!boardId || !token) {
+    if (!boardId) {
       setLabels([]);
       setIsLoading(false);
       return;
@@ -35,86 +34,49 @@ export function useBoardLabels(
     setError(null);
 
     try {
-      const res = await fetch(`${API_URL}/api/boards/${boardId}/labels`, {
-        headers: {
-          Authorization: `Bearer ${token}`,
-          Accept: "application/json",
-        },
-      });
-
-      if (!res.ok) throw new Error("Failed to fetch labels");
-
-      const data = await res.json();
+      const data = await api.get<{ data: Label[] }>(
+        `/api/boards/${boardId}/labels`
+      );
       setLabels(data.data);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Unknown error");
     } finally {
       setIsLoading(false);
     }
-  }, [boardId, token]);
+  }, [boardId]);
 
   useEffect(() => {
     fetchLabels();
   }, [fetchLabels]);
 
   const createLabel = async (name: string, color: string): Promise<Label> => {
-    if (!boardId || !token) throw new Error("No board");
+    if (!boardId) throw new Error("No board");
 
-    const res = await fetch(`${API_URL}/api/boards/${boardId}/labels`, {
-      method: "POST",
-      headers: {
-        Authorization: `Bearer ${token}`,
-        "Content-Type": "application/json",
-        Accept: "application/json",
-      },
-      body: JSON.stringify({ name, color }),
-    });
-
-    if (!res.ok) throw new Error("Failed to create label");
-
-    const data = await res.json();
+    const data = await api.post<{ data: Label }>(
+      `/api/boards/${boardId}/labels`,
+      { name, color }
+    );
     setLabels((prev) => [...prev, data.data]);
     return data.data;
   };
 
   const updateLabel = async (
     labelId: number,
-    data: { name?: string; color?: string }
+    updateData: { name?: string; color?: string }
   ) => {
-    if (!boardId || !token) return;
+    if (!boardId) return;
 
-    const res = await fetch(
-      `${API_URL}/api/boards/${boardId}/labels/${labelId}`,
-      {
-        method: "PATCH",
-        headers: {
-          Authorization: `Bearer ${token}`,
-          "Content-Type": "application/json",
-          Accept: "application/json",
-        },
-        body: JSON.stringify(data),
-      }
+    const updated = await api.patch<{ data: Label }>(
+      `/api/boards/${boardId}/labels/${labelId}`,
+      updateData
     );
-
-    if (!res.ok) throw new Error("Failed to update label");
-
-    const updated = await res.json();
     setLabels((prev) => prev.map((l) => (l.id === labelId ? updated.data : l)));
   };
 
   const deleteLabel = async (labelId: number) => {
-    if (!boardId || !token) return;
+    if (!boardId) return;
 
-    const res = await fetch(
-      `${API_URL}/api/boards/${boardId}/labels/${labelId}`,
-      {
-        method: "DELETE",
-        headers: { Authorization: `Bearer ${token}` },
-      }
-    );
-
-    if (!res.ok) throw new Error("Failed to delete label");
-
+    await api.delete(`/api/boards/${boardId}/labels/${labelId}`);
     setLabels((prev) => prev.filter((l) => l.id !== labelId));
   };
 
