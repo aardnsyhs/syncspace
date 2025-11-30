@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { Loader2, Camera } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -15,6 +15,7 @@ import { Separator } from "@/components/ui/separator";
 import { useAuth } from "@/features/auth";
 import { toast } from "sonner";
 import { api } from "@/lib/api";
+import { compressImage, blobToFile } from "@/lib/image-utils";
 
 export function ProfilePage() {
   const { user } = useAuth();
@@ -25,6 +26,9 @@ export function ProfilePage() {
   const [confirmPassword, setConfirmPassword] = useState("");
   const [isUpdatingProfile, setIsUpdatingProfile] = useState(false);
   const [isUpdatingPassword, setIsUpdatingPassword] = useState(false);
+  const [isUploadingAvatar, setIsUploadingAvatar] = useState(false);
+  const [avatarPreview, setAvatarPreview] = useState<string | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const getInitials = (name: string) => {
     return name
@@ -79,6 +83,60 @@ export function ProfilePage() {
     }
   };
 
+  const handleAvatarClick = () => {
+    fileInputRef.current?.click();
+  };
+
+  const handleAvatarChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    // Validate file type
+    if (!file.type.startsWith("image/")) {
+      toast.error("Please select an image file");
+      return;
+    }
+
+    // Validate file size (max 5MB before compression)
+    if (file.size > 5 * 1024 * 1024) {
+      toast.error("Image must be less than 5MB");
+      return;
+    }
+
+    setIsUploadingAvatar(true);
+    try {
+      // Compress image
+      const compressedBlob = await compressImage(file, 400, 400, 0.8);
+      const compressedFile = blobToFile(compressedBlob, "avatar.jpg");
+
+      // Show preview
+      const previewUrl = URL.createObjectURL(compressedBlob);
+      setAvatarPreview(previewUrl);
+
+      // Upload to server
+      const formData = new FormData();
+      formData.append("avatar", compressedFile);
+
+      await api.upload("/api/user/avatar", formData);
+
+      toast.success("Avatar updated successfully!");
+
+      // Refresh page to update avatar everywhere
+      window.location.reload();
+    } catch (err) {
+      toast.error(
+        err instanceof Error ? err.message : "Failed to upload avatar"
+      );
+      setAvatarPreview(null);
+    } finally {
+      setIsUploadingAvatar(false);
+      // Reset input
+      if (fileInputRef.current) {
+        fileInputRef.current.value = "";
+      }
+    }
+  };
+
   return (
     <div className="max-w-2xl mx-auto space-y-6">
       <div>
@@ -98,16 +156,34 @@ export function ProfilePage() {
         </CardHeader>
         <CardContent>
           <div className="flex items-center gap-4">
-            <div className="relative group cursor-pointer">
+            <div
+              className="relative group cursor-pointer"
+              onClick={handleAvatarClick}
+            >
               <Avatar className="h-20 w-20">
-                <AvatarImage src={user?.avatar_url} alt={user?.name} />
+                <AvatarImage
+                  src={avatarPreview || user?.avatar_url}
+                  alt={user?.name}
+                />
                 <AvatarFallback className="text-lg">
                   {user?.name ? getInitials(user.name) : "U"}
                 </AvatarFallback>
               </Avatar>
               <div className="absolute inset-0 flex items-center justify-center bg-black/50 rounded-full opacity-0 group-hover:opacity-100 transition-opacity">
-                <Camera className="h-6 w-6 text-white" />
+                {isUploadingAvatar ? (
+                  <Loader2 className="h-6 w-6 text-white animate-spin" />
+                ) : (
+                  <Camera className="h-6 w-6 text-white" />
+                )}
               </div>
+              <input
+                ref={fileInputRef}
+                type="file"
+                accept="image/*"
+                className="hidden"
+                onChange={handleAvatarChange}
+                disabled={isUploadingAvatar}
+              />
             </div>
             <div>
               <p className="font-medium">{user?.name}</p>
