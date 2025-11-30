@@ -1,12 +1,7 @@
 import Echo from "laravel-echo";
 import Pusher from "pusher-js";
 
-interface AuthData {
-  auth: string;
-  channel_data?: string;
-}
-
-// Make Pusher available globally for Laravel Echo (Ably uses Pusher protocol)
+// Make Pusher available globally for Laravel Echo
 declare global {
   interface Window {
     Pusher: typeof Pusher;
@@ -25,14 +20,14 @@ export function initializeEcho(): Echo<"pusher"> {
     return echoInstance;
   }
 
-  // Ably uses Pusher protocol adapter
-  // Key format: appKey.clientId (we only need the appKey part for client)
+  // For Ably with Pusher protocol, we need the full key for connection
+  // Format: appKey.keyId:keySecret -> use appKey.keyId for Pusher key
   const ablyKey = import.meta.env.VITE_ABLY_KEY || "";
-  const appKey = ablyKey.split(":")[0]; // Get the public part before ":"
+  const [keyPart] = ablyKey.split(":");
 
   echoInstance = new Echo({
     broadcaster: "pusher",
-    key: appKey,
+    key: keyPart,
     wsHost: "realtime-pusher.ably.io",
     wsPort: 443,
     wssPort: 443,
@@ -40,43 +35,14 @@ export function initializeEcho(): Echo<"pusher"> {
     encrypted: true,
     disableStats: true,
     enabledTransports: ["ws", "wss"],
-    cluster: "eu", // Ably ignores this but Pusher requires it
+    cluster: "eu",
     authEndpoint: `${import.meta.env.VITE_API_URL}/api/broadcasting/auth`,
-    authorizer: (channel: { name: string }) => ({
-      authorize: (
-        socketId: string,
-        callback: (error: Error | null, data: AuthData | null) => void
-      ) => {
-        const token = localStorage.getItem("token");
-        fetch(`${import.meta.env.VITE_API_URL}/api/broadcasting/auth`, {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            Accept: "application/json",
-            "X-Socket-ID": socketId,
-            ...(token ? { Authorization: `Bearer ${token}` } : {}),
-          },
-          credentials: "include",
-          body: JSON.stringify({
-            socket_id: socketId,
-            channel_name: channel.name,
-          }),
-        })
-          .then((response) => {
-            if (!response.ok) {
-              throw new Error("Unauthorized");
-            }
-            return response.json();
-          })
-          .then((data: AuthData) => callback(null, data))
-          .catch((error) =>
-            callback(
-              error instanceof Error ? error : new Error(String(error)),
-              null
-            )
-          );
+    auth: {
+      headers: {
+        Authorization: `Bearer ${localStorage.getItem("token")}`,
+        Accept: "application/json",
       },
-    }),
+    },
   });
 
   window.Echo = echoInstance;
@@ -97,7 +63,6 @@ export function getEcho(): Echo<"pusher"> | null {
   return echoInstance;
 }
 
-// For backward compatibility - but prefer using initializeEcho
 export default {
   get instance() {
     return echoInstance;
