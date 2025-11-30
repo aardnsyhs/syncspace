@@ -12,7 +12,9 @@ Add these secrets:
 
 1. **VITE_API_URL**
    - Description: Your production API URL
-   - Example: `http://148.230.101.110` or `https://api.yourdomain.com`
+   - Example: `http://148.230.101.110` (IP address is fine!) or `https://api.yourdomain.com`
+   - **Important**: This MUST match the URL your frontend uses to call the API
+   - Using IP address is perfectly fine until you have a domain
    - This will be embedded in the frontend build
 
 2. **VITE_ABLY_KEY**
@@ -60,21 +62,59 @@ The fix includes:
 
 ### Avatars not loading?
 
-1. Check browser console for logs:
+1. **Check browser console for logs**:
    ```
-   [Avatar Utils Init] VITE_API_URL: <should show your API URL>
-   [Avatar Utils] Input URL: <backend URL>
-   [Avatar Utils] Normalized URL: <should use VITE_API_URL domain>
+   [Avatar Utils Init] VITE_API_URL: http://148.230.101.110
+   [Avatar Utils] Input URL: http://148.230.101.110/storage/avatars/xxx.jpg
+   [Avatar Utils] Normalized URL: http://148.230.101.110/storage/avatars/xxx.jpg
    ```
 
-2. If VITE_API_URL is undefined:
-   - Verify GitHub secrets are set correctly
-   - Check deployment workflow logs for ".env created" message
+2. **If VITE_API_URL is undefined or empty**:
+   - Verify GitHub secrets are set correctly (especially VITE_API_URL)
+   - Check deployment workflow logs for "Production .env created" message
    - Ensure build runs AFTER .env creation
+   - Re-run deployment after adding secrets
 
-3. If avatar URL is still using wrong domain:
-   - Check backend response for `avatar_url` field
+3. **If avatar URL is still using wrong domain**:
+   - Check backend response for `avatar_url` field format
    - Verify `normalizeAvatarUrl()` is called in all components
+   - Backend should return either:
+     - Absolute URL: `http://148.230.101.110/storage/avatars/xxx.jpg`
+     - Relative URL: `/storage/avatars/xxx.jpg`
+
+4. **Backend configuration required**:
+   
+   Laravel must serve storage files publicly. Ensure:
+   
+   a) **Storage link created**:
+   ```bash
+   php artisan storage:link
+   ```
+   
+   b) **Nginx/Apache configured to serve /storage/***:
+   ```nginx
+   location /storage {
+       alias /path/to/your/laravel/storage/app/public;
+   }
+   ```
+   
+   c) **Test manually**:
+   ```bash
+   # Should return the image
+   curl -I http://148.230.101.110/storage/avatars/test.jpg
+   ```
+   
+   d) **CORS headers for images** (if needed):
+   Add to Laravel's `config/cors.php`:
+   ```php
+   'paths' => ['api/*', 'storage/*', 'sanctum/csrf-cookie'],
+   ```
+
+5. **Network tab check**:
+   - Open browser DevTools → Network tab
+   - Look for avatar image requests
+   - Check response status (should be 200, not 404 or 403)
+   - Verify URL is using correct domain (VITE_API_URL)
 
 ### Deployment failing?
 
