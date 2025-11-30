@@ -23,8 +23,9 @@ jobs:
       - name: Deploy via SSH
         run: |
           ssh ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }} << 'EOF'
-            cd ~/syncspace-stack
+            cd ~/syncspace-stack/frontend
             git pull origin master
-            docker compose pull
-            docker compose up -d --build
+            cd ~/syncspace-stack
+            docker compose up -d --build frontend
+            docker compose restart nginx
           EOF
