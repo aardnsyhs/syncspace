@@ -38,14 +38,13 @@ export function useUserNotifications(
 
       setNotifications((prev) => [notification, ...prev].slice(0, 50));
 
-      // Show toast notification
       toast(payload.title, {
         description: payload.message,
         action: payload.data.board_id
           ? {
               label: "View",
               onClick: () => {
-                // Navigate to board/card - implement based on your router
+                
                 console.log("Navigate to:", payload.data);
               },
             }

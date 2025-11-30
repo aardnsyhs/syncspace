@@ -1,11 +1,3 @@
-/**
- * API Client wrapper untuk fetch dengan fitur:
- * - Automatic auth token injection
- * - JSON parsing
- * - Error handling
- * - Request/Response interceptors
- */
-
 const API_URL = import.meta.env.VITE_API_URL;
 
 interface RequestConfig extends RequestInit {
@@ -56,7 +48,6 @@ class ApiClient {
         error.message = `HTTP ${response.status}`;
       }
 
-      // Handle 401 - redirect to login
       if (response.status === 401) {
         localStorage.removeItem("token");
         window.location.href = "/login";
@@ -65,7 +56,6 @@ class ApiClient {
       throw error;
     }
 
-    // Handle 204 No Content
     if (response.status === 204) {
       return null as T;
     }
@@ -82,12 +72,10 @@ class ApiClient {
       ...init.headers,
     };
 
-    // Add Content-Type for requests with body
     if (init.body && !(init.body instanceof FormData)) {
       (headers as Record<string, string>)["Content-Type"] = "application/json";
     }
 
-    // Add auth token
     if (token) {
       (headers as Record<string, string>)["Authorization"] = `Bearer ${token}`;
     }
@@ -100,7 +88,6 @@ class ApiClient {
     return this.handleResponse<T>(response);
   }
 
-  // Convenience methods
   get<T>(endpoint: string, params?: RequestConfig["params"]): Promise<T> {
     return this.request<T>(endpoint, { method: "GET", params });
   }
@@ -130,7 +117,6 @@ class ApiClient {
     return this.request<T>(endpoint, { method: "DELETE" });
   }
 
-  // For file uploads
   upload<T>(endpoint: string, formData: FormData): Promise<T> {
     return this.request<T>(endpoint, {
       method: "POST",
@@ -139,8 +125,6 @@ class ApiClient {
   }
 }
 
-// Export singleton instance
 export const api = new ApiClient(API_URL);
 
-// Export types
 export type { ApiError, RequestConfig };

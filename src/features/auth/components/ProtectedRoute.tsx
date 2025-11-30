@@ -1,4 +1,3 @@
-// src/features/auth/components/ProtectedRoute.tsx
 import { Navigate, useLocation } from "react-router-dom";
 import { Loader2 } from "lucide-react";
 import { useAuth } from "../store/AuthContext";
@@ -23,7 +22,7 @@ export function ProtectedRoute({ children }: Props) {
   }
 
   if (!isAuthenticated) {
-    // Save the attempted URL for redirecting after login
+    
     return <Navigate to="/login" state={{ from: location.pathname }} replace />;
   }
 

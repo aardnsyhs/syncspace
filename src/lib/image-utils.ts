@@ -1,14 +1,7 @@
-/**
- * Compress and crop image to square (for avatars)
- * @param file - The image file to compress
- * @param size - Output size (default 400px square)
- * @param quality - JPEG quality 0-1 (default 0.8)
- * @returns Compressed square image as Blob
- */
 export async function compressImage(
   file: File,
   size = 400,
-  _maxHeight = 400, // kept for backward compatibility
+  _maxHeight = 400, 
   quality = 0.8
 ): Promise<Blob> {
   return new Promise((resolve, reject) => {
@@ -23,12 +16,10 @@ export async function compressImage(
         const canvas = document.createElement("canvas");
         const { width, height } = img;
 
-        // Calculate crop dimensions (center crop to square)
         const minDimension = Math.min(width, height);
         const cropX = (width - minDimension) / 2;
         const cropY = (height - minDimension) / 2;
 
-        // Set canvas to target size
         canvas.width = size;
         canvas.height = size;
 
@@ -38,17 +29,16 @@ export async function compressImage(
           return;
         }
 
-        // Draw cropped and scaled image
         ctx.drawImage(
           img,
-          cropX, // source x
-          cropY, // source y
-          minDimension, // source width
-          minDimension, // source height
-          0, // dest x
-          0, // dest y
-          size, // dest width
-          size // dest height
+          cropX, 
+          cropY, 
+          minDimension, 
+          minDimension, 
+          0, 
+          0, 
+          size, 
+          size 
         );
 
         canvas.toBlob(
@@ -71,9 +61,6 @@ export async function compressImage(
   });
 }
 
-/**
- * Convert Blob to File
- */
 export function blobToFile(blob: Blob, fileName: string): File {
   return new File([blob], fileName, { type: blob.type });
 }

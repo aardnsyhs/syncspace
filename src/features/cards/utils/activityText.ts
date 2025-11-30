@@ -1,4 +1,3 @@
-// Convert activity type to human-readable text
 export function getActivityText(
   type: string,
   data: Record<string, unknown>

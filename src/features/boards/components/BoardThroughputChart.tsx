@@ -30,13 +30,11 @@ export function BoardThroughputChart({ data, isLoading }: Props) {
 
   const hasData = data.some((d) => d.completed_count > 0);
 
-  // Format data for chart
   const chartData = data.map((d) => ({
     ...d,
     label: formatWeekLabel(d.week_start),
   }));
 
-  // Calculate average
   const avgThroughput =
     data.length > 0
       ? (

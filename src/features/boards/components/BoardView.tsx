@@ -12,7 +12,6 @@ import type {
 } from "../types";
 import type { Board, Column, Card } from "@/types";
 
-// Demo board data - in real app, this would come from API
 const initialBoard: Board & { columns: (Column & { cards: Card[] })[] } = {
   id: 1,
   workspace_id: 1,
@@ -30,7 +29,6 @@ const initialBoard: Board & { columns: (Column & { cards: Card[] })[] } = {
 export function BoardView() {
   const [board, setBoard] = useState(initialBoard);
 
-  // Real-time event handlers
   const handleColumnCreated = useCallback((payload: ColumnEventPayload) => {
     setBoard((prev) => ({
       ...prev,
@@ -108,7 +106,7 @@ export function BoardView() {
 
   const handleCardMoved = useCallback((payload: CardMovedPayload) => {
     setBoard((prev) => {
-      // Remove card from old column
+      
       let movedCard: Card | undefined;
       const columnsWithoutCard = prev.columns.map((col) => {
         if (col.id === payload.from_column_id) {
@@ -124,7 +122,6 @@ export function BoardView() {
 
       if (!movedCard) return prev;
 
-      // Add card to new column at new position
       return {
         ...prev,
         columns: columnsWithoutCard.map((col) => {
@@ -150,13 +147,12 @@ export function BoardView() {
 
   const handleCommentCreated = useCallback(
     (_payload: CommentCreatedPayload) => {
-      // Could show a toast notification or update comment count
+      
       console.log("New comment on card:", _payload.card_id);
     },
     []
   );
 
-  // Subscribe to board channel for real-time updates
   useBoardChannel(board.id, {
     onColumnCreated: handleColumnCreated,
     onColumnUpdated: handleColumnUpdated,
@@ -170,7 +166,7 @@ export function BoardView() {
 
   return (
     <div className="h-full">
-      {/* Board Header */}
+      {}
       <div className="mb-6 flex items-center justify-between">
         <div>
           <h2 className="text-2xl font-bold">{board.name}</h2>
@@ -185,14 +181,14 @@ export function BoardView() {
         </Button>
       </div>
 
-      {/* Kanban Columns */}
+      {}
       <div className="flex gap-4 overflow-x-auto pb-4">
         {board.columns.map((column) => (
           <div
             key={column.id}
             className="flex w-72 flex-shrink-0 flex-col rounded-lg bg-muted/50 p-3"
           >
-            {/* Column Header */}
+            {}
             <div className="mb-3 flex items-center justify-between">
               <h3 className="font-semibold">{column.name}</h3>
               <span className="rounded-full bg-muted px-2 py-0.5 text-xs text-muted-foreground">
@@ -200,7 +196,7 @@ export function BoardView() {
               </span>
             </div>
 
-            {/* Cards Area */}
+            {}
             <div className="flex-1 space-y-2">
               {column.cards && column.cards.length > 0 ? (
                 column.cards.map((card) => (
@@ -223,7 +219,7 @@ export function BoardView() {
               )}
             </div>
 
-            {/* Add Card Button */}
+            {}
             <Button variant="ghost" className="mt-3 w-full justify-start">
               <Plus className="mr-2 h-4 w-4" />
               Add a card
@@ -231,7 +227,7 @@ export function BoardView() {
           </div>
         ))}
 
-        {/* Add Column Button */}
+        {}
         <div className="flex w-72 flex-shrink-0 items-start">
           <Button variant="outline" className="w-full justify-start">
             <Plus className="mr-2 h-4 w-4" />

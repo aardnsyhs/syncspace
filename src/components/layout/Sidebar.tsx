@@ -94,7 +94,6 @@ export function Sidebar({ onNavigate }: SidebarProps = {}) {
   useEffect(() => {
     fetchTeams();
 
-    // Listen for board-deleted event to refresh sidebar
     const handleBoardDeleted = () => {
       fetchTeams();
     };

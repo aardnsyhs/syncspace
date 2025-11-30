@@ -87,7 +87,6 @@ export function NotificationsDropdown() {
     markAsRead(notification.id);
     setIsOpen(false);
 
-    // Navigate to board with card_id as query param to open card detail
     if (notification.data?.board_id) {
       const boardId = notification.data.board_id;
       const cardId = notification.data.card_id;

@@ -59,7 +59,7 @@ interface Props {
   isPublic: boolean;
   publicUrl: string | null;
   token: string;
-  canManage: boolean; // OWNER/ADMIN only
+  canManage: boolean; 
   isOpen: boolean;
   onClose: () => void;
   onBoardUpdated: () => void;
@@ -151,7 +151,7 @@ export function BoardSettingsPanel({
     try {
       await api.delete(`/api/boards/${boardId}`);
       toast.success("Board deleted");
-      // Dispatch custom event to refresh sidebar
+      
       window.dispatchEvent(new CustomEvent("board-deleted"));
       onClose();
       navigate("/app/boards");

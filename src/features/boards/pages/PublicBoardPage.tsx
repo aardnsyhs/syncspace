@@ -63,7 +63,7 @@ export function PublicBoardPage({ publicToken }: Props) {
 
   return (
     <div className="min-h-screen bg-background">
-      {/* Header */}
+      {}
       <header className="border-b bg-background/95 backdrop-blur sticky top-0 z-10">
         <div className="container mx-auto px-4 py-4">
           <div className="flex items-center justify-between">
@@ -85,7 +85,7 @@ export function PublicBoardPage({ publicToken }: Props) {
         </div>
       </header>
 
-      {/* Board Content */}
+      {}
       <main className="p-4 overflow-x-auto">
         <div className="flex gap-4 min-w-max">
           {board.columns.map((column) => (
@@ -93,7 +93,7 @@ export function PublicBoardPage({ publicToken }: Props) {
               key={column.id}
               className="w-72 flex-shrink-0 bg-muted/30 rounded-lg"
             >
-              {/* Column Header */}
+              {}
               <div className="p-3 border-b">
                 <div className="flex items-center justify-between">
                   <h3 className="font-medium text-sm">{column.name}</h3>
@@ -104,7 +104,7 @@ export function PublicBoardPage({ publicToken }: Props) {
                 </div>
               </div>
 
-              {/* Cards */}
+              {}
               <div className="p-2 space-y-2 max-h-[calc(100vh-200px)] overflow-y-auto">
                 {column.cards.map((card) => (
                   <PublicCardItem key={card.id} card={card} />
@@ -120,7 +120,7 @@ export function PublicBoardPage({ publicToken }: Props) {
         </div>
       </main>
 
-      {/* Footer */}
+      {}
       <footer className="fixed bottom-0 left-0 right-0 p-2 bg-muted/50 text-center text-xs text-muted-foreground">
         Powered by Syncspace • Read-only public view
       </footer>
@@ -135,7 +135,7 @@ function PublicCardItem({
 }) {
   return (
     <div className="bg-background rounded-lg border p-3 shadow-sm">
-      {/* Labels */}
+      {}
       {card.labels.length > 0 && (
         <div className="flex flex-wrap gap-1 mb-2">
           {card.labels.map((label) => (
@@ -149,17 +149,17 @@ function PublicCardItem({
         </div>
       )}
 
-      {/* Title */}
+      {}
       <h4 className="text-sm font-medium">{card.title}</h4>
 
-      {/* Description preview */}
+      {}
       {card.description && (
         <p className="text-xs text-muted-foreground mt-1 line-clamp-2">
           {card.description}
         </p>
       )}
 
-      {/* Badges */}
+      {}
       <div className="flex items-center gap-3 mt-2 text-xs text-muted-foreground">
         {card.due_date && (
           <span className="flex items-center gap-1">

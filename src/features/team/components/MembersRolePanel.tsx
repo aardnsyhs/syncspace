@@ -221,7 +221,7 @@ export function MembersRolePanel({
                       <DropdownMenuLabel>Actions</DropdownMenuLabel>
                       <DropdownMenuSeparator />
 
-                      {/* Role change options */}
+                      {}
                       {canAssignRole(currentUserRole, "admin") &&
                         member.role !== "admin" && (
                           <DropdownMenuItem

@@ -1,4 +1,3 @@
-// src/features/auth/pages/LoginPage.tsx
 import { useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -50,7 +49,6 @@ export function LoginPage() {
     setFocus("email");
   }, [setFocus]);
 
-  // Redirect if already authenticated
   useEffect(() => {
     if (isAuthenticated && !authLoading) {
       navigate(from, { replace: true });
@@ -69,7 +67,7 @@ export function LoginPage() {
       };
 
       if (error.status === 422 && error.errors) {
-        // Map server validation errors to form fields
+        
         Object.entries(error.errors).forEach(([field, messages]) => {
           if (field === "email" || field === "password") {
             setError(field, { message: messages[0] });
@@ -97,7 +95,7 @@ export function LoginPage() {
       <Card className="border-0 shadow-none lg:border lg:shadow-sm">
         <form onSubmit={handleSubmit(onSubmit)}>
           <CardContent className="space-y-4 px-0 lg:px-6 pt-0 lg:pt-6">
-            {/* Email */}
+            {}
             <div className="space-y-2">
               <Label htmlFor="email">Email</Label>
               <div className="relative">
@@ -118,7 +116,7 @@ export function LoginPage() {
               )}
             </div>
 
-            {/* Password */}
+            {}
             <div className="space-y-2">
               <div className="flex items-center justify-between">
                 <Label htmlFor="password">Password</Label>
@@ -147,7 +145,7 @@ export function LoginPage() {
               )}
             </div>
 
-            {/* Remember me */}
+            {}
             <div className="flex items-center gap-2">
               <input
                 type="checkbox"

@@ -1,4 +1,3 @@
-// User & Auth types
 export interface User {
   id: number;
   name: string;
@@ -7,7 +6,6 @@ export interface User {
   created_at: string;
 }
 
-// Workspace/Team types
 export interface Workspace {
   id: number;
   name: string;
@@ -16,7 +14,6 @@ export interface Workspace {
   created_at: string;
 }
 
-// Board types
 export interface Board {
   id: number;
   workspace_id: number;
@@ -44,7 +41,6 @@ export interface Card {
   created_at: string;
 }
 
-// API Response wrapper
 export interface ApiResponse<T> {
   data: T;
   message?: string;

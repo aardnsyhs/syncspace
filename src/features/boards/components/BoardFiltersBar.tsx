@@ -57,7 +57,7 @@ export function BoardFiltersBar({
 
   return (
     <div className="flex items-center gap-3 p-3 border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
-      {/* Search Input */}
+      {}
       <div className="relative flex-1 max-w-sm">
         <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
         <Input
@@ -76,7 +76,7 @@ export function BoardFiltersBar({
         )}
       </div>
 
-      {/* Quick Filter: My Cards */}
+      {}
       <Button
         variant={filters.myCards ? "default" : "outline"}
         size="sm"
@@ -87,7 +87,7 @@ export function BoardFiltersBar({
         My Cards
       </Button>
 
-      {/* Filter Dropdown */}
+      {}
       <DropdownMenu open={isFilterOpen} onOpenChange={setIsFilterOpen}>
         <DropdownMenuTrigger asChild>
           <Button variant="outline" size="sm" className="h-9">
@@ -101,7 +101,7 @@ export function BoardFiltersBar({
           </Button>
         </DropdownMenuTrigger>
         <DropdownMenuContent align="end" className="w-72">
-          {/* Assignee Filter */}
+          {}
           <DropdownMenuLabel className="flex items-center gap-2">
             <User className="h-4 w-4" />
             Assignee
@@ -130,7 +130,7 @@ export function BoardFiltersBar({
 
           <DropdownMenuSeparator />
 
-          {/* Labels Filter */}
+          {}
           <DropdownMenuLabel className="flex items-center gap-2">
             <Tag className="h-4 w-4" />
             Labels
@@ -167,7 +167,7 @@ export function BoardFiltersBar({
 
           <DropdownMenuSeparator />
 
-          {/* Due Date Filter */}
+          {}
           <DropdownMenuLabel className="flex items-center gap-2">
             <Calendar className="h-4 w-4" />
             Due Date
@@ -192,7 +192,7 @@ export function BoardFiltersBar({
         </DropdownMenuContent>
       </DropdownMenu>
 
-      {/* Clear Filters */}
+      {}
       {hasActiveFilters && (
         <Button
           variant="ghost"
@@ -205,7 +205,7 @@ export function BoardFiltersBar({
         </Button>
       )}
 
-      {/* Loading indicator */}
+      {}
       {isLoading && (
         <div className="h-4 w-4 border-2 border-primary border-t-transparent rounded-full animate-spin" />
       )}

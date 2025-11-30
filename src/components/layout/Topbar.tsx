@@ -34,7 +34,6 @@ export function Topbar({ onMenuClick }: TopbarProps) {
   const location = useLocation();
   const { user, logout } = useAuth();
 
-  // Keyboard shortcut for search (Cmd+K or Ctrl+K)
   useEffect(() => {
     const down = (e: KeyboardEvent) => {
       if (e.key === "k" && (e.metaKey || e.ctrlKey)) {
@@ -47,7 +46,6 @@ export function Topbar({ onMenuClick }: TopbarProps) {
     return () => document.removeEventListener("keydown", down);
   }, []);
 
-  // Get page title based on route
   const getPageTitle = () => {
     const path = location.pathname;
     if (path === "/app") return "Dashboard";
@@ -69,7 +67,6 @@ export function Topbar({ onMenuClick }: TopbarProps) {
     }
   };
 
-  // Get user initials for avatar fallback
   const getInitials = (name: string) => {
     return name
       .split(" ")
@@ -81,9 +78,9 @@ export function Topbar({ onMenuClick }: TopbarProps) {
 
   return (
     <header className="flex h-14 items-center justify-between border-b bg-card px-4 md:px-6">
-      {/* Left: Menu + Page Title */}
+      {}
       <div className="flex items-center gap-2 md:gap-4">
-        {/* Mobile Menu Button */}
+        {}
         <Button
           variant="ghost"
           size="icon"
@@ -97,9 +94,9 @@ export function Topbar({ onMenuClick }: TopbarProps) {
         </h1>
       </div>
 
-      {/* Right: Actions */}
+      {}
       <div className="flex items-center gap-2">
-        {/* Search */}
+        {}
         <Tooltip>
           <TooltipTrigger asChild>
             <Button
@@ -115,10 +112,10 @@ export function Topbar({ onMenuClick }: TopbarProps) {
           </TooltipContent>
         </Tooltip>
 
-        {/* Notifications */}
+        {}
         <NotificationsDropdown />
 
-        {/* Theme Toggle */}
+        {}
         <Tooltip>
           <TooltipTrigger asChild>
             <Button variant="ghost" size="icon" onClick={() => toggleTheme()}>
@@ -132,7 +129,7 @@ export function Topbar({ onMenuClick }: TopbarProps) {
           <TooltipContent>Toggle theme</TooltipContent>
         </Tooltip>
 
-        {/* User Menu */}
+        {}
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
             <Button variant="ghost" className="relative h-8 w-8 rounded-full">
@@ -174,7 +171,7 @@ export function Topbar({ onMenuClick }: TopbarProps) {
         </DropdownMenu>
       </div>
 
-      {/* Search Dialog */}
+      {}
       <SearchDialog open={searchOpen} onOpenChange={setSearchOpen} />
     </header>
   );

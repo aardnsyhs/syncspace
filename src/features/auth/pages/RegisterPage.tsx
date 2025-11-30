@@ -1,4 +1,3 @@
-// src/features/auth/pages/RegisterPage.tsx
 import { useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -58,7 +57,6 @@ export function RegisterPage() {
     setFocus("name");
   }, [setFocus]);
 
-  // Redirect if already authenticated
   useEffect(() => {
     if (isAuthenticated && !authLoading) {
       navigate("/app", { replace: true });
@@ -77,7 +75,7 @@ export function RegisterPage() {
       };
 
       if (error.status === 422 && error.errors) {
-        // Map server validation errors to form fields
+        
         Object.entries(error.errors).forEach(([field, messages]) => {
           if (
             field === "name" ||
@@ -110,7 +108,7 @@ export function RegisterPage() {
       <Card className="border-0 shadow-none lg:border lg:shadow-sm">
         <form onSubmit={handleSubmit(onSubmit)}>
           <CardContent className="space-y-4 px-0 lg:px-6 pt-0 lg:pt-6">
-            {/* Name */}
+            {}
             <div className="space-y-2">
               <Label htmlFor="name">Full Name</Label>
               <div className="relative">
@@ -131,7 +129,7 @@ export function RegisterPage() {
               )}
             </div>
 
-            {/* Email */}
+            {}
             <div className="space-y-2">
               <Label htmlFor="email">Email</Label>
               <div className="relative">
@@ -152,7 +150,7 @@ export function RegisterPage() {
               )}
             </div>
 
-            {/* Password */}
+            {}
             <div className="space-y-2">
               <Label htmlFor="password">Password</Label>
               <div className="relative">
@@ -176,7 +174,7 @@ export function RegisterPage() {
               </p>
             </div>
 
-            {/* Confirm Password */}
+            {}
             <div className="space-y-2">
               <Label htmlFor="password_confirmation">Confirm Password</Label>
               <div className="relative">

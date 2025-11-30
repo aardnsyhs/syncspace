@@ -23,18 +23,18 @@ import {
 import type { BoardTemplate } from "../hooks/useBoardTemplates";
 
 const BOARD_COLORS = [
-  "#6366f1", // indigo
-  "#8b5cf6", // violet
-  "#ec4899", // pink
-  "#ef4444", // red
-  "#f97316", // orange
-  "#eab308", // yellow
-  "#22c55e", // green
-  "#14b8a6", // teal
-  "#06b6d4", // cyan
-  "#3b82f6", // blue
-  "#64748b", // slate
-  "#78716c", // stone
+  "#6366f1", 
+  "#8b5cf6", 
+  "#ec4899", 
+  "#ef4444", 
+  "#f97316", 
+  "#eab308", 
+  "#22c55e", 
+  "#14b8a6", 
+  "#06b6d4", 
+  "#3b82f6", 
+  "#64748b", 
+  "#78716c", 
 ];
 
 interface Props {
@@ -92,7 +92,7 @@ export function BoardTemplatePicker({
           boardColor
         );
       }
-      // Reset state - parent will close dialog
+      
       setSelectedTemplate(null);
       setBoardName("");
       setBoardDescription("");
@@ -136,7 +136,7 @@ export function BoardTemplatePicker({
                 </div>
               ) : (
                 <div className="space-y-4">
-                  {/* Global Templates */}
+                  {}
                   {globalTemplates.length > 0 && (
                     <div>
                       <h4 className="text-sm font-medium text-muted-foreground mb-2 flex items-center gap-1">
@@ -156,7 +156,7 @@ export function BoardTemplatePicker({
                     </div>
                   )}
 
-                  {/* Team Templates */}
+                  {}
                   {teamTemplates.length > 0 && (
                     <div>
                       <h4 className="text-sm font-medium text-muted-foreground mb-2 flex items-center gap-1">
@@ -184,7 +184,7 @@ export function BoardTemplatePicker({
                 </div>
               )}
 
-              {/* Selected template preview */}
+              {}
               {selectedTemplate && (
                 <div className="mt-4 p-4 border rounded-lg bg-muted/30">
                   <h4 className="font-medium mb-2">{selectedTemplate.name}</h4>
@@ -213,7 +213,7 @@ export function BoardTemplatePicker({
           </TabsContent>
         </Tabs>
 
-        {/* Board name input */}
+        {}
         <div className="space-y-3 pt-4 border-t">
           <div className="space-y-2">
             <Label htmlFor="board-name">Board Name</Label>

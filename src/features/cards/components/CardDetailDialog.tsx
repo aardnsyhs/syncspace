@@ -208,11 +208,11 @@ export function CardDetailDialog({
           </div>
         ) : (
           <div className="flex flex-col md:flex-row h-[85vh]">
-            {/* Left Panel - Card Details */}
+            {}
             <div className="flex-1 overflow-y-auto p-4 md:p-6">
               <DialogHeader className="pr-8">
                 <div className="flex items-start justify-between gap-2">
-                  {/* Title */}
+                  {}
                   {isEditingTitle ? (
                     <Input
                       value={editedTitle}
@@ -230,7 +230,7 @@ export function CardDetailDialog({
                       {card.title}
                     </DialogTitle>
                   )}
-                  {/* Delete Button */}
+                  {}
                   <AlertDialog>
                     <AlertDialogTrigger asChild>
                       <Button
@@ -273,7 +273,7 @@ export function CardDetailDialog({
               </DialogHeader>
 
               <div className="space-y-6 mt-4">
-                {/* Labels */}
+                {}
                 <div className="space-y-2">
                   <div className="flex items-center gap-2">
                     <Tag className="h-4 w-4 text-muted-foreground" />
@@ -307,9 +307,9 @@ export function CardDetailDialog({
                   </div>
                 </div>
 
-                {/* Due Date & Assignee row */}
+                {}
                 <div className="flex gap-6">
-                  {/* Due Date */}
+                  {}
                   <div className="space-y-1">
                     <div className="flex items-center gap-2 text-sm text-muted-foreground">
                       <CalendarIcon className="h-4 w-4" />
@@ -342,7 +342,7 @@ export function CardDetailDialog({
                           }
                           onSelect={async (date: Date | undefined) => {
                             try {
-                              // Format date in local timezone (YYYY-MM-DD)
+                              
                               const formattedDate = date
                                 ? `${date.getFullYear()}-${String(
                                     date.getMonth() + 1
@@ -384,7 +384,7 @@ export function CardDetailDialog({
                     </Popover>
                   </div>
 
-                  {/* Assignee */}
+                  {}
                   <div className="space-y-1">
                     <div className="flex items-center gap-2 text-sm text-muted-foreground">
                       <User className="h-4 w-4" />
@@ -422,7 +422,7 @@ export function CardDetailDialog({
                   </div>
                 </div>
 
-                {/* Description */}
+                {}
                 <div className="space-y-2">
                   <div className="flex items-center gap-2">
                     <AlignLeft className="h-4 w-4 text-muted-foreground" />
@@ -467,7 +467,7 @@ export function CardDetailDialog({
                   )}
                 </div>
 
-                {/* Checklists */}
+                {}
                 <ChecklistView
                   checklists={card.checklists}
                   onAddChecklist={async (title) => {
@@ -510,7 +510,7 @@ export function CardDetailDialog({
                   }}
                 />
 
-                {/* Attachments */}
+                {}
                 <AttachmentList
                   attachments={card.attachments}
                   onUpload={async (file) => {
@@ -544,7 +544,7 @@ export function CardDetailDialog({
               </div>
             </div>
 
-            {/* Mobile Comments Toggle */}
+            {}
             <div className="md:hidden border-t p-3">
               <Button
                 variant="outline"
@@ -555,7 +555,7 @@ export function CardDetailDialog({
               </Button>
             </div>
 
-            {/* Right Panel - Comments (hidden on mobile unless toggled) */}
+            {}
             <div
               className={`${
                 showComments ? "block" : "hidden"

@@ -1,5 +1,3 @@
-// Board event types for real-time updates
-
 export interface BoardEventPayload {
   board: {
     id: number;
@@ -42,7 +40,7 @@ export interface CardEventPayload {
       color: string;
     }>;
   };
-  column_id?: number; // For CardCreated
+  column_id?: number; 
 }
 
 export interface CardDeletedPayload {
@@ -71,7 +69,6 @@ export interface CommentCreatedPayload {
   card_id: number;
 }
 
-// Event names as constants
 export const BOARD_EVENTS = {
   BOARD_UPDATED: ".BoardUpdated",
   COLUMN_CREATED: ".ColumnCreated",

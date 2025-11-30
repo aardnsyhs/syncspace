@@ -1,7 +1,6 @@
 import Echo from "laravel-echo";
 import Pusher from "pusher-js";
 
-// Make Pusher available globally for Laravel Echo
 declare global {
   interface Window {
     Pusher: typeof Pusher;
@@ -14,14 +13,11 @@ window.Echo = null;
 
 let echoInstance: Echo<"pusher"> | null = null;
 
-// Lazy initialization - only create Echo when authenticated
 export function initializeEcho(): Echo<"pusher"> {
   if (echoInstance) {
     return echoInstance;
   }
 
-  // For Ably with Pusher protocol, we need the full key for connection
-  // Format: appKey.keyId:keySecret -> use appKey.keyId for Pusher key
   const ablyKey = import.meta.env.VITE_ABLY_KEY || "";
   const [keyPart] = ablyKey.split(":");
 
@@ -49,7 +45,6 @@ export function initializeEcho(): Echo<"pusher"> {
   return echoInstance;
 }
 
-// Disconnect and cleanup Echo
 export function disconnectEcho() {
   if (echoInstance) {
     echoInstance.disconnect();
@@ -58,7 +53,6 @@ export function disconnectEcho() {
   }
 }
 
-// Get current Echo instance (may be null if not authenticated)
 export function getEcho(): Echo<"pusher"> | null {
   return echoInstance;
 }

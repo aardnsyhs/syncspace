@@ -71,7 +71,6 @@ export function SettingsPage() {
   const [inviteRole, setInviteRole] = useState("member");
   const [isInviting, setIsInviting] = useState(false);
 
-  // Preferences
   const [emailNotifications, setEmailNotifications] = useState(true);
   const [desktopNotifications, setDesktopNotifications] = useState(true);
 
@@ -292,7 +291,7 @@ export function SettingsPage() {
           <TabsTrigger value="notifications">Notifications</TabsTrigger>
         </TabsList>
 
-        {/* Workspace Settings */}
+        {}
         <TabsContent value="workspace" className="space-y-6">
           <Card>
             <CardHeader>
@@ -352,7 +351,7 @@ export function SettingsPage() {
           </Card>
         </TabsContent>
 
-        {/* Members Settings */}
+        {}
         <TabsContent value="members" className="space-y-6">
           <Card>
             <CardHeader>
@@ -452,7 +451,7 @@ export function SettingsPage() {
           </Card>
         </TabsContent>
 
-        {/* Notification Settings */}
+        {}
         <TabsContent value="notifications" className="space-y-6">
           <Card>
             <CardHeader>

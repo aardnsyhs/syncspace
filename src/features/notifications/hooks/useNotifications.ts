@@ -67,7 +67,6 @@ export function useNotifications(): UseNotificationsReturn {
     }
   }, []);
 
-  // Subscribe to real-time notifications
   useEffect(() => {
     if (!user?.id) return;
 
@@ -75,12 +74,11 @@ export function useNotifications(): UseNotificationsReturn {
     const channel = echo.private(`user.${user.id}`);
 
     channel.listen(".UserNotification", (payload: RealTimeNotification) => {
-      // Show toast notification
+      
       toast(payload.title, {
         description: payload.message,
       });
 
-      // Refetch to get the new notification with proper ID
       fetchNotifications();
     });
 
@@ -89,7 +87,6 @@ export function useNotifications(): UseNotificationsReturn {
     };
   }, [user?.id, fetchNotifications]);
 
-  // Initial fetch
   useEffect(() => {
     fetchNotifications();
   }, [fetchNotifications]);

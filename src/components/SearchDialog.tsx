@@ -54,7 +54,7 @@ export function SearchDialog({ open, onOpenChange }: SearchDialogProps) {
 
     setIsLoading(true);
     try {
-      // Search boards
+      
       const boardsRes = await fetch(
         `${API_URL}/api/teams?search=${encodeURIComponent(searchQuery)}`,
         {
@@ -127,7 +127,7 @@ export function SearchDialog({ open, onOpenChange }: SearchDialogProps) {
 
         <CommandEmpty>No results found.</CommandEmpty>
 
-        {/* Quick Navigation */}
+        {}
         <CommandGroup heading="Navigation">
           <CommandItem onSelect={() => handleSelect("dashboard")}>
             <PanelsTopLeft className="mr-2 h-4 w-4" />
@@ -143,7 +143,7 @@ export function SearchDialog({ open, onOpenChange }: SearchDialogProps) {
           </CommandItem>
         </CommandGroup>
 
-        {/* Board Results */}
+        {}
         {results.boards.length > 0 && (
           <CommandGroup heading="Boards">
             {results.boards.map((board) => (
@@ -161,7 +161,7 @@ export function SearchDialog({ open, onOpenChange }: SearchDialogProps) {
           </CommandGroup>
         )}
 
-        {/* Card Results */}
+        {}
         {results.cards.length > 0 && (
           <CommandGroup heading="Cards">
             {results.cards.map((card) => (

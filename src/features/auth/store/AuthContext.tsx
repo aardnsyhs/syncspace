@@ -1,4 +1,3 @@
-// src/features/auth/store/AuthContext.tsx
 import {
   createContext,
   useContext,
@@ -42,7 +41,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     error: null,
   });
 
-  // Check auth status on mount
   useEffect(() => {
     const checkAuth = async () => {
       try {

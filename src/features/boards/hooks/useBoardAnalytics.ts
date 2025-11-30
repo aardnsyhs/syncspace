@@ -1,7 +1,6 @@
 import { useState, useEffect, useCallback } from "react";
 import { api } from "@/lib/api";
 
-// Types
 export interface ColumnStat {
   id: number;
   name: string;
@@ -42,7 +41,6 @@ export interface AssigneeData {
   card_count: number;
 }
 
-// Hook for summary analytics
 export function useBoardAnalyticsSummary(
   boardId: number | null,
   _token: string | null
@@ -80,7 +78,6 @@ export function useBoardAnalyticsSummary(
   return { data, isLoading, error, refetch: fetchData };
 }
 
-// Hook for throughput data
 export function useBoardThroughput(
   boardId: number | null,
   _token: string | null,
@@ -120,7 +117,6 @@ export function useBoardThroughput(
   return { data, isLoading, error, refetch: fetchData };
 }
 
-// Hook for cumulative flow data
 export function useBoardCumulativeFlow(
   boardId: number | null,
   _token: string | null,
@@ -160,7 +156,6 @@ export function useBoardCumulativeFlow(
   return { data, isLoading, error, refetch: fetchData };
 }
 
-// Hook for assignee distribution
 export function useBoardAssigneeDistribution(
   boardId: number | null,
   _token: string | null

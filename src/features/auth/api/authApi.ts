@@ -1,4 +1,3 @@
-// src/features/auth/api/authApi.ts
 import { api } from "@/lib/api";
 
 const API_URL = import.meta.env.VITE_API_URL;
@@ -29,14 +28,12 @@ export interface AuthResponse {
   token: string;
 }
 
-// Get CSRF cookie (required before login/register for Sanctum SPA)
 export async function getCsrfCookie(): Promise<void> {
   await fetch(`${API_URL}/sanctum/csrf-cookie`, {
     credentials: "include",
   });
 }
 
-// Login
 export async function login(
   credentials: LoginCredentials
 ): Promise<AuthResponse> {
@@ -54,7 +51,6 @@ export async function login(
   return { user: response.data, token: response.token };
 }
 
-// Register
 export async function register(data: RegisterData): Promise<AuthResponse> {
   await getCsrfCookie();
 
@@ -70,7 +66,6 @@ export async function register(data: RegisterData): Promise<AuthResponse> {
   return { user: response.data, token: response.token };
 }
 
-// Logout
 export async function logout(): Promise<void> {
   try {
     await api.post("/api/logout");
@@ -79,7 +74,6 @@ export async function logout(): Promise<void> {
   }
 }
 
-// Get current user
 export async function fetchCurrentUser(): Promise<User | null> {
   const token = localStorage.getItem("token");
 

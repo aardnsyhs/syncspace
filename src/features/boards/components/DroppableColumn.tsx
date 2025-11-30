@@ -96,7 +96,7 @@ export function DroppableColumn({
         onUpdate={onUpdate}
       />
 
-      {/* Cards */}
+      {}
       <div
         ref={setNodeRef}
         className="flex-1 p-2 space-y-2 overflow-y-auto min-h-[100px]"
@@ -118,7 +118,7 @@ export function DroppableColumn({
         )}
       </div>
 
-      {/* Add Card */}
+      {}
       <div className="p-2">
         {isAddingCard ? (
           <div className="space-y-2">

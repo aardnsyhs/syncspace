@@ -17,7 +17,7 @@ interface UseBoardLabelsReturn {
 
 export function useBoardLabels(
   boardId: number | null,
-  _token: string | null // kept for backward compatibility
+  _token: string | null 
 ): UseBoardLabelsReturn {
   const [labels, setLabels] = useState<Label[]>([]);
   const [isLoading, setIsLoading] = useState(true);

@@ -1,4 +1,3 @@
-// src/components/ErrorBoundary.tsx
 import { Component, type ReactNode } from "react";
 import { AlertTriangle, RefreshCw } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -24,12 +23,11 @@ export class ErrorBoundary extends Component<Props, State> {
   }
 
   componentDidCatch(error: Error, errorInfo: React.ErrorInfo) {
-    // Log to error reporting service (e.g., Sentry)
+    
     console.error("ErrorBoundary caught an error:", error, errorInfo);
 
-    // In production, send to error tracking
     if (import.meta.env.PROD) {
-      // Example: Sentry.captureException(error, { extra: errorInfo });
+      
     }
   }
 

@@ -39,19 +39,16 @@ export function useBoardChannel(
     onCommentCreated,
   } = callbacks;
 
-  // Memoize the subscribe function
   const subscribe = useCallback(() => {
     if (!boardId) return null;
 
     const echo = getEcho() || initializeEcho();
     const channel = echo.private(`board.${boardId}`);
 
-    // Board events
     if (onBoardUpdated) {
       channel.listen(BOARD_EVENTS.BOARD_UPDATED, onBoardUpdated);
     }
 
-    // Column events
     if (onColumnCreated) {
       channel.listen(BOARD_EVENTS.COLUMN_CREATED, onColumnCreated);
     }
@@ -62,7 +59,6 @@ export function useBoardChannel(
       channel.listen(BOARD_EVENTS.COLUMN_DELETED, onColumnDeleted);
     }
 
-    // Card events
     if (onCardCreated) {
       channel.listen(BOARD_EVENTS.CARD_CREATED, (payload: CardEventPayload) => {
         onCardCreated(payload);
@@ -87,7 +83,6 @@ export function useBoardChannel(
       });
     }
 
-    // Comment events
     if (onCommentCreated) {
       channel.listen(BOARD_EVENTS.COMMENT_CREATED, onCommentCreated);
     }
@@ -109,7 +104,6 @@ export function useBoardChannel(
   useEffect(() => {
     subscribe();
 
-    // Cleanup: unsubscribe when component unmounts or boardId changes
     return () => {
       if (boardId) {
         const echo = getEcho();

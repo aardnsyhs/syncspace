@@ -31,7 +31,6 @@ import {
   type DragEndEvent,
 } from "@dnd-kit/core";
 
-// Components
 import { BoardFiltersBar } from "../components/BoardFiltersBar";
 import { BoardSettingsPanel } from "../components/BoardSettingsPanel";
 import { CreateBoardDialog } from "../components/CreateBoardDialog";
@@ -42,17 +41,14 @@ import { OnlineUsers } from "../components/OnlineUsers";
 import { DroppableColumn } from "../components/DroppableColumn";
 import { BoardAnalyticsDialog } from "../components/BoardAnalyticsDialog";
 
-// Hooks
 import { useBoardChannel } from "../hooks/useBoardChannel";
 import { useBoardFilters } from "../hooks/useBoardFilters";
 import { useBoardLabels } from "@/features/cards/hooks/useBoardLabels";
 import { useBoardPresence } from "../hooks/useBoardPresence";
 import { useBoardActivities } from "../hooks/useBoardActivities";
 
-// API
 import { api } from "@/lib/api";
 
-// Types
 import type {
   CardEventPayload,
   CardDeletedPayload,
@@ -80,20 +76,18 @@ export function BoardPage({ boardId: propBoardId }: BoardPageProps) {
   const { user } = useAuth();
   const [searchParams, setSearchParams] = useSearchParams();
 
-  // State
   const [board, setBoard] = useState<BoardData | null>(null);
   const [isLoadingBoard, setIsLoadingBoard] = useState(true);
   const [selectedCardId, setSelectedCardId] = useState<number | null>(null);
   const [showSettings, setShowSettings] = useState(false);
 
-  // Handle card query param from notification click
   useEffect(() => {
     const cardParam = searchParams.get("card");
     if (cardParam) {
       const cardId = parseInt(cardParam);
       if (!isNaN(cardId)) {
         setSelectedCardId(cardId);
-        // Clear the query param after opening
+        
         setSearchParams({}, { replace: true });
       }
     }
@@ -101,7 +95,6 @@ export function BoardPage({ boardId: propBoardId }: BoardPageProps) {
   const [showActivity, setShowActivity] = useState(false);
   const [showAnalytics, setShowAnalytics] = useState(false);
 
-  // Add Card state
   const [addingCardToColumn, setAddingCardToColumn] = useState<number | null>(
     null
   );
@@ -181,7 +174,6 @@ export function BoardPage({ boardId: propBoardId }: BoardPageProps) {
     fetchBoard();
   }, [fetchBoard]);
 
-  // Fetch team members when board is loaded
   useEffect(() => {
     const fetchTeamMembers = async () => {
       if (!board?.team_id) return;
@@ -199,7 +191,6 @@ export function BoardPage({ boardId: propBoardId }: BoardPageProps) {
     fetchTeamMembers();
   }, [board?.team_id]);
 
-  // Real-time handlers
   const handleColumnCreated = useCallback(
     (_payload: ColumnEventPayload) => {
       refetchCards();
@@ -252,7 +243,6 @@ export function BoardPage({ boardId: propBoardId }: BoardPageProps) {
     [refetchCards]
   );
 
-  // Create new card
   const handleCreateCard = async (columnId: number) => {
     if (!newCardTitle.trim()) return;
 
@@ -270,7 +260,6 @@ export function BoardPage({ boardId: propBoardId }: BoardPageProps) {
     }
   };
 
-  // Create new column
   const handleCreateColumn = async () => {
     if (!newColumnName.trim()) return;
 
@@ -288,7 +277,6 @@ export function BoardPage({ boardId: propBoardId }: BoardPageProps) {
     }
   };
 
-  // Drag handlers
   const handleDragStart = (event: DragStartEvent) => {
     const { active } = event;
     const cardData = active.data.current?.card;
@@ -306,7 +294,6 @@ export function BoardPage({ boardId: propBoardId }: BoardPageProps) {
     const activeId = String(active.id);
     const overId = String(over.id);
 
-    // Extract card ID from "card-123" format
     const cardId = parseInt(activeId.replace("card-", ""));
 
     // Determine target column
@@ -342,7 +329,6 @@ export function BoardPage({ boardId: propBoardId }: BoardPageProps) {
     }
   };
 
-  // Subscribe to real-time updates
   useBoardChannel(boardId, {
     onColumnCreated: handleColumnCreated,
     onColumnUpdated: handleColumnUpdated,
@@ -353,7 +339,6 @@ export function BoardPage({ boardId: propBoardId }: BoardPageProps) {
     onCardMoved: handleCardMoved,
   });
 
-  // Group cards by column
   const cardsByColumn = cards.reduce((acc, card) => {
     if (!acc[card.column_id]) acc[card.column_id] = [];
     acc[card.column_id].push(card);
@@ -374,10 +359,10 @@ export function BoardPage({ boardId: propBoardId }: BoardPageProps) {
 
   return (
     <div className="h-full flex flex-col -m-4 md:-m-6">
-      {/* Board Header */}
+      {}
       <div className="px-3 md:px-4 py-2 md:py-3 border-b flex flex-col sm:flex-row sm:items-center justify-between gap-2">
         <div className="flex items-center gap-2 md:gap-4 min-w-0">
-          {/* Board Color Indicator */}
+          {}
           {board.color && (
             <div
               className="w-3 h-10 rounded-full flex-shrink-0"
@@ -407,7 +392,7 @@ export function BoardPage({ boardId: propBoardId }: BoardPageProps) {
         <div className="flex items-center gap-1 md:gap-2 flex-shrink-0 overflow-x-auto">
           <OnlineUsers members={onlineMembers} />
 
-          {/* Mobile Menu */}
+          {}
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <Button variant="outline" size="icon" className="sm:hidden">
@@ -425,7 +410,7 @@ export function BoardPage({ boardId: propBoardId }: BoardPageProps) {
             </DropdownMenuContent>
           </DropdownMenu>
 
-          {/* Desktop Buttons */}
+          {}
           <Button
             variant="outline"
             size="sm"
@@ -465,7 +450,7 @@ export function BoardPage({ boardId: propBoardId }: BoardPageProps) {
         </div>
       </div>
 
-      {/* Filters Bar */}
+      {}
       <BoardFiltersBar
         filters={filters}
         onSearchChange={setSearch}
@@ -480,9 +465,9 @@ export function BoardPage({ boardId: propBoardId }: BoardPageProps) {
         isLoading={isLoadingCards}
       />
 
-      {/* Main Content */}
+      {}
       <div className="flex-1 flex overflow-hidden">
-        {/* Board Columns */}
+        {}
         <DndContext
           sensors={sensors}
           collisionDetection={closestCorners}
@@ -569,7 +554,7 @@ export function BoardPage({ boardId: propBoardId }: BoardPageProps) {
             </div>
           </div>
 
-          {/* Drag Overlay */}
+          {}
           <DragOverlay>
             {activeCard && (
               <div className="bg-background rounded-lg border p-3 shadow-lg w-72 opacity-90">
@@ -583,7 +568,7 @@ export function BoardPage({ boardId: propBoardId }: BoardPageProps) {
           </DragOverlay>
         </DndContext>
 
-        {/* Activity Sidebar */}
+        {}
         {showActivity && (
           <div className="w-80 border-l bg-background overflow-y-auto">
             <div className="p-4">
@@ -597,7 +582,7 @@ export function BoardPage({ boardId: propBoardId }: BoardPageProps) {
         )}
       </div>
 
-      {/* Card Detail Dialog */}
+      {}
       <CardDetailDialog
         cardId={selectedCardId}
         boardId={boardId}
@@ -609,7 +594,7 @@ export function BoardPage({ boardId: propBoardId }: BoardPageProps) {
         teamMembers={teamMembers}
       />
 
-      {/* Board Settings Panel */}
+      {}
       <BoardSettingsPanel
         boardId={boardId}
         boardName={board.name}
@@ -625,7 +610,7 @@ export function BoardPage({ boardId: propBoardId }: BoardPageProps) {
         onBoardUpdated={fetchBoard}
       />
 
-      {/* Board Analytics Dialog */}
+      {}
       <BoardAnalyticsDialog
         boardId={boardId}
         boardName={board.name}

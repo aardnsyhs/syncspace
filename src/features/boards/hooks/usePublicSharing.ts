@@ -105,7 +105,6 @@ export function usePublicSharing(
   };
 }
 
-// Hook for fetching public board (no auth required)
 export function usePublicBoard(publicToken: string | null) {
   const [board, setBoard] = useState<PublicBoardData | null>(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -122,7 +121,7 @@ export function usePublicBoard(publicToken: string | null) {
     setError(null);
 
     try {
-      // Public endpoint - no auth needed, use raw fetch
+      
       const res = await fetch(`${API_URL}/api/public/boards/${publicToken}`, {
         headers: { Accept: "application/json" },
       });

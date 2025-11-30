@@ -1,5 +1,3 @@
-// src/lib/api-error.ts
-
 export interface ApiError {
   message: string;
   fieldErrors?: Record<string, string[]>;
@@ -7,11 +5,8 @@ export interface ApiError {
   isNetworkError?: boolean;
 }
 
-/**
- * Normalize API errors into a consistent format
- */
 export function normalizeApiError(error: unknown): ApiError {
-  // Network error (no response)
+  
   if (error instanceof TypeError && error.message === "Failed to fetch") {
     return {
       message:
@@ -20,7 +15,6 @@ export function normalizeApiError(error: unknown): ApiError {
     };
   }
 
-  // Error with status and errors (validation)
   if (isApiErrorResponse(error)) {
     return {
       message: error.message || "Validation failed",
@@ -29,22 +23,17 @@ export function normalizeApiError(error: unknown): ApiError {
     };
   }
 
-  // Standard Error object
   if (error instanceof Error) {
     return {
       message: error.message || "An unexpected error occurred",
     };
   }
 
-  // Unknown error
   return {
     message: "An unexpected error occurred. Please try again.",
   };
 }
 
-/**
- * Type guard for API error responses
- */
 function isApiErrorResponse(
   error: unknown
 ): error is {
@@ -60,11 +49,8 @@ function isApiErrorResponse(
   );
 }
 
-/**
- * Get user-friendly error message (hides internal details in production)
- */
 export function getUserFriendlyMessage(error: ApiError): string {
-  // In production, don't expose internal error details
+  
   if (import.meta.env.PROD) {
     if (error.status === 500) {
       return "Something went wrong on our end. Please try again later.";
@@ -77,9 +63,6 @@ export function getUserFriendlyMessage(error: ApiError): string {
   return error.message;
 }
 
-/**
- * Get first field error message
- */
 export function getFirstFieldError(
   fieldErrors: Record<string, string[]> | undefined,
   field: string
@@ -87,23 +70,14 @@ export function getFirstFieldError(
   return fieldErrors?.[field]?.[0];
 }
 
-/**
- * Check if error is authentication related
- */
 export function isAuthError(error: ApiError): boolean {
   return error.status === 401 || error.status === 419;
 }
 
-/**
- * Check if error is permission related
- */
 export function isPermissionError(error: ApiError): boolean {
   return error.status === 403;
 }
 
-/**
- * Check if error is validation related
- */
 export function isValidationError(error: ApiError): boolean {
   return error.status === 422 && !!error.fieldErrors;
 }

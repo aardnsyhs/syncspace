@@ -38,7 +38,7 @@ export function BoardAnalyticsSummary({ data, isLoading }: Props) {
 
   return (
     <div className="space-y-6">
-      {/* Key Metrics */}
+      {}
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
         <MetricCard
           title="Total Cards"
@@ -70,7 +70,7 @@ export function BoardAnalyticsSummary({ data, isLoading }: Props) {
         />
       </div>
 
-      {/* WIP Warning */}
+      {}
       {wipWarning && (
         <div className="flex items-center gap-2 p-3 bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-lg text-yellow-800 dark:text-yellow-200">
           <AlertTriangle className="h-4 w-4" />
@@ -81,7 +81,7 @@ export function BoardAnalyticsSummary({ data, isLoading }: Props) {
         </div>
       )}
 
-      {/* Cards per Column */}
+      {}
       <Card>
         <CardHeader className="pb-2">
           <CardTitle className="text-base font-medium flex items-center gap-2">
@@ -130,7 +130,7 @@ export function BoardAnalyticsSummary({ data, isLoading }: Props) {
         </CardContent>
       </Card>
 
-      {/* 30-day Stats */}
+      {}
       <div className="grid gap-4 md:grid-cols-2">
         <Card>
           <CardHeader className="pb-2">

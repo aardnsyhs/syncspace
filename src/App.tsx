@@ -13,7 +13,6 @@ import { ErrorBoundary } from "@/components/ErrorBoundary";
 import { MainLayout } from "@/components/layout";
 import { AuthProvider, ProtectedRoute, GuestRoute } from "@/features/auth";
 
-// Lazy load pages
 const LoginPage = lazy(() =>
   import("@/features/auth").then((m) => ({ default: m.LoginPage }))
 );
@@ -42,7 +41,6 @@ const ProfilePage = lazy(() =>
   import("@/features/profile").then((m) => ({ default: m.ProfilePage }))
 );
 
-// Loading fallback component
 function PageLoader() {
   return (
     <div className="flex items-center justify-center h-screen">
@@ -54,17 +52,14 @@ function PageLoader() {
 function App() {
   const [theme, setTheme] = useState<"light" | "dark">("dark");
 
-  // Listen for theme changes on documentElement
   useEffect(() => {
     const checkTheme = () => {
       const isDark = document.documentElement.classList.contains("dark");
       setTheme(isDark ? "dark" : "light");
     };
 
-    // Initial check
     checkTheme();
 
-    // Observe class changes on html element
     const observer = new MutationObserver(checkTheme);
     observer.observe(document.documentElement, {
       attributes: true,
@@ -80,10 +75,10 @@ function App() {
         <AuthProvider>
           <Suspense fallback={<PageLoader />}>
             <Routes>
-              {/* Public routes */}
+              {}
               <Route path="/" element={<Navigate to="/app" replace />} />
 
-              {/* Auth routes (guest only) */}
+              {}
               <Route
                 path="/login"
                 element={
@@ -101,10 +96,10 @@ function App() {
                 }
               />
 
-              {/* Public board route - no auth required */}
+              {}
               <Route path="/p/:token" element={<PublicBoardWrapper />} />
 
-              {/* Protected routes */}
+              {}
               <Route
                 path="/app"
                 element={
@@ -166,7 +161,7 @@ function App() {
                 }
               />
 
-              {/* Catch all - redirect to app */}
+              {}
               <Route path="*" element={<Navigate to="/app" replace />} />
             </Routes>
           </Suspense>
@@ -190,13 +185,11 @@ function App() {
   );
 }
 
-// Wrapper to extract boardId from URL params
 function BoardPageWrapper() {
   const { boardId } = useParams<{ boardId: string }>();
   return <BoardPage boardId={boardId ? parseInt(boardId) : undefined} />;
 }
 
-// Wrapper to extract token from URL params
 function PublicBoardWrapper() {
   const { token } = useParams<{ token: string }>();
   if (!token) {

@@ -98,13 +98,11 @@ export function ProfilePage() {
     const file = e.target.files?.[0];
     if (!file) return;
 
-    // Validate file type
     if (!file.type.startsWith("image/")) {
       toast.error("Please select an image file");
       return;
     }
 
-    // Validate file size (max 5MB before compression)
     if (file.size > 5 * 1024 * 1024) {
       toast.error("Image must be less than 5MB");
       return;
@@ -112,15 +110,13 @@ export function ProfilePage() {
 
     setIsUploadingAvatar(true);
     try {
-      // Compress image
+      
       const compressedBlob = await compressImage(file, 400, 400, 0.8);
       const compressedFile = blobToFile(compressedBlob, "avatar.jpg");
 
-      // Show preview
       const previewUrl = URL.createObjectURL(compressedBlob);
       setAvatarPreview(previewUrl);
 
-      // Upload to server
       const formData = new FormData();
       formData.append("avatar", compressedFile);
 
@@ -129,7 +125,6 @@ export function ProfilePage() {
         formData
       );
 
-      // Update user state without refresh
       if (response.data?.avatar_url) {
         updateUser({ avatar_url: response.data.avatar_url });
       }
@@ -142,7 +137,7 @@ export function ProfilePage() {
       setAvatarPreview(null);
     } finally {
       setIsUploadingAvatar(false);
-      // Reset input
+      
       if (fileInputRef.current) {
         fileInputRef.current.value = "";
       }
@@ -163,7 +158,7 @@ export function ProfilePage() {
         </p>
       </div>
 
-      {/* Avatar Section */}
+      {}
       <Card>
         <CardHeader>
           <CardTitle>Avatar</CardTitle>
@@ -210,7 +205,7 @@ export function ProfilePage() {
         </CardContent>
       </Card>
 
-      {/* Profile Information */}
+      {}
       <Card>
         <CardHeader>
           <CardTitle>Profile Information</CardTitle>
@@ -246,7 +241,7 @@ export function ProfilePage() {
 
       <Separator />
 
-      {/* Change Password */}
+      {}
       <Card>
         <CardHeader>
           <CardTitle>Change Password</CardTitle>

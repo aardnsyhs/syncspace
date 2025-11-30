@@ -1,4 +1,3 @@
-// Components
 export { BoardView } from "./components/BoardView";
 export { OnlineUsers } from "./components/OnlineUsers";
 export { ActivityFeed } from "./components/ActivityFeed";
@@ -17,12 +16,10 @@ export { BoardSettingsPanel } from "./components/BoardSettingsPanel";
 export { BoardAnalyticsDialog } from "./components/BoardAnalyticsDialog";
 export { CreateBoardDialog } from "./components/CreateBoardDialog";
 
-// Pages
 export { BoardPage } from "./pages/BoardPage";
 export { BoardsListPage } from "./pages/BoardsListPage";
 export { PublicBoardPage } from "./pages/PublicBoardPage";
 
-// Hooks
 export { useBoardChannel } from "./hooks/useBoardChannel";
 export { useBoardPresence } from "./hooks/useBoardPresence";
 export { useBoardActivities } from "./hooks/useBoardActivities";
@@ -36,7 +33,6 @@ export {
   useBoardAssigneeDistribution,
 } from "./hooks/useBoardAnalytics";
 
-// Types
 export type {
   FilterState,
   FilteredCard,
