@@ -10,6 +10,7 @@ interface UseCardReturn {
   updateCard: (
     data: Partial<CardDetail> & { assignee_id?: number | null }
   ) => Promise<void>;
+  deleteCard: () => Promise<void>;
   attachLabel: (labelIds: number[]) => Promise<void>;
   detachLabel: (labelId: number) => Promise<void>;
   addChecklist: (title: string) => Promise<Checklist>;
@@ -78,6 +79,12 @@ export function useCard(
       data
     );
     setCard((prev) => (prev ? { ...prev, ...updated.data } : null));
+  };
+
+  const deleteCard = async () => {
+    if (!cardId) return;
+    await api.delete(`/api/cards/${cardId}`);
+    setCard(null);
   };
 
   const attachLabel = async (labelIds: number[]) => {
@@ -225,6 +232,7 @@ export function useCard(
     error,
     refetch: fetchCard,
     updateCard,
+    deleteCard,
     attachLabel,
     detachLabel,
     addChecklist,

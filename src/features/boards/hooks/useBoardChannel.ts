@@ -64,16 +64,27 @@ export function useBoardChannel(
 
     // Card events
     if (onCardCreated) {
-      channel.listen(BOARD_EVENTS.CARD_CREATED, onCardCreated);
+      channel.listen(BOARD_EVENTS.CARD_CREATED, (payload: CardEventPayload) => {
+        onCardCreated(payload);
+      });
     }
     if (onCardUpdated) {
-      channel.listen(BOARD_EVENTS.CARD_UPDATED, onCardUpdated);
+      channel.listen(BOARD_EVENTS.CARD_UPDATED, (payload: CardEventPayload) => {
+        onCardUpdated(payload);
+      });
     }
     if (onCardDeleted) {
-      channel.listen(BOARD_EVENTS.CARD_DELETED, onCardDeleted);
+      channel.listen(
+        BOARD_EVENTS.CARD_DELETED,
+        (payload: CardDeletedPayload) => {
+          onCardDeleted(payload);
+        }
+      );
     }
     if (onCardMoved) {
-      channel.listen(BOARD_EVENTS.CARD_MOVED, onCardMoved);
+      channel.listen(BOARD_EVENTS.CARD_MOVED, (payload: CardMovedPayload) => {
+        onCardMoved(payload);
+      });
     }
 
     // Comment events

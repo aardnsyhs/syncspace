@@ -5,6 +5,17 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -40,6 +51,7 @@ import {
   User,
   AlignLeft,
   X,
+  Trash2,
 } from "lucide-react";
 import { toast } from "sonner";
 import { format } from "date-fns";
@@ -76,6 +88,7 @@ export function CardDetailDialog({
     isLoading,
     error,
     updateCard,
+    deleteCard,
     attachLabel,
     detachLabel,
     addChecklist,
@@ -196,24 +209,65 @@ export function CardDetailDialog({
             {/* Left Panel - Card Details */}
             <div className="flex-1 overflow-y-auto p-6">
               <DialogHeader className="pr-8">
-                {/* Title */}
-                {isEditingTitle ? (
-                  <Input
-                    value={editedTitle}
-                    onChange={(e) => setEditedTitle(e.target.value)}
-                    onBlur={handleSaveTitle}
-                    onKeyDown={(e) => e.key === "Enter" && handleSaveTitle()}
-                    autoFocus
-                    className="text-lg font-semibold"
-                  />
-                ) : (
-                  <DialogTitle
-                    className="cursor-pointer hover:bg-muted px-2 py-1 -mx-2 rounded"
-                    onClick={() => setIsEditingTitle(true)}
-                  >
-                    {card.title}
-                  </DialogTitle>
-                )}
+                <div className="flex items-start justify-between gap-2">
+                  {/* Title */}
+                  {isEditingTitle ? (
+                    <Input
+                      value={editedTitle}
+                      onChange={(e) => setEditedTitle(e.target.value)}
+                      onBlur={handleSaveTitle}
+                      onKeyDown={(e) => e.key === "Enter" && handleSaveTitle()}
+                      autoFocus
+                      className="text-lg font-semibold flex-1"
+                    />
+                  ) : (
+                    <DialogTitle
+                      className="cursor-pointer hover:bg-muted px-2 py-1 -mx-2 rounded flex-1"
+                      onClick={() => setIsEditingTitle(true)}
+                    >
+                      {card.title}
+                    </DialogTitle>
+                  )}
+                  {/* Delete Button */}
+                  <AlertDialog>
+                    <AlertDialogTrigger asChild>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="text-muted-foreground hover:text-destructive"
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
+                    </AlertDialogTrigger>
+                    <AlertDialogContent>
+                      <AlertDialogHeader>
+                        <AlertDialogTitle>Delete Card</AlertDialogTitle>
+                        <AlertDialogDescription>
+                          Are you sure you want to delete "{card.title}"? This
+                          action cannot be undone.
+                        </AlertDialogDescription>
+                      </AlertDialogHeader>
+                      <AlertDialogFooter>
+                        <AlertDialogCancel>Cancel</AlertDialogCancel>
+                        <AlertDialogAction
+                          className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                          onClick={async () => {
+                            try {
+                              await deleteCard();
+                              toast.success("Card deleted");
+                              onCardUpdated?.();
+                              onClose();
+                            } catch {
+                              toast.error("Failed to delete card");
+                            }
+                          }}
+                        >
+                          Delete
+                        </AlertDialogAction>
+                      </AlertDialogFooter>
+                    </AlertDialogContent>
+                  </AlertDialog>
+                </div>
               </DialogHeader>
 
               <div className="space-y-6 mt-4">
