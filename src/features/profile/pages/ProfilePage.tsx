@@ -148,6 +148,11 @@ export function ProfilePage() {
     }
   };
 
+  if (import.meta.env.MODE === "production") {
+    console.log("ProfilePage PRODUCTION user.avatar_url =", user?.avatar_url);
+    console.log("ProfilePage PRODUCTION avatarPreview =", avatarPreview);
+  }
+
   return (
     <div className="max-w-2xl mx-auto space-y-6">
       <div>
