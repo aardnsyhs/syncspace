@@ -21,10 +21,24 @@ jobs:
           ssh-keyscan -H ${{ secrets.SSH_HOST }} >> ~/.ssh/known_hosts
 
       - name: Deploy via SSH
+        env:
+          VITE_API_URL: ${{ secrets.VITE_API_URL }}
+          VITE_ABLY_KEY: ${{ secrets.VITE_ABLY_KEY }}
         run: |
-          ssh ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }} << 'EOF'
+          ssh ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }} << EOF
             cd ~/syncspace-stack/frontend
             git pull origin master
+            
+            # Create .env file for build with secrets
+            echo "VITE_API_URL=${{ secrets.VITE_API_URL }}" > .env
+            echo "VITE_ABLY_KEY=${{ secrets.VITE_ABLY_KEY }}" >> .env
+            echo "Production .env created"
+            
+            # Install dependencies and build
+            npm install
+            npm run build
+            
+            # Restart services
             cd ~/syncspace-stack
             docker compose up -d --build frontend
             docker compose restart nginx
