@@ -1,6 +1,8 @@
 import { useState, useEffect, useCallback } from "react";
 import { toast } from "sonner";
 import { api } from "@/lib/api";
+import { getEcho, initializeEcho } from "@/lib/echo";
+import { useAuth } from "@/features/auth";
 
 export interface Notification {
   id: string;
@@ -22,6 +24,17 @@ interface NotificationsResponse {
   };
 }
 
+interface RealTimeNotification {
+  type: string;
+  title: string;
+  message: string;
+  data: {
+    card_id?: number;
+    board_id?: number;
+  };
+  created_at: string;
+}
+
 interface UseNotificationsReturn {
   notifications: Notification[];
   unreadCount: number;
@@ -34,6 +47,7 @@ interface UseNotificationsReturn {
 }
 
 export function useNotifications(): UseNotificationsReturn {
+  const { user } = useAuth();
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [unreadCount, setUnreadCount] = useState(0);
   const [isLoading, setIsLoading] = useState(true);
@@ -53,12 +67,31 @@ export function useNotifications(): UseNotificationsReturn {
     }
   }, []);
 
+  // Subscribe to real-time notifications
+  useEffect(() => {
+    if (!user?.id) return;
+
+    const echo = getEcho() || initializeEcho();
+    const channel = echo.private(`user.${user.id}`);
+
+    channel.listen(".UserNotification", (payload: RealTimeNotification) => {
+      // Show toast notification
+      toast(payload.title, {
+        description: payload.message,
+      });
+
+      // Refetch to get the new notification with proper ID
+      fetchNotifications();
+    });
+
+    return () => {
+      echo.leave(`user.${user.id}`);
+    };
+  }, [user?.id, fetchNotifications]);
+
+  // Initial fetch
   useEffect(() => {
     fetchNotifications();
-
-    // Poll for new notifications every 30 seconds
-    const interval = setInterval(fetchNotifications, 30000);
-    return () => clearInterval(interval);
   }, [fetchNotifications]);
 
   const markAsRead = useCallback(async (id: string) => {
