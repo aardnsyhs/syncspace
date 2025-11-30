@@ -17,18 +17,44 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Settings, Globe, BookTemplate, Trash2, Loader2 } from "lucide-react";
+import {
+  Settings,
+  Globe,
+  BookTemplate,
+  Trash2,
+  Loader2,
+  Check,
+} from "lucide-react";
 import { PublicSharingSettings } from "./PublicSharingSettings";
 import { SaveBoardAsTemplateDialog } from "./SaveBoardAsTemplateDialog";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import { usePublicSharing } from "../hooks/usePublicSharing";
 import { useBoardTemplates } from "../hooks/useBoardTemplates";
 import { api } from "@/lib/api";
 import { toast } from "sonner";
 
+const BOARD_COLORS = [
+  "#6366f1",
+  "#8b5cf6",
+  "#ec4899",
+  "#ef4444",
+  "#f97316",
+  "#eab308",
+  "#22c55e",
+  "#14b8a6",
+  "#06b6d4",
+  "#3b82f6",
+  "#64748b",
+  "#78716c",
+];
+
 interface Props {
   boardId: number;
   boardName: string;
+  boardDescription?: string | null;
+  boardColor?: string | null;
   teamId: number;
   isPublic: boolean;
   publicUrl: string | null;
@@ -42,6 +68,8 @@ interface Props {
 export function BoardSettingsPanel({
   boardId,
   boardName,
+  boardDescription,
+  boardColor,
   teamId,
   isPublic,
   publicUrl,
@@ -55,8 +83,14 @@ export function BoardSettingsPanel({
   const [showSaveTemplate, setShowSaveTemplate] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
+  const [isSavingGeneral, setIsSavingGeneral] = useState(false);
   const [currentIsPublic, setCurrentIsPublic] = useState(isPublic);
   const [currentPublicUrl, setCurrentPublicUrl] = useState(publicUrl);
+  const [editName, setEditName] = useState(boardName);
+  const [editDescription, setEditDescription] = useState(
+    boardDescription || ""
+  );
+  const [editColor, setEditColor] = useState(boardColor || BOARD_COLORS[0]);
 
   const {
     enable,
@@ -91,6 +125,27 @@ export function BoardSettingsPanel({
     await saveAsTemplate(teamId, boardId, name, description);
   };
 
+  const handleSaveGeneral = async () => {
+    if (!editName.trim()) {
+      toast.error("Board name is required");
+      return;
+    }
+    setIsSavingGeneral(true);
+    try {
+      await api.put(`/api/boards/${boardId}`, {
+        name: editName.trim(),
+        description: editDescription.trim() || null,
+        color: editColor,
+      });
+      toast.success("Board updated");
+      onBoardUpdated();
+    } catch {
+      toast.error("Failed to update board");
+    } finally {
+      setIsSavingGeneral(false);
+    }
+  };
+
   const handleDeleteBoard = async () => {
     setIsDeleting(true);
     try {
@@ -123,8 +178,12 @@ export function BoardSettingsPanel({
             </DialogTitle>
           </DialogHeader>
 
-          <Tabs defaultValue="sharing" className="mt-4">
-            <TabsList className="grid w-full grid-cols-3">
+          <Tabs defaultValue="general" className="mt-4">
+            <TabsList className="grid w-full grid-cols-4">
+              <TabsTrigger value="general" className="flex items-center gap-1">
+                <Settings className="h-4 w-4" />
+                General
+              </TabsTrigger>
               <TabsTrigger value="sharing" className="flex items-center gap-1">
                 <Globe className="h-4 w-4" />
                 Sharing
@@ -141,6 +200,51 @@ export function BoardSettingsPanel({
                 Danger
               </TabsTrigger>
             </TabsList>
+
+            <TabsContent value="general" className="mt-4 space-y-4">
+              <div className="space-y-2">
+                <Label htmlFor="board-name">Board Name</Label>
+                <Input
+                  id="board-name"
+                  value={editName}
+                  onChange={(e) => setEditName(e.target.value)}
+                  placeholder="Board name"
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="board-desc">Description</Label>
+                <Input
+                  id="board-desc"
+                  value={editDescription}
+                  onChange={(e) => setEditDescription(e.target.value)}
+                  placeholder="Brief description (optional)"
+                />
+              </div>
+              <div className="space-y-2">
+                <Label>Board Color</Label>
+                <div className="flex flex-wrap gap-2">
+                  {BOARD_COLORS.map((color) => (
+                    <button
+                      key={color}
+                      type="button"
+                      className="w-8 h-8 rounded-full flex items-center justify-center transition-transform hover:scale-110"
+                      style={{ backgroundColor: color }}
+                      onClick={() => setEditColor(color)}
+                    >
+                      {editColor === color && (
+                        <Check className="h-4 w-4 text-white" />
+                      )}
+                    </button>
+                  ))}
+                </div>
+              </div>
+              <Button onClick={handleSaveGeneral} disabled={isSavingGeneral}>
+                {isSavingGeneral && (
+                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                )}
+                Save Changes
+              </Button>
+            </TabsContent>
 
             <TabsContent value="sharing" className="mt-4">
               <PublicSharingSettings

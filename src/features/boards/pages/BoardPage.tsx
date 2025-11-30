@@ -165,23 +165,21 @@ export function BoardPage({ boardId: propBoardId }: BoardPageProps) {
     useBoardActivities(boardId);
 
   // Fetch board data
-  useEffect(() => {
-    const fetchBoard = async () => {
-      setIsLoadingBoard(true);
-      try {
-        const json = await api.get<{ data: BoardData }>(
-          `/api/boards/${boardId}`
-        );
-        setBoard(json.data);
-      } catch {
-        toast.error("Failed to load board");
-      } finally {
-        setIsLoadingBoard(false);
-      }
-    };
-
-    fetchBoard();
+  const fetchBoard = useCallback(async () => {
+    setIsLoadingBoard(true);
+    try {
+      const json = await api.get<{ data: BoardData }>(`/api/boards/${boardId}`);
+      setBoard(json.data);
+    } catch {
+      toast.error("Failed to load board");
+    } finally {
+      setIsLoadingBoard(false);
+    }
   }, [boardId]);
+
+  useEffect(() => {
+    fetchBoard();
+  }, [fetchBoard]);
 
   // Fetch team members when board is loaded
   useEffect(() => {
@@ -379,6 +377,13 @@ export function BoardPage({ boardId: propBoardId }: BoardPageProps) {
       {/* Board Header */}
       <div className="px-3 md:px-4 py-2 md:py-3 border-b flex flex-col sm:flex-row sm:items-center justify-between gap-2">
         <div className="flex items-center gap-2 md:gap-4 min-w-0">
+          {/* Board Color Indicator */}
+          {board.color && (
+            <div
+              className="w-3 h-10 rounded-full flex-shrink-0"
+              style={{ backgroundColor: board.color }}
+            />
+          )}
           <div className="min-w-0">
             <div className="flex items-center gap-2 flex-wrap">
               <h1 className="text-lg md:text-xl font-semibold truncate">
@@ -608,6 +613,8 @@ export function BoardPage({ boardId: propBoardId }: BoardPageProps) {
       <BoardSettingsPanel
         boardId={boardId}
         boardName={board.name}
+        boardDescription={board.description}
+        boardColor={board.color}
         teamId={teamId}
         isPublic={board.is_public}
         publicUrl={board.public_url}
@@ -615,9 +622,7 @@ export function BoardPage({ boardId: propBoardId }: BoardPageProps) {
         canManage={canManage}
         isOpen={showSettings}
         onClose={() => setShowSettings(false)}
-        onBoardUpdated={() => {
-          // Refetch board data
-        }}
+        onBoardUpdated={fetchBoard}
       />
 
       {/* Board Analytics Dialog */}

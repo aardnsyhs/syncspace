@@ -12,8 +12,30 @@ import { Label } from "@/components/ui/label";
 import { Skeleton } from "@/components/ui/skeleton";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Layout, Globe, Users, ChevronRight, Columns } from "lucide-react";
+import {
+  Layout,
+  Globe,
+  Users,
+  ChevronRight,
+  Columns,
+  Check,
+} from "lucide-react";
 import type { BoardTemplate } from "../hooks/useBoardTemplates";
+
+const BOARD_COLORS = [
+  "#6366f1", // indigo
+  "#8b5cf6", // violet
+  "#ec4899", // pink
+  "#ef4444", // red
+  "#f97316", // orange
+  "#eab308", // yellow
+  "#22c55e", // green
+  "#14b8a6", // teal
+  "#06b6d4", // cyan
+  "#3b82f6", // blue
+  "#64748b", // slate
+  "#78716c", // stone
+];
 
 interface Props {
   templates: BoardTemplate[];
@@ -23,9 +45,14 @@ interface Props {
   onSelectTemplate: (
     templateId: number,
     name: string,
-    description?: string
+    description?: string,
+    color?: string
   ) => Promise<void>;
-  onCreateBlank: (name: string, description?: string) => Promise<void>;
+  onCreateBlank: (
+    name: string,
+    description?: string,
+    color?: string
+  ) => Promise<void>;
 }
 
 export function BoardTemplatePicker({
@@ -40,6 +67,7 @@ export function BoardTemplatePicker({
     useState<BoardTemplate | null>(null);
   const [boardName, setBoardName] = useState("");
   const [boardDescription, setBoardDescription] = useState("");
+  const [boardColor, setBoardColor] = useState(BOARD_COLORS[0]);
   const [isCreating, setIsCreating] = useState(false);
 
   const globalTemplates = templates.filter((t) => t.visibility === "global");
@@ -54,18 +82,21 @@ export function BoardTemplatePicker({
         await onSelectTemplate(
           selectedTemplate.id,
           boardName.trim(),
-          boardDescription.trim() || undefined
+          boardDescription.trim() || undefined,
+          boardColor
         );
       } else {
         await onCreateBlank(
           boardName.trim(),
-          boardDescription.trim() || undefined
+          boardDescription.trim() || undefined,
+          boardColor
         );
       }
       // Reset state - parent will close dialog
       setSelectedTemplate(null);
       setBoardName("");
       setBoardDescription("");
+      setBoardColor(BOARD_COLORS[0]);
     } finally {
       setIsCreating(false);
     }
@@ -75,6 +106,7 @@ export function BoardTemplatePicker({
     setSelectedTemplate(null);
     setBoardName("");
     setBoardDescription("");
+    setBoardColor(BOARD_COLORS[0]);
     onClose();
   };
 
@@ -200,6 +232,24 @@ export function BoardTemplatePicker({
               onChange={(e) => setBoardDescription(e.target.value)}
               placeholder="Brief description"
             />
+          </div>
+          <div className="space-y-2">
+            <Label>Board Color</Label>
+            <div className="flex flex-wrap gap-2">
+              {BOARD_COLORS.map((color) => (
+                <button
+                  key={color}
+                  type="button"
+                  className="w-8 h-8 rounded-full flex items-center justify-center transition-transform hover:scale-110"
+                  style={{ backgroundColor: color }}
+                  onClick={() => setBoardColor(color)}
+                >
+                  {boardColor === color && (
+                    <Check className="h-4 w-4 text-white" />
+                  )}
+                </button>
+              ))}
+            </div>
           </div>
         </div>
 

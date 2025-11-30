@@ -21,14 +21,16 @@ export function CreateBoardDialog({ teamId, token, onBoardCreated }: Props) {
   const handleSelectTemplate = async (
     templateId: number,
     name: string,
-    description?: string
+    description?: string,
+    color?: string
   ) => {
     try {
       const board = await createBoardFromTemplate(
         teamId,
         templateId,
         name,
-        description
+        description,
+        color
       );
       toast.success("Board created from template");
       onBoardCreated(board.id);
@@ -38,7 +40,11 @@ export function CreateBoardDialog({ teamId, token, onBoardCreated }: Props) {
     }
   };
 
-  const handleCreateBlank = async (name: string, description?: string) => {
+  const handleCreateBlank = async (
+    name: string,
+    description?: string,
+    color?: string
+  ) => {
     try {
       const res = await fetch(`${API_URL}/api/teams/${teamId}/boards`, {
         method: "POST",
@@ -47,7 +53,7 @@ export function CreateBoardDialog({ teamId, token, onBoardCreated }: Props) {
           "Content-Type": "application/json",
           Accept: "application/json",
         },
-        body: JSON.stringify({ name, description }),
+        body: JSON.stringify({ name, description, color }),
       });
 
       if (!res.ok) throw new Error("Failed to create board");
