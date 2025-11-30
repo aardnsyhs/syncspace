@@ -29,6 +29,7 @@ interface AuthContextValue extends AuthState {
   register: (data: RegisterData) => Promise<void>;
   logout: () => Promise<void>;
   clearError: () => void;
+  updateUser: (updates: Partial<User>) => void;
 }
 
 const AuthContext = createContext<AuthContextValue | null>(null);
@@ -129,6 +130,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setState((prev) => ({ ...prev, error: null }));
   }, []);
 
+  const updateUser = useCallback((updates: Partial<User>) => {
+    setState((prev) => ({
+      ...prev,
+      user: prev.user ? { ...prev.user, ...updates } : null,
+    }));
+  }, []);
+
   return (
     <AuthContext.Provider
       value={{
@@ -137,6 +145,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         register,
         logout,
         clearError,
+        updateUser,
       }}
     >
       {children}

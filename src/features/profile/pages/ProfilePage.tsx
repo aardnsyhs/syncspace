@@ -17,8 +17,14 @@ import { toast } from "sonner";
 import { api } from "@/lib/api";
 import { compressImage, blobToFile } from "@/lib/image-utils";
 
+interface AvatarResponse {
+  data: {
+    avatar_url: string;
+  };
+}
+
 export function ProfilePage() {
-  const { user } = useAuth();
+  const { user, updateUser } = useAuth();
   const [name, setName] = useState(user?.name || "");
   const [email] = useState(user?.email || "");
   const [currentPassword, setCurrentPassword] = useState("");
@@ -117,12 +123,17 @@ export function ProfilePage() {
       const formData = new FormData();
       formData.append("avatar", compressedFile);
 
-      await api.upload("/api/user/avatar", formData);
+      const response = await api.upload<AvatarResponse>(
+        "/api/user/avatar",
+        formData
+      );
+
+      // Update user state without refresh
+      if (response.data?.avatar_url) {
+        updateUser({ avatar_url: response.data.avatar_url });
+      }
 
       toast.success("Avatar updated successfully!");
-
-      // Refresh page to update avatar everywhere
-      window.location.reload();
     } catch (err) {
       toast.error(
         err instanceof Error ? err.message : "Failed to upload avatar"
