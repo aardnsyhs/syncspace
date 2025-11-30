@@ -165,9 +165,6 @@ importers:
       msw:
         specifier: ^2.12.3
         version: 2.12.3(@types/node@24.10.1)(typescript@5.9.3)
-      strip-comments:
-        specifier: ^2.0.1
-        version: 2.0.1
       tw-animate-css:
         specifier: ^1.4.0
         version: 1.4.0
@@ -2623,10 +2620,6 @@ packages:
   strip-ansi@6.0.1:
     resolution: {integrity: sha512-Y38VPSHcqkFrCpFnQ9vuSXmquuv5oXOKpGeT6aGrr3o3Gc9AlVa6JBfUSOCnbxGGZF+/0ooI7KrPuUSztUdU5A==}
     engines: {node: '>=8'}
-
-  strip-comments@2.0.1:
-    resolution: {integrity: sha512-ZprKx+bBLXv067WTCALv8SSz5l2+XhpYCsVtSqlMnkAXMWDq+/ekVbl1ghqP9rUHTzv6sm/DwCOiYutU/yp1fw==}
-    engines: {node: '>=10'}
 
   strip-indent@3.0.0:
     resolution: {integrity: sha512-laJTa3Jb+VQpaC6DseHhF7dXVqHTfJPCRDaEbid/drOhgitgYku/letMUqOXFoWV0zIIUbjpdH2t+tYj4bQMRQ==}
@@ -5315,8 +5308,6 @@ snapshots:
   strip-ansi@6.0.1:
     dependencies:
       ansi-regex: 5.0.1
-
-  strip-comments@2.0.1: {}
 
   strip-indent@3.0.0:
     dependencies:
