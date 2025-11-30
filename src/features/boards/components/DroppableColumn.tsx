@@ -77,7 +77,7 @@ export function DroppableColumn({
 
   return (
     <div
-      className={`w-72 flex-shrink-0 flex flex-col rounded-lg transition-colors ${
+      className={`w-64 md:w-72 flex-shrink-0 flex flex-col rounded-lg transition-colors ${
         column.wip_exceeded
           ? "bg-red-50 dark:bg-red-900/10"
           : isOver

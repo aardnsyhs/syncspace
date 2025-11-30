@@ -197,6 +197,8 @@ export function CardDetailDialog({
     );
   }
 
+  const [showComments, setShowComments] = useState(false);
+
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="sm:max-w-5xl w-[95vw] max-h-[90vh] overflow-hidden p-0">
@@ -205,9 +207,9 @@ export function CardDetailDialog({
             <CardDetailSkeleton />
           </div>
         ) : (
-          <div className="flex h-[85vh]">
+          <div className="flex flex-col md:flex-row h-[85vh]">
             {/* Left Panel - Card Details */}
-            <div className="flex-1 overflow-y-auto p-6">
+            <div className="flex-1 overflow-y-auto p-4 md:p-6">
               <DialogHeader className="pr-8">
                 <div className="flex items-start justify-between gap-2">
                   {/* Title */}
@@ -542,8 +544,23 @@ export function CardDetailDialog({
               </div>
             </div>
 
-            {/* Right Panel - Comments */}
-            <div className="w-80 border-l bg-muted/20 flex flex-col">
+            {/* Mobile Comments Toggle */}
+            <div className="md:hidden border-t p-3">
+              <Button
+                variant="outline"
+                className="w-full"
+                onClick={() => setShowComments(!showComments)}
+              >
+                {showComments ? "Hide Comments" : "Show Comments"}
+              </Button>
+            </div>
+
+            {/* Right Panel - Comments (hidden on mobile unless toggled) */}
+            <div
+              className={`${
+                showComments ? "block" : "hidden"
+              } md:block md:w-80 border-l bg-muted/20 flex flex-col`}
+            >
               <div className="flex-1 overflow-y-auto p-4">
                 <CommentsSection
                   comments={comments}

@@ -62,7 +62,11 @@ function NavItem({ icon, label, active, onClick }: NavItemProps) {
   );
 }
 
-export function Sidebar() {
+interface SidebarProps {
+  onNavigate?: () => void;
+}
+
+export function Sidebar({ onNavigate }: SidebarProps = {}) {
   const navigate = useNavigate();
   const location = useLocation();
   const [teams, setTeams] = useState<Team[]>([]);
@@ -142,6 +146,11 @@ export function Sidebar() {
 
   const allBoards = teams.flatMap((team) => team.boards || []);
 
+  const handleNavigate = (path: string) => {
+    navigate(path);
+    onNavigate?.();
+  };
+
   return (
     <aside className="flex h-screen w-64 flex-col border-r bg-card">
       <WorkspaceSelector />
@@ -151,19 +160,19 @@ export function Sidebar() {
           icon={<LayoutDashboard className="h-4 w-4" />}
           label="Dashboard"
           active={isActive("/app")}
-          onClick={() => navigate("/app")}
+          onClick={() => handleNavigate("/app")}
         />
         <NavItem
           icon={<PanelsTopLeft className="h-4 w-4" />}
           label="Boards"
           active={isActive("/app/boards")}
-          onClick={() => navigate("/app/boards")}
+          onClick={() => handleNavigate("/app/boards")}
         />
         <NavItem
           icon={<Users className="h-4 w-4" />}
           label="Members"
           active={isActive("/app/members")}
-          onClick={() => navigate("/app/members")}
+          onClick={() => handleNavigate("/app/members")}
         />
 
         <Separator className="my-3" />
@@ -200,10 +209,10 @@ export function Sidebar() {
                   "w-full justify-start gap-3 px-3",
                   isBoardActive(board.id) && "bg-accent"
                 )}
-                onClick={() => navigate(`/app/boards/${board.id}`)}
+                onClick={() => handleNavigate(`/app/boards/${board.id}`)}
               >
                 <div
-                  className="h-3 w-3 rounded-sm"
+                  className="h-3 w-3 rounded-sm flex-shrink-0"
                   style={{ backgroundColor: board.color || "#3b82f6" }}
                 />
                 <span className="truncate">{board.name}</span>
@@ -218,7 +227,7 @@ export function Sidebar() {
           icon={<Settings className="h-4 w-4" />}
           label="Settings"
           active={isActive("/app/settings")}
-          onClick={() => navigate("/app/settings")}
+          onClick={() => handleNavigate("/app/settings")}
         />
       </div>
 

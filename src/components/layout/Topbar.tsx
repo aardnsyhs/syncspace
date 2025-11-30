@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
-import { Search, Moon, Sun, LogOut, User, Settings } from "lucide-react";
+import { Search, Moon, Sun, LogOut, User, Settings, Menu } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import {
@@ -22,7 +22,11 @@ import { SearchDialog } from "@/components/SearchDialog";
 import { NotificationsDropdown } from "@/components/NotificationsDropdown";
 import { useTheme } from "@/hooks/useTheme";
 
-export function Topbar() {
+interface TopbarProps {
+  onMenuClick?: () => void;
+}
+
+export function Topbar({ onMenuClick }: TopbarProps) {
   const { isDark, toggleTheme } = useTheme();
   const [searchOpen, setSearchOpen] = useState(false);
   const navigate = useNavigate();
@@ -75,10 +79,21 @@ export function Topbar() {
   };
 
   return (
-    <header className="flex h-14 items-center justify-between border-b bg-card px-6">
-      {/* Left: Page Title / Breadcrumb */}
-      <div className="flex items-center gap-4">
-        <h1 className="text-lg font-semibold">{getPageTitle()}</h1>
+    <header className="flex h-14 items-center justify-between border-b bg-card px-4 md:px-6">
+      {/* Left: Menu + Page Title */}
+      <div className="flex items-center gap-2 md:gap-4">
+        {/* Mobile Menu Button */}
+        <Button
+          variant="ghost"
+          size="icon"
+          className="lg:hidden"
+          onClick={onMenuClick}
+        >
+          <Menu className="h-5 w-5" />
+        </Button>
+        <h1 className="text-lg font-semibold hidden sm:block">
+          {getPageTitle()}
+        </h1>
       </div>
 
       {/* Right: Actions */}

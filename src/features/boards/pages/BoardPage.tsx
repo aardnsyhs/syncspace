@@ -1,10 +1,24 @@
 import { useState, useCallback, useEffect } from "react";
 import { useSearchParams } from "react-router-dom";
-import { Plus, Settings, Globe, X, Loader2, BarChart3 } from "lucide-react";
+import {
+  Plus,
+  Settings,
+  Globe,
+  X,
+  Loader2,
+  BarChart3,
+  MoreHorizontal,
+} from "lucide-react";
 import { useAuth } from "@/features/auth/store/AuthContext";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Input } from "@/components/ui/input";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { toast } from "sonner";
 import {
   DndContext,
@@ -361,34 +375,56 @@ export function BoardPage({ boardId: propBoardId }: BoardPageProps) {
   }
 
   return (
-    <div className="h-full flex flex-col">
+    <div className="h-full flex flex-col -m-4 md:-m-6">
       {/* Board Header */}
-      <div className="px-4 py-3 border-b flex items-center justify-between">
-        <div className="flex items-center gap-4">
-          <div>
-            <div className="flex items-center gap-2">
-              <h1 className="text-xl font-semibold">{board.name}</h1>
+      <div className="px-3 md:px-4 py-2 md:py-3 border-b flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+        <div className="flex items-center gap-2 md:gap-4 min-w-0">
+          <div className="min-w-0">
+            <div className="flex items-center gap-2 flex-wrap">
+              <h1 className="text-lg md:text-xl font-semibold truncate">
+                {board.name}
+              </h1>
               {board.is_public && (
-                <span className="px-2 py-0.5 text-xs bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-200 rounded-full flex items-center gap-1">
+                <span className="px-2 py-0.5 text-xs bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-200 rounded-full flex items-center gap-1 flex-shrink-0">
                   <Globe className="h-3 w-3" />
                   Public
                 </span>
               )}
             </div>
             {board.description && (
-              <p className="text-sm text-muted-foreground">
+              <p className="text-sm text-muted-foreground truncate hidden md:block">
                 {board.description}
               </p>
             )}
           </div>
         </div>
 
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-1 md:gap-2 flex-shrink-0 overflow-x-auto">
           <OnlineUsers members={onlineMembers} />
 
+          {/* Mobile Menu */}
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="outline" size="icon" className="sm:hidden">
+                <MoreHorizontal className="h-4 w-4" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end">
+              <DropdownMenuItem onClick={() => setShowActivity(!showActivity)}>
+                Activity
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={() => setShowAnalytics(true)}>
+                <BarChart3 className="h-4 w-4 mr-2" />
+                Analytics
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+
+          {/* Desktop Buttons */}
           <Button
             variant="outline"
             size="sm"
+            className="hidden sm:flex"
             onClick={() => setShowActivity(!showActivity)}
           >
             Activity
@@ -397,6 +433,7 @@ export function BoardPage({ boardId: propBoardId }: BoardPageProps) {
           <Button
             variant="outline"
             size="sm"
+            className="hidden sm:flex"
             onClick={() => setShowAnalytics(true)}
           >
             <BarChart3 className="h-4 w-4 mr-1" />
@@ -473,7 +510,7 @@ export function BoardPage({ boardId: propBoardId }: BoardPageProps) {
               ))}
 
               {/* Add Column */}
-              <div className="w-72 flex-shrink-0">
+              <div className="w-64 md:w-72 flex-shrink-0">
                 {isAddingColumn ? (
                   <div className="bg-muted/30 rounded-lg p-3 space-y-2">
                     <Input
