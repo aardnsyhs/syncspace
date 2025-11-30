@@ -16,6 +16,7 @@ import { useAuth } from "@/features/auth";
 import { toast } from "sonner";
 import { api } from "@/lib/api";
 import { compressImage, blobToFile } from "@/lib/image-utils";
+import { normalizeAvatarUrl } from "@/lib/avatar-utils";
 
 interface AvatarResponse {
   data: {
@@ -178,7 +179,7 @@ export function ProfilePage() {
             >
               <Avatar className="h-20 w-20">
                 <AvatarImage
-                  src={avatarPreview || user?.avatar_url}
+                  src={avatarPreview || normalizeAvatarUrl(user?.avatar_url)}
                   alt={user?.name}
                 />
                 <AvatarFallback className="text-lg">

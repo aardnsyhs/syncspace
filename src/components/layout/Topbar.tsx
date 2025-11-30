@@ -21,6 +21,7 @@ import { toast } from "sonner";
 import { SearchDialog } from "@/components/SearchDialog";
 import { NotificationsDropdown } from "@/components/NotificationsDropdown";
 import { useTheme } from "@/hooks/useTheme";
+import { normalizeAvatarUrl } from "@/lib/avatar-utils";
 
 interface TopbarProps {
   onMenuClick?: () => void;
@@ -136,7 +137,7 @@ export function Topbar({ onMenuClick }: TopbarProps) {
           <DropdownMenuTrigger asChild>
             <Button variant="ghost" className="relative h-8 w-8 rounded-full">
               <Avatar className="h-8 w-8">
-                <AvatarImage src={user?.avatar_url} alt={user?.name} />
+                <AvatarImage src={normalizeAvatarUrl(user?.avatar_url)} alt={user?.name} />
                 <AvatarFallback>
                   {user?.name ? getInitials(user.name) : "U"}
                 </AvatarFallback>

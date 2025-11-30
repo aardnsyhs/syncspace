@@ -13,6 +13,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { api } from "@/lib/api";
 import { useAuth } from "@/features/auth";
+import { normalizeAvatarUrl } from "@/lib/avatar-utils";
 
 interface DashboardStats {
   total_boards: number;
@@ -225,7 +226,7 @@ export function DashboardPage() {
                 {activities.map((activity) => (
                   <div key={activity.id} className="flex items-start gap-3">
                     <Avatar className="h-8 w-8">
-                      <AvatarImage src={activity.user.avatar_url} />
+                      <AvatarImage src={normalizeAvatarUrl(activity.user.avatar_url)} />
                       <AvatarFallback>
                         {getInitials(activity.user.name)}
                       </AvatarFallback>

@@ -6,6 +6,7 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 import type { PresenceMember } from "../hooks/useBoardPresence";
+import { normalizeAvatarUrl } from "@/lib/avatar-utils";
 
 interface OnlineUsersProps {
   members: PresenceMember[];
@@ -41,7 +42,7 @@ export function OnlineUsers({ members, maxDisplay = 4 }: OnlineUsersProps) {
           <Tooltip key={member.id}>
             <TooltipTrigger asChild>
               <Avatar className="h-8 w-8 border-2 border-background">
-                <AvatarImage src={member.avatar_url} alt={member.name} />
+                <AvatarImage src={normalizeAvatarUrl(member.avatar_url)} alt={member.name} />
                 <AvatarFallback className="text-xs">
                   {getInitials(member.name)}
                 </AvatarFallback>

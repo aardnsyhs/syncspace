@@ -40,6 +40,7 @@ import { Label } from "@/components/ui/label";
 import { api } from "@/lib/api";
 import { toast } from "sonner";
 import { useAuth } from "@/features/auth";
+import { normalizeAvatarUrl } from "@/lib/avatar-utils";
 
 type TeamRole = "owner" | "admin" | "member" | "viewer";
 
@@ -349,7 +350,7 @@ export function MembersPage() {
                 >
                   <div className="flex items-center gap-3">
                     <Avatar>
-                      <AvatarImage src={member.avatar_url} alt={member.name} />
+                      <AvatarImage src={normalizeAvatarUrl(member.avatar_url)} alt={member.name} />
                       <AvatarFallback>
                         {getInitials(member.name)}
                       </AvatarFallback>

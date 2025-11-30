@@ -10,6 +10,7 @@ import {
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import type { Activity } from "../hooks/useBoardActivities";
+import { normalizeAvatarUrl } from "@/lib/avatar-utils";
 
 interface ActivityFeedProps {
   activities: Activity[];
@@ -114,7 +115,7 @@ export function ActivityFeed({ activities, isLoading }: ActivityFeedProps) {
           <div key={activity.id} className="flex gap-3">
             <Avatar className="h-8 w-8 flex-shrink-0">
               <AvatarImage
-                src={activity.user.avatar_url}
+                src={normalizeAvatarUrl(activity.user.avatar_url)}
                 alt={activity.user.name}
               />
               <AvatarFallback className="text-xs">
