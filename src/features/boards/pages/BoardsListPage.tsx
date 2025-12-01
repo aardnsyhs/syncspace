@@ -53,11 +53,9 @@ export function BoardsListPage() {
   const [newBoardDescription, setNewBoardDescription] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  // Get boards from selected team
   const boards: Board[] = (selectedTeam?.boards as Board[]) || [];
 
   useEffect(() => {
-    // Loading state depends on team context
     if (selectedTeam !== null) {
       setIsLoading(false);
     }

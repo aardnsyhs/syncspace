@@ -52,7 +52,6 @@ export function TeamProvider({ children }: { children: ReactNode }) {
       const fetchedTeams = data.data || [];
       setTeams(fetchedTeams);
 
-      // Restore selected team from localStorage or select first
       const savedTeamId = localStorage.getItem(SELECTED_TEAM_KEY);
       if (savedTeamId) {
         const savedTeam = fetchedTeams.find(
@@ -64,7 +63,6 @@ export function TeamProvider({ children }: { children: ReactNode }) {
         }
       }
 
-      // Default to first team
       if (fetchedTeams.length > 0 && !selectedTeam) {
         setSelectedTeamState(fetchedTeams[0]);
         localStorage.setItem(SELECTED_TEAM_KEY, fetchedTeams[0].id.toString());
