@@ -12,6 +12,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardFooter } from "@/components/ui/card";
+import { Checkbox } from "@/components/ui/checkbox";
 import { toast } from "sonner";
 
 const loginSchema = z.object({
@@ -67,7 +68,6 @@ export function LoginPage() {
       };
 
       if (error.status === 422 && error.errors) {
-        
         Object.entries(error.errors).forEach(([field, messages]) => {
           if (field === "email" || field === "password") {
             setError(field, { message: messages[0] });
@@ -146,13 +146,8 @@ export function LoginPage() {
             </div>
 
             {}
-            <div className="flex items-center gap-2">
-              <input
-                type="checkbox"
-                id="remember"
-                className="h-4 w-4 rounded border-input"
-                {...register("remember")}
-              />
+            <div className="flex items-center gap-2 mb-2">
+              <Checkbox id="remember" {...register("remember")} />
               <Label htmlFor="remember" className="text-sm font-normal">
                 Remember me for 30 days
               </Label>

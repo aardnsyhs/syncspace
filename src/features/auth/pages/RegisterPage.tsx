@@ -75,7 +75,6 @@ export function RegisterPage() {
       };
 
       if (error.status === 422 && error.errors) {
-        
         Object.entries(error.errors).forEach(([field, messages]) => {
           if (
             field === "name" ||
@@ -174,7 +173,6 @@ export function RegisterPage() {
               </p>
             </div>
 
-            {}
             <div className="space-y-2">
               <Label htmlFor="password_confirmation">Confirm Password</Label>
               <div className="relative">
@@ -196,7 +194,7 @@ export function RegisterPage() {
             </div>
           </CardContent>
 
-          <CardFooter className="flex-col gap-4 px-0 lg:px-6 pb-0 lg:pb-6">
+          <CardFooter className="flex-col gap-4 px-0 lg:px-6 pb-0 lg:pb-6 mt-4">
             <Button type="submit" className="w-full" disabled={isSubmitting}>
               {isSubmitting ? (
                 <>
@@ -220,17 +218,6 @@ export function RegisterPage() {
           </CardFooter>
         </form>
       </Card>
-
-      <p className="text-xs text-center text-muted-foreground mt-6">
-        By creating an account, you agree to our{" "}
-        <Link to="/terms" className="underline hover:text-foreground">
-          Terms of Service
-        </Link>{" "}
-        and{" "}
-        <Link to="/privacy" className="underline hover:text-foreground">
-          Privacy Policy
-        </Link>
-      </p>
     </AuthLayout>
   );
 }
