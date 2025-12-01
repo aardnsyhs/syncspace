@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { Loader2, Trash2, UserPlus } from "lucide-react";
+import { useAuth } from "@/features/auth/store/AuthContext";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -59,6 +60,7 @@ interface Team {
 }
 
 export function SettingsPage() {
+  const { user, updateUser } = useAuth();
   const [, setTeams] = useState<Team[]>([]);
   const [selectedTeam, setSelectedTeam] = useState<Team | null>(null);
   const [members, setMembers] = useState<TeamMember[]>([]);
@@ -71,8 +73,20 @@ export function SettingsPage() {
   const [inviteRole, setInviteRole] = useState("member");
   const [isInviting, setIsInviting] = useState(false);
 
-  const [emailNotifications, setEmailNotifications] = useState(true);
-  const [desktopNotifications, setDesktopNotifications] = useState(true);
+  const [emailNotifications, setEmailNotifications] = useState(
+    user?.email_notifications ?? true
+  );
+  const [desktopNotifications, setDesktopNotifications] = useState(
+    user?.desktop_notifications ?? true
+  );
+  const [isSavingNotifications, setIsSavingNotifications] = useState(false);
+
+  useEffect(() => {
+    if (user) {
+      setEmailNotifications(user.email_notifications ?? true);
+      setDesktopNotifications(user.desktop_notifications ?? true);
+    }
+  }, [user]);
 
   useEffect(() => {
     const fetchTeams = async () => {
@@ -264,6 +278,42 @@ export function SettingsPage() {
         return "secondary";
       default:
         return "outline";
+    }
+  };
+
+  const handleUpdateNotifications = async (
+    field: "email_notifications" | "desktop_notifications",
+    value: boolean
+  ) => {
+    const token = localStorage.getItem("token");
+    if (!token) return;
+
+    setIsSavingNotifications(true);
+    try {
+      const res = await fetch(`${API_URL}/api/user/notification-preferences`, {
+        method: "PUT",
+        headers: {
+          Authorization: `Bearer ${token}`,
+          Accept: "application/json",
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ [field]: value }),
+      });
+
+      if (!res.ok) throw new Error("Failed to update notification preferences");
+
+      const data = await res.json();
+      updateUser(data.data);
+      toast.success("Notification preferences updated!");
+    } catch {
+      toast.error("Failed to update notification preferences");
+      if (field === "email_notifications") {
+        setEmailNotifications(!value);
+      } else {
+        setDesktopNotifications(!value);
+      }
+    } finally {
+      setIsSavingNotifications(false);
     }
   };
 
@@ -470,7 +520,11 @@ export function SettingsPage() {
                 </div>
                 <Switch
                   checked={emailNotifications}
-                  onCheckedChange={setEmailNotifications}
+                  onCheckedChange={(value) => {
+                    setEmailNotifications(value);
+                    handleUpdateNotifications("email_notifications", value);
+                  }}
+                  disabled={isSavingNotifications}
                 />
               </div>
               <Separator />
@@ -483,7 +537,11 @@ export function SettingsPage() {
                 </div>
                 <Switch
                   checked={desktopNotifications}
-                  onCheckedChange={setDesktopNotifications}
+                  onCheckedChange={(value) => {
+                    setDesktopNotifications(value);
+                    handleUpdateNotifications("desktop_notifications", value);
+                  }}
+                  disabled={isSavingNotifications}
                 />
               </div>
             </CardContent>

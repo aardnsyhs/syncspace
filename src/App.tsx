@@ -19,6 +19,15 @@ const LoginPage = lazy(() =>
 const RegisterPage = lazy(() =>
   import("@/features/auth").then((m) => ({ default: m.RegisterPage }))
 );
+const ForgotPasswordPage = lazy(() =>
+  import("@/features/auth").then((m) => ({ default: m.ForgotPasswordPage }))
+);
+const ResetPasswordPage = lazy(() =>
+  import("@/features/auth").then((m) => ({ default: m.ResetPasswordPage }))
+);
+const VerifyOTPPage = lazy(() =>
+  import("@/features/auth").then((m) => ({ default: m.VerifyOTPPage }))
+);
 const DashboardPage = lazy(() =>
   import("@/features/dashboard").then((m) => ({ default: m.DashboardPage }))
 );
@@ -92,6 +101,30 @@ function App() {
                 element={
                   <GuestRoute>
                     <RegisterPage />
+                  </GuestRoute>
+                }
+              />
+              <Route
+                path="/forgot-password"
+                element={
+                  <GuestRoute>
+                    <ForgotPasswordPage />
+                  </GuestRoute>
+                }
+              />
+              <Route
+                path="/reset-password"
+                element={
+                  <GuestRoute>
+                    <ResetPasswordPage />
+                  </GuestRoute>
+                }
+              />
+              <Route
+                path="/verify-otp"
+                element={
+                  <GuestRoute>
+                    <VerifyOTPPage />
                   </GuestRoute>
                 }
               />

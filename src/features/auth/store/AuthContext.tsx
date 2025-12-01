@@ -90,13 +90,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setState((prev) => ({ ...prev, isLoading: true, error: null }));
 
     try {
-      const response = await apiRegister(data);
-      setState({
-        user: response.user,
+      await apiRegister(data);
+      setState((prev) => ({
+        ...prev,
         isLoading: false,
-        isAuthenticated: true,
-        error: null,
-      });
+      }));
     } catch (err) {
       const message =
         err instanceof Error ? err.message : "Registration failed";

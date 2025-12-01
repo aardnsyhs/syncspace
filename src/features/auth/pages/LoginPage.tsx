@@ -45,7 +45,6 @@ export function LoginPage() {
     },
   });
 
-  // Auto-focus email field
   useEffect(() => {
     setFocus("email");
   }, [setFocus]);

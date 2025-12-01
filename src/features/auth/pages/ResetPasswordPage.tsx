@@ -2,11 +2,11 @@ import { useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod/v4";
-import { Link, useNavigate } from "react-router-dom";
-import { Mail, Lock, User, Loader2 } from "lucide-react";
+import { useNavigate, useSearchParams } from "react-router-dom";
+import { Lock, Loader2 } from "lucide-react";
 
 import { AuthLayout } from "../components/AuthLayout";
-import { useAuth } from "../store/AuthContext";
+import { resetPassword } from "../api/authApi";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -14,9 +14,8 @@ import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardFooter } from "@/components/ui/card";
 import { toast } from "sonner";
 
-const registerSchema = z
+const resetPasswordSchema = z
   .object({
-    name: z.string().min(2, "Name must be at least 2 characters"),
     email: z.email("Please enter a valid email address"),
     password: z.string().min(8, "Password must be at least 8 characters"),
     password_confirmation: z.string(),
@@ -26,49 +25,54 @@ const registerSchema = z
     path: ["password_confirmation"],
   });
 
-type RegisterFormData = z.infer<typeof registerSchema>;
+type ResetPasswordFormData = z.infer<typeof resetPasswordSchema>;
 
-export function RegisterPage() {
+export function ResetPasswordPage() {
   const navigate = useNavigate();
-  const {
-    register: registerUser,
-    isAuthenticated,
-    isLoading: authLoading,
-  } = useAuth();
+  const [searchParams] = useSearchParams();
+  const token = searchParams.get("token");
+  const email = searchParams.get("email");
 
   const {
     register,
     handleSubmit,
     setFocus,
     setError,
+    setValue,
     formState: { errors, isSubmitting },
-  } = useForm<RegisterFormData>({
-    resolver: zodResolver(registerSchema),
+  } = useForm<ResetPasswordFormData>({
+    resolver: zodResolver(resetPasswordSchema),
     defaultValues: {
-      name: "",
-      email: "",
+      email: email || "",
       password: "",
       password_confirmation: "",
     },
   });
 
   useEffect(() => {
-    setFocus("name");
-  }, [setFocus]);
-
-  useEffect(() => {
-    if (isAuthenticated && !authLoading) {
-      navigate("/app", { replace: true });
+    if (!token || !email) {
+      toast.error("Invalid password reset link");
+      navigate("/login");
+      return;
     }
-  }, [isAuthenticated, authLoading, navigate]);
 
-  const onSubmit = async (data: RegisterFormData) => {
+    setValue("email", email);
+    setFocus("password");
+  }, [token, email, navigate, setValue, setFocus]);
+
+  const onSubmit = async (data: ResetPasswordFormData) => {
+    if (!token) {
+      toast.error("Invalid password reset link");
+      return;
+    }
+
     try {
-      await registerUser(data);
-      toast.success("Please check your email for verification code");
-      navigate(`/verify-otp?email=${encodeURIComponent(data.email)}`, {
-        replace: true,
+      const response = await resetPassword({
+        ...data,
+        token,
       });
+      toast.success(response.message || "Password reset successfully!");
+      navigate("/login", { replace: true });
     } catch (err) {
       const error = err as Error & {
         errors?: Record<string, string[]>;
@@ -78,7 +82,6 @@ export function RegisterPage() {
       if (error.status === 422 && error.errors) {
         Object.entries(error.errors).forEach(([field, messages]) => {
           if (
-            field === "name" ||
             field === "email" ||
             field === "password" ||
             field === "password_confirmation"
@@ -87,72 +90,39 @@ export function RegisterPage() {
           }
         });
       } else {
-        toast.error(error.message || "Registration failed");
+        toast.error(
+          error.message ||
+            "Failed to reset password. The link may have expired."
+        );
       }
     }
   };
 
-  if (authLoading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center">
-        <Loader2 className="h-8 w-8 animate-spin text-primary" />
-      </div>
-    );
+  if (!token || !email) {
+    return null;
   }
 
   return (
     <AuthLayout
-      title="Create an account"
-      subtitle="Get started with Syncspace today"
+      title="Reset your password"
+      subtitle="Enter your new password below"
     >
       <Card className="border-0 shadow-none lg:border lg:shadow-sm">
         <form onSubmit={handleSubmit(onSubmit)}>
           <CardContent className="space-y-4 px-0 lg:px-6 pt-0 lg:pt-6">
-            {}
-            <div className="space-y-2">
-              <Label htmlFor="name">Full Name</Label>
-              <div className="relative">
-                <User className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                <Input
-                  id="name"
-                  type="text"
-                  placeholder="John Doe"
-                  className="pl-10"
-                  {...register("name")}
-                  aria-invalid={!!errors.name}
-                />
-              </div>
-              {errors.name && (
-                <p className="text-sm text-destructive">
-                  {errors.name.message}
-                </p>
-              )}
-            </div>
-
-            {}
             <div className="space-y-2">
               <Label htmlFor="email">Email</Label>
-              <div className="relative">
-                <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                <Input
-                  id="email"
-                  type="email"
-                  placeholder="you@example.com"
-                  className="pl-10"
-                  {...register("email")}
-                  aria-invalid={!!errors.email}
-                />
-              </div>
-              {errors.email && (
-                <p className="text-sm text-destructive">
-                  {errors.email.message}
-                </p>
-              )}
+              <Input
+                id="email"
+                type="email"
+                {...register("email")}
+                disabled
+                className="bg-muted"
+              />
             </div>
 
-            {}
             <div className="space-y-2">
-              <Label htmlFor="password">Password</Label>
+              <Label htmlFor="password">New Password</Label>
               <div className="relative">
                 <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                 <Input
@@ -200,22 +170,12 @@ export function RegisterPage() {
               {isSubmitting ? (
                 <>
                   <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                  Creating account...
+                  Resetting password...
                 </>
               ) : (
-                "Create account"
+                "Reset password"
               )}
             </Button>
-
-            <p className="text-sm text-center text-muted-foreground">
-              Already have an account?{" "}
-              <Link
-                to="/login"
-                className="text-primary font-medium hover:underline"
-              >
-                Sign in
-              </Link>
-            </p>
           </CardFooter>
         </form>
       </Card>

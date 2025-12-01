@@ -7,6 +7,8 @@ export interface User {
   name: string;
   email: string;
   avatar_url?: string;
+  email_notifications?: boolean;
+  desktop_notifications?: boolean;
   created_at: string;
 }
 
@@ -26,6 +28,26 @@ export interface RegisterData {
 export interface AuthResponse {
   user: User;
   token: string;
+}
+
+export interface ForgotPasswordData {
+  email: string;
+}
+
+export interface ResetPasswordData {
+  email: string;
+  password: string;
+  password_confirmation: string;
+  token: string;
+}
+
+export interface VerifyOTPData {
+  email: string;
+  otp: string;
+}
+
+export interface ResendOTPData {
+  email: string;
 }
 
 export async function getCsrfCookie(): Promise<void> {
@@ -88,4 +110,60 @@ export async function fetchCurrentUser(): Promise<User | null> {
     localStorage.removeItem("token");
     return null;
   }
+}
+
+export async function forgotPassword(
+  data: ForgotPasswordData
+): Promise<{ message: string }> {
+  await getCsrfCookie();
+
+  const response = await api.post<{ message: string }>(
+    "/api/forgot-password",
+    data
+  );
+
+  return response;
+}
+
+export async function resetPassword(
+  data: ResetPasswordData
+): Promise<{ message: string }> {
+  await getCsrfCookie();
+
+  const response = await api.post<{ message: string }>(
+    "/api/reset-password",
+    data
+  );
+
+  return response;
+}
+
+export async function verifyOTP(
+  data: VerifyOTPData
+): Promise<{ message: string; data: User; token: string }> {
+  await getCsrfCookie();
+
+  const response = await api.post<{ message: string; data: User; token: string }>(
+    "/api/verify-otp",
+    data
+  );
+
+  if (response.token) {
+    localStorage.setItem("token", response.token);
+  }
+
+  return response;
+}
+
+export async function resendOTP(
+  data: ResendOTPData
+): Promise<{ message: string }> {
+  await getCsrfCookie();
+
+  const response = await api.post<{ message: string }>(
+    "/api/resend-otp",
+    data
+  );
+
+  return response;
 }
