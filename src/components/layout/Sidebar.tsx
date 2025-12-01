@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import {
   LayoutDashboard,
@@ -21,17 +21,12 @@ import { toast } from "sonner";
 import { WorkspaceSelector } from "@/components/WorkspaceSelector";
 import { BoardTemplatePicker } from "@/features/boards/components/BoardTemplatePicker";
 import { useBoardTemplates } from "@/features/boards/hooks/useBoardTemplates";
+import { useTeam } from "@/features/team";
 
 interface Board {
   id: number;
   name: string;
   color: string | null;
-}
-
-interface Team {
-  id: number;
-  name: string;
-  boards: Board[];
 }
 
 interface NavItemProps {
@@ -69,9 +64,9 @@ interface SidebarProps {
 export function Sidebar({ onNavigate }: SidebarProps = {}) {
   const navigate = useNavigate();
   const location = useLocation();
-  const [teams, setTeams] = useState<Team[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
   const [isCreateOpen, setIsCreateOpen] = useState(false);
+
+  const { selectedTeam, isLoading, refreshTeams } = useTeam();
 
   const token = localStorage.getItem("token") || "";
   const {
@@ -80,31 +75,8 @@ export function Sidebar({ onNavigate }: SidebarProps = {}) {
     createBoardFromTemplate,
   } = useBoardTemplates(token);
 
-  const fetchTeams = async () => {
-    try {
-      const json = await api.get<{ data: Team[] }>("/api/teams");
-      setTeams(json.data || []);
-    } catch {
-      console.error("Failed to fetch teams");
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  useEffect(() => {
-    fetchTeams();
-
-    const handleBoardDeleted = () => {
-      fetchTeams();
-    };
-    window.addEventListener("board-deleted", handleBoardDeleted);
-
-    return () => {
-      window.removeEventListener("board-deleted", handleBoardDeleted);
-    };
-  }, []);
-
-  const teamId = teams[0]?.id;
+  const teamId = selectedTeam?.id;
+  const boards: Board[] = (selectedTeam?.boards as Board[]) || [];
 
   const handleSelectTemplate = async (
     templateId: number,
@@ -121,7 +93,7 @@ export function Sidebar({ onNavigate }: SidebarProps = {}) {
     );
     toast.success("Board created from template!");
     setIsCreateOpen(false);
-    await fetchTeams();
+    await refreshTeams();
     navigate(`/app/boards/${board.id}`);
   };
 
@@ -135,15 +107,13 @@ export function Sidebar({ onNavigate }: SidebarProps = {}) {
 
     toast.success("Board created!");
     setIsCreateOpen(false);
-    await fetchTeams();
+    await refreshTeams();
     navigate(`/app/boards/${json.data.id}`);
   };
 
   const isActive = (path: string) => location.pathname === path;
   const isBoardActive = (boardId: number) =>
     location.pathname === `/app/boards/${boardId}`;
-
-  const allBoards = teams.flatMap((team) => team.boards || []);
 
   const handleNavigate = (path: string) => {
     navigate(path);
@@ -186,6 +156,7 @@ export function Sidebar({ onNavigate }: SidebarProps = {}) {
               size="icon"
               className="h-5 w-5"
               onClick={() => setIsCreateOpen(true)}
+              disabled={!teamId}
             >
               <Plus className="h-3 w-3" />
             </Button>
@@ -195,12 +166,12 @@ export function Sidebar({ onNavigate }: SidebarProps = {}) {
             <div className="flex items-center justify-center py-4">
               <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
             </div>
-          ) : allBoards.length === 0 ? (
+          ) : boards.length === 0 ? (
             <p className="px-3 py-2 text-sm text-muted-foreground">
               No boards yet
             </p>
           ) : (
-            allBoards.map((board) => (
+            boards.map((board) => (
               <Button
                 key={board.id}
                 variant={isBoardActive(board.id) ? "secondary" : "ghost"}

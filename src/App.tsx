@@ -12,6 +12,7 @@ import { Loader2 } from "lucide-react";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
 import { MainLayout } from "@/components/layout";
 import { AuthProvider, ProtectedRoute, GuestRoute } from "@/features/auth";
+import { TeamProvider } from "@/features/team";
 
 const LoginPage = lazy(() =>
   import("@/features/auth").then((m) => ({ default: m.LoginPage }))
@@ -82,136 +83,138 @@ function App() {
     <ErrorBoundary>
       <BrowserRouter>
         <AuthProvider>
-          <Suspense fallback={<PageLoader />}>
-            <Routes>
-              {}
-              <Route path="/" element={<Navigate to="/app" replace />} />
+          <TeamProvider>
+            <Suspense fallback={<PageLoader />}>
+              <Routes>
+                {}
+                <Route path="/" element={<Navigate to="/app" replace />} />
 
-              {}
-              <Route
-                path="/login"
-                element={
-                  <GuestRoute>
-                    <LoginPage />
-                  </GuestRoute>
-                }
-              />
-              <Route
-                path="/register"
-                element={
-                  <GuestRoute>
-                    <RegisterPage />
-                  </GuestRoute>
-                }
-              />
-              <Route
-                path="/forgot-password"
-                element={
-                  <GuestRoute>
-                    <ForgotPasswordPage />
-                  </GuestRoute>
-                }
-              />
-              <Route
-                path="/reset-password"
-                element={
-                  <GuestRoute>
-                    <ResetPasswordPage />
-                  </GuestRoute>
-                }
-              />
-              <Route
-                path="/verify-otp"
-                element={
-                  <GuestRoute>
-                    <VerifyOTPPage />
-                  </GuestRoute>
-                }
-              />
+                {}
+                <Route
+                  path="/login"
+                  element={
+                    <GuestRoute>
+                      <LoginPage />
+                    </GuestRoute>
+                  }
+                />
+                <Route
+                  path="/register"
+                  element={
+                    <GuestRoute>
+                      <RegisterPage />
+                    </GuestRoute>
+                  }
+                />
+                <Route
+                  path="/forgot-password"
+                  element={
+                    <GuestRoute>
+                      <ForgotPasswordPage />
+                    </GuestRoute>
+                  }
+                />
+                <Route
+                  path="/reset-password"
+                  element={
+                    <GuestRoute>
+                      <ResetPasswordPage />
+                    </GuestRoute>
+                  }
+                />
+                <Route
+                  path="/verify-otp"
+                  element={
+                    <GuestRoute>
+                      <VerifyOTPPage />
+                    </GuestRoute>
+                  }
+                />
 
-              {}
-              <Route path="/p/:token" element={<PublicBoardWrapper />} />
+                {}
+                <Route path="/p/:token" element={<PublicBoardWrapper />} />
 
-              {}
-              <Route
-                path="/app"
-                element={
-                  <ProtectedRoute>
-                    <MainLayout>
-                      <DashboardPage />
-                    </MainLayout>
-                  </ProtectedRoute>
-                }
-              />
-              <Route
-                path="/app/boards"
-                element={
-                  <ProtectedRoute>
-                    <MainLayout>
-                      <BoardsListPage />
-                    </MainLayout>
-                  </ProtectedRoute>
-                }
-              />
-              <Route
-                path="/app/boards/:boardId"
-                element={
-                  <ProtectedRoute>
-                    <MainLayout>
-                      <BoardPageWrapper />
-                    </MainLayout>
-                  </ProtectedRoute>
-                }
-              />
-              <Route
-                path="/app/members"
-                element={
-                  <ProtectedRoute>
-                    <MainLayout>
-                      <MembersPage />
-                    </MainLayout>
-                  </ProtectedRoute>
-                }
-              />
-              <Route
-                path="/app/settings"
-                element={
-                  <ProtectedRoute>
-                    <MainLayout>
-                      <SettingsPage />
-                    </MainLayout>
-                  </ProtectedRoute>
-                }
-              />
-              <Route
-                path="/app/profile"
-                element={
-                  <ProtectedRoute>
-                    <MainLayout>
-                      <ProfilePage />
-                    </MainLayout>
-                  </ProtectedRoute>
-                }
-              />
+                {}
+                <Route
+                  path="/app"
+                  element={
+                    <ProtectedRoute>
+                      <MainLayout>
+                        <DashboardPage />
+                      </MainLayout>
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="/app/boards"
+                  element={
+                    <ProtectedRoute>
+                      <MainLayout>
+                        <BoardsListPage />
+                      </MainLayout>
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="/app/boards/:boardId"
+                  element={
+                    <ProtectedRoute>
+                      <MainLayout>
+                        <BoardPageWrapper />
+                      </MainLayout>
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="/app/members"
+                  element={
+                    <ProtectedRoute>
+                      <MainLayout>
+                        <MembersPage />
+                      </MainLayout>
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="/app/settings"
+                  element={
+                    <ProtectedRoute>
+                      <MainLayout>
+                        <SettingsPage />
+                      </MainLayout>
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="/app/profile"
+                  element={
+                    <ProtectedRoute>
+                      <MainLayout>
+                        <ProfilePage />
+                      </MainLayout>
+                    </ProtectedRoute>
+                  }
+                />
 
-              {}
-              <Route path="*" element={<Navigate to="/app" replace />} />
-            </Routes>
-          </Suspense>
+                {}
+                <Route path="*" element={<Navigate to="/app" replace />} />
+              </Routes>
+            </Suspense>
 
-          <Toaster
-            position="top-right"
-            theme={theme}
-            toastOptions={{
-              classNames: {
-                toast: "bg-card text-card-foreground border-border",
-                success: "border-green-500/50",
-                error: "border-destructive/50",
-                warning: "border-yellow-500/50",
-                info: "border-blue-500/50",
-              },
-            }}
-          />
+            <Toaster
+              position="top-right"
+              theme={theme}
+              toastOptions={{
+                classNames: {
+                  toast: "bg-card text-card-foreground border-border",
+                  success: "border-green-500/50",
+                  error: "border-destructive/50",
+                  warning: "border-yellow-500/50",
+                  info: "border-blue-500/50",
+                },
+              }}
+            />
+          </TeamProvider>
         </AuthProvider>
       </BrowserRouter>
     </ErrorBoundary>

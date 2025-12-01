@@ -30,6 +30,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { api } from "@/lib/api";
 import { toast } from "sonner";
+import { useTeam } from "@/features/team";
 
 interface Board {
   id: number;
@@ -41,15 +42,9 @@ interface Board {
   created_at: string;
 }
 
-interface Team {
-  id: number;
-  name: string;
-  boards: Board[];
-}
-
 export function BoardsListPage() {
   const navigate = useNavigate();
-  const [teams, setTeams] = useState<Team[]>([]);
+  const { selectedTeam, refreshTeams } = useTeam();
   const [isLoading, setIsLoading] = useState(true);
   const [isCreateOpen, setIsCreateOpen] = useState(false);
   const [isEditOpen, setIsEditOpen] = useState(false);
@@ -58,31 +53,23 @@ export function BoardsListPage() {
   const [newBoardDescription, setNewBoardDescription] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const fetchTeams = async () => {
-    try {
-      const json = await api.get<{ data: Team[] }>("/api/teams");
-      setTeams(json.data || []);
-    } catch {
-      toast.error("Failed to load boards");
-    } finally {
-      setIsLoading(false);
-    }
-  };
+  // Get boards from selected team
+  const boards: Board[] = (selectedTeam?.boards as Board[]) || [];
 
   useEffect(() => {
-    fetchTeams();
-  }, []);
+    // Loading state depends on team context
+    if (selectedTeam !== null) {
+      setIsLoading(false);
+    }
+  }, [selectedTeam]);
 
   const handleCreateBoard = async () => {
-    if (!newBoardName.trim()) return;
-
-    const teamId = teams[0]?.id;
-    if (!teamId) return;
+    if (!newBoardName.trim() || !selectedTeam) return;
 
     setIsSubmitting(true);
     try {
       const json = await api.post<{ data: { id: number } }>(
-        `/api/teams/${teamId}/boards`,
+        `/api/teams/${selectedTeam.id}/boards`,
         {
           name: newBoardName,
           description: newBoardDescription || null,
@@ -93,7 +80,7 @@ export function BoardsListPage() {
       setIsCreateOpen(false);
       setNewBoardName("");
       setNewBoardDescription("");
-      await fetchTeams();
+      await refreshTeams();
       navigate(`/app/boards/${json.data.id}`);
     } catch {
       toast.error("Failed to create board");
@@ -117,7 +104,7 @@ export function BoardsListPage() {
       setEditingBoard(null);
       setNewBoardName("");
       setNewBoardDescription("");
-      await fetchTeams();
+      await refreshTeams();
     } catch {
       toast.error("Failed to update board");
     } finally {
@@ -131,7 +118,7 @@ export function BoardsListPage() {
     try {
       await api.delete(`/api/boards/${boardId}`);
       toast.success("Board deleted!");
-      await fetchTeams();
+      await refreshTeams();
     } catch {
       toast.error("Failed to delete board");
     }
@@ -143,8 +130,6 @@ export function BoardsListPage() {
     setNewBoardDescription(board.description || "");
     setIsEditOpen(true);
   };
-
-  const allBoards = teams.flatMap((team) => team.boards || []);
 
   if (isLoading) {
     return (
@@ -165,7 +150,7 @@ export function BoardsListPage() {
         </div>
         <Dialog open={isCreateOpen} onOpenChange={setIsCreateOpen}>
           <DialogTrigger asChild>
-            <Button>
+            <Button disabled={!selectedTeam}>
               <Plus className="mr-2 h-4 w-4" />
               New Board
             </Button>
@@ -213,7 +198,7 @@ export function BoardsListPage() {
         </Dialog>
       </div>
 
-      {allBoards.length === 0 ? (
+      {boards.length === 0 ? (
         <Card className="border-dashed">
           <CardContent className="flex flex-col items-center justify-center py-12">
             <PanelsTopLeft className="h-12 w-12 text-muted-foreground mb-4" />
@@ -221,7 +206,10 @@ export function BoardsListPage() {
             <p className="text-muted-foreground text-center mb-4">
               Create your first board to start organizing your projects
             </p>
-            <Button onClick={() => setIsCreateOpen(true)}>
+            <Button
+              onClick={() => setIsCreateOpen(true)}
+              disabled={!selectedTeam}
+            >
               <Plus className="mr-2 h-4 w-4" />
               Create Board
             </Button>
@@ -229,7 +217,7 @@ export function BoardsListPage() {
         </Card>
       ) : (
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-          {allBoards.map((board) => (
+          {boards.map((board) => (
             <Card
               key={board.id}
               className="hover:shadow-md transition-shadow cursor-pointer group"

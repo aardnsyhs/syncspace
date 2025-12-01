@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { Check, ChevronsUpDown, Plus, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
@@ -24,55 +24,31 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { cn } from "@/lib/utils";
-import { api } from "@/lib/api";
+import { useTeam } from "@/features/team";
 import { toast } from "sonner";
-
-interface Team {
-  id: number;
-  name: string;
-  slug: string;
-}
 
 export function WorkspaceSelector() {
   const [open, setOpen] = useState(false);
-  const [teams, setTeams] = useState<Team[]>([]);
-  const [selectedTeam, setSelectedTeam] = useState<Team | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
   const [isCreateOpen, setIsCreateOpen] = useState(false);
   const [newTeamName, setNewTeamName] = useState("");
   const [isCreating, setIsCreating] = useState(false);
 
-  useEffect(() => {
-    const fetchTeams = async () => {
-      try {
-        const data = await api.get<{ data: Team[] }>("/api/teams");
-        setTeams(data.data || []);
-        if (data.data?.length > 0 && !selectedTeam) {
-          setSelectedTeam(data.data[0]);
-        }
-      } catch {
-        console.error("Failed to fetch teams");
-      } finally {
-        setIsLoading(false);
-      }
-    };
-
-    fetchTeams();
-  }, [selectedTeam]);
+  const { teams, selectedTeam, isLoading, setSelectedTeam, createTeam } =
+    useTeam();
 
   const handleCreateTeam = async () => {
     if (!newTeamName.trim()) return;
 
     setIsCreating(true);
     try {
-      const data = await api.post<{ data: Team }>("/api/teams", {
-        name: newTeamName,
-      });
-      setTeams((prev) => [...prev, data.data]);
-      setSelectedTeam(data.data);
-      setIsCreateOpen(false);
-      setNewTeamName("");
-      toast.success("Workspace created!");
+      const newTeam = await createTeam(newTeamName);
+      if (newTeam) {
+        setIsCreateOpen(false);
+        setNewTeamName("");
+        toast.success("Workspace created!");
+      } else {
+        toast.error("Failed to create workspace");
+      }
     } catch {
       toast.error("Failed to create workspace");
     } finally {
