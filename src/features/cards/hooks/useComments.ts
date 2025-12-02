@@ -91,12 +91,17 @@ export function useComments(
       { body }
     );
 
-    setComments((prev) => [res.data, ...prev]);
+    // Add comment only if not already added by broadcast
+    setComments((prev) => {
+      if (prev.some((c) => c.id === res.data.id)) return prev;
+      return [res.data, ...prev];
+    });
   };
 
   const deleteComment = async (commentId: number) => {
-    await api.delete(`/api/comments/${commentId}`);
+    // Optimistically remove from UI first
     setComments((prev) => prev.filter((c) => c.id !== commentId));
+    await api.delete(`/api/comments/${commentId}`);
   };
 
   return {

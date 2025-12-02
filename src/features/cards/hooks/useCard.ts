@@ -72,6 +72,32 @@ export function useCard(
     fetchCard();
   }, [fetchCard]);
 
+  // Fetch only checklists (for realtime updates)
+  const fetchChecklists = useCallback(async () => {
+    if (!cardId) return;
+    try {
+      const data = await api.get<{ data: Checklist[] }>(
+        `/api/cards/${cardId}/checklists`
+      );
+      setCard((prev) => (prev ? { ...prev, checklists: data.data } : null));
+    } catch {
+      // Silently fail for background refresh
+    }
+  }, [cardId]);
+
+  // Fetch only attachments (for realtime updates)
+  const fetchAttachments = useCallback(async () => {
+    if (!cardId) return;
+    try {
+      const data = await api.get<{ data: CardDetail["attachments"] }>(
+        `/api/cards/${cardId}/attachments`
+      );
+      setCard((prev) => (prev ? { ...prev, attachments: data.data } : null));
+    } catch {
+      // Silently fail for background refresh
+    }
+  }, [cardId]);
+
   // Subscribe to realtime updates for this card
   useEffect(() => {
     if (!cardId || !boardId) return;
@@ -79,35 +105,38 @@ export function useCard(
     const echo = getEcho() || initializeEcho();
     const channel = echo.private(`board.${boardId}`);
 
-    const handleCardUpdated = (payload: { card: CardDetail }) => {
+    const handleCardUpdated = (payload: { card: Partial<CardDetail> }) => {
       if (payload.card.id === cardId) {
-        // Refetch to get full card data with checklists and attachments
-        fetchCard();
-      }
-    };
+        // Merge basic card fields directly (title, description, due_date, etc.)
+        setCard((prev) => {
+          if (!prev) return null;
+          return {
+            ...prev,
+            title: payload.card.title ?? prev.title,
+            description: payload.card.description ?? prev.description,
+            due_date: payload.card.due_date ?? prev.due_date,
+            is_completed: payload.card.is_completed ?? prev.is_completed,
+            completed_at: payload.card.completed_at ?? prev.completed_at,
+            assignee: payload.card.assignee ?? prev.assignee,
+            labels: payload.card.labels ?? prev.labels,
+            // Keep existing checklists and attachments
+            checklists: prev.checklists,
+            attachments: prev.attachments,
+          };
+        });
 
-    const handleCommentCreated = (payload: { card_id: number }) => {
-      if (payload.card_id === cardId) {
-        // Comments are handled by useComments hook, but we can trigger a refetch if needed
-      }
-    };
-
-    const handleCommentDeleted = (payload: { card_id: number }) => {
-      if (payload.card_id === cardId) {
-        // Comments are handled by useComments hook
+        // Background refresh checklists and attachments (they might have changed)
+        fetchChecklists();
+        fetchAttachments();
       }
     };
 
     channel.listen(".CardUpdated", handleCardUpdated);
-    channel.listen(".CommentCreated", handleCommentCreated);
-    channel.listen(".CommentDeleted", handleCommentDeleted);
 
     return () => {
       channel.stopListening(".CardUpdated", handleCardUpdated);
-      channel.stopListening(".CommentCreated", handleCommentCreated);
-      channel.stopListening(".CommentDeleted", handleCommentDeleted);
     };
-  }, [cardId, boardId, fetchCard]);
+  }, [cardId, boardId, fetchChecklists, fetchAttachments]);
 
   const updateCard = async (
     data: Partial<CardDetail> & { assignee_id?: number | null }

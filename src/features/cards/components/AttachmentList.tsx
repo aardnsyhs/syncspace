@@ -172,40 +172,112 @@ interface AttachmentItemProps {
 
 function AttachmentItem({ attachment, onDelete }: AttachmentItemProps) {
   const Icon = getFileIcon(attachment.mime_type);
+  const isImage = attachment.mime_type?.startsWith("image/");
+  const [imageError, setImageError] = useState(false);
+  const [isDownloading, setIsDownloading] = useState(false);
+
+  const handleDownload = async () => {
+    if (attachment.is_external) {
+      window.open(attachment.url, "_blank");
+      return;
+    }
+
+    setIsDownloading(true);
+    try {
+      const apiUrl = import.meta.env.VITE_API_URL || "";
+      const token = localStorage.getItem("token");
+      const response = await fetch(
+        `${apiUrl}/attachments/${attachment.id}/download`,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+
+      if (!response.ok) throw new Error("Download failed");
+
+      const blob = await response.blob();
+      const url = window.URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.href = url;
+      link.download = attachment.file_name;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      window.URL.revokeObjectURL(url);
+    } catch (error) {
+      console.error("Download failed:", error);
+      window.open(attachment.url, "_blank");
+    } finally {
+      setIsDownloading(false);
+    }
+  };
 
   return (
-    <div className="flex items-center gap-3 p-2 border rounded-lg group hover:bg-muted/50">
-      <div className="w-10 h-10 rounded bg-muted flex items-center justify-center">
-        <Icon className="h-5 w-5 text-muted-foreground" />
-      </div>
-      <div className="flex-1 min-w-0">
-        <p className="text-sm font-medium truncate">{attachment.file_name}</p>
-        <p className="text-xs text-muted-foreground">
-          {attachment.is_external
-            ? "External link"
-            : formatFileSize(attachment.file_size)}
-          {" • "}
-          {new Date(attachment.created_at).toLocaleDateString()}
-        </p>
-      </div>
-      <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-        <Button variant="ghost" size="icon" className="h-8 w-8" asChild>
-          <a href={attachment.url} target="_blank" rel="noopener noreferrer">
+    <div className="border rounded-lg group hover:bg-muted/50 overflow-hidden">
+      {/* Image Preview */}
+      {isImage && !attachment.is_external && !imageError && (
+        <a
+          href={attachment.url}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="block"
+        >
+          <div className="relative aspect-video bg-muted">
+            <img
+              src={attachment.url}
+              alt={attachment.file_name}
+              className="w-full h-full object-cover"
+              onError={() => setImageError(true)}
+            />
+            <div className="absolute inset-0 bg-black/0 hover:bg-black/10 transition-colors" />
+          </div>
+        </a>
+      )}
+
+      {/* File Info */}
+      <div className="flex items-center gap-3 p-2">
+        {(!isImage || attachment.is_external || imageError) && (
+          <div className="w-10 h-10 rounded bg-muted flex items-center justify-center flex-shrink-0">
+            <Icon className="h-5 w-5 text-muted-foreground" />
+          </div>
+        )}
+        <div className="flex-1 min-w-0">
+          <p className="text-sm font-medium truncate">{attachment.file_name}</p>
+          <p className="text-xs text-muted-foreground">
+            {attachment.is_external
+              ? "External link"
+              : formatFileSize(attachment.file_size)}
+            {" • "}
+            {new Date(attachment.created_at).toLocaleDateString()}
+          </p>
+        </div>
+        <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity flex-shrink-0">
+          <Button
+            variant="ghost"
+            size="icon"
+            className="h-8 w-8"
+            onClick={handleDownload}
+            disabled={isDownloading}
+          >
             {attachment.is_external ? (
               <ExternalLink className="h-4 w-4" />
             ) : (
-              <Download className="h-4 w-4" />
+              <Download
+                className={`h-4 w-4 ${isDownloading ? "animate-pulse" : ""}`}
+              />
             )}
-          </a>
-        </Button>
-        <Button
-          variant="ghost"
-          size="icon"
-          className="h-8 w-8 text-destructive"
-          onClick={() => onDelete(attachment.id)}
-        >
-          <Trash2 className="h-4 w-4" />
-        </Button>
+          </Button>
+          <Button
+            variant="ghost"
+            size="icon"
+            className="h-8 w-8 text-destructive"
+            onClick={() => onDelete(attachment.id)}
+          >
+            <Trash2 className="h-4 w-4" />
+          </Button>
+        </div>
       </div>
     </div>
   );
