@@ -124,7 +124,7 @@ export function BoardPage({ boardId: propBoardId }: BoardPageProps) {
   const sensors = useSensors(
     useSensor(PointerSensor, {
       activationConstraint: {
-        distance: 8,
+        distance: 1,
       },
     })
   );

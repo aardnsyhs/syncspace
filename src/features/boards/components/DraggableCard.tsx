@@ -48,8 +48,9 @@ export function DraggableCard({
 
   const style = {
     transform: CSS.Transform.toString(transform),
-    transition,
-    opacity: isDragging ? 0.5 : 1,
+    transition: transition || undefined,
+    opacity: isDragging ? 0.8 : 1,
+    zIndex: isDragging ? 1000 : undefined,
   };
 
   const handleCheckboxClick = (e: React.MouseEvent) => {
@@ -64,7 +65,7 @@ export function DraggableCard({
       {...attributes}
       {...listeners}
       className={cn(
-        "bg-background rounded-lg border p-3 shadow-sm hover:shadow-md transition-shadow cursor-grab active:cursor-grabbing",
+        "group bg-background rounded-lg border p-3 shadow-sm hover:shadow-md transition-shadow cursor-grab active:cursor-grabbing",
         card.is_completed && "opacity-60"
       )}
       onClick={onClick}
@@ -73,7 +74,12 @@ export function DraggableCard({
       <div className="flex items-start gap-2 mt-1">
         <button
           onClick={handleCheckboxClick}
-          className="flex-shrink-0 mt-0.5 text-muted-foreground hover:text-primary transition-colors"
+          className={cn(
+            "flex-shrink-0 mt-0.5 text-muted-foreground hover:text-primary transition-all",
+            card.is_completed
+              ? "opacity-100"
+              : "opacity-0 group-hover:opacity-100"
+          )}
           aria-label={
             card.is_completed ? "Mark as incomplete" : "Mark as complete"
           }
