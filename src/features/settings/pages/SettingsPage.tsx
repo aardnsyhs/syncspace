@@ -1,5 +1,6 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { Loader2, Trash2, UserPlus } from "lucide-react";
+import { getEcho, initializeEcho } from "@/lib/echo";
 import { useAuth } from "@/features/auth/store/AuthContext";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -119,34 +120,71 @@ export function SettingsPage() {
     fetchTeams();
   }, []);
 
-  useEffect(() => {
-    const fetchMembers = async () => {
-      if (!selectedTeam) return;
+  const fetchMembers = useCallback(async () => {
+    if (!selectedTeam) return;
 
-      const token = localStorage.getItem("token");
-      if (!token) return;
+    const token = localStorage.getItem("token");
+    if (!token) return;
 
-      try {
-        const res = await fetch(
-          `${API_URL}/api/teams/${selectedTeam.id}/members`,
-          {
-            headers: {
-              Authorization: `Bearer ${token}`,
-              Accept: "application/json",
-            },
-          }
-        );
-
-        if (res.ok) {
-          const data = await res.json();
-          setMembers(data.data || []);
+    try {
+      const res = await fetch(
+        `${API_URL}/api/teams/${selectedTeam.id}/members`,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+            Accept: "application/json",
+          },
         }
-      } catch {
-        console.error("Failed to fetch members");
-      }
-    };
+      );
 
+      if (res.ok) {
+        const data = await res.json();
+        setMembers(data.data || []);
+      }
+    } catch {
+      console.error("Failed to fetch members");
+    }
+  }, [selectedTeam]);
+
+  useEffect(() => {
     fetchMembers();
+  }, [fetchMembers]);
+
+  // Subscribe to realtime member updates
+  useEffect(() => {
+    if (!selectedTeam) return;
+
+    const echo = getEcho() || initializeEcho();
+    const channel = echo.private(`team.${selectedTeam.id}`);
+
+    channel.listen(
+      ".TeamMemberAdded",
+      (payload: { member: TeamMember; role: string }) => {
+        setMembers((prev) => {
+          if (prev.some((m) => m.id === payload.member.id)) return prev;
+          return [...prev, { ...payload.member, role: payload.role }];
+        });
+      }
+    );
+
+    channel.listen(
+      ".TeamMemberUpdated",
+      (payload: { member: TeamMember; new_role: string }) => {
+        setMembers((prev) =>
+          prev.map((m) =>
+            m.id === payload.member.id ? { ...m, role: payload.new_role } : m
+          )
+        );
+      }
+    );
+
+    channel.listen(".TeamMemberRemoved", (payload: { user_id: number }) => {
+      setMembers((prev) => prev.filter((m) => m.id !== payload.user_id));
+    });
+
+    return () => {
+      echo.leave(`team.${selectedTeam.id}`);
+    };
   }, [selectedTeam]);
 
   const handleSaveTeam = async () => {
