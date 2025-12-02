@@ -14,14 +14,14 @@ interface Props {
 }
 
 const PRESET_COLORS = [
-  "#ef4444", 
-  "#f97316", 
-  "#eab308", 
-  "#22c55e", 
-  "#14b8a6", 
-  "#3b82f6", 
-  "#8b5cf6", 
-  "#ec4899", 
+  "#ef4444",
+  "#f97316",
+  "#eab308",
+  "#22c55e",
+  "#14b8a6",
+  "#3b82f6",
+  "#8b5cf6",
+  "#ec4899",
 ];
 
 export function LabelPicker({
@@ -48,7 +48,6 @@ export function LabelPicker({
     <div className="space-y-3">
       <div className="text-sm font-medium">Labels</div>
 
-      {}
       <div className="space-y-1 max-h-48 overflow-y-auto">
         {boardLabels.length === 0 && !isCreating && (
           <p className="text-sm text-muted-foreground py-2">No labels yet</p>
@@ -73,7 +72,6 @@ export function LabelPicker({
         })}
       </div>
 
-      {}
       {isCreating ? (
         <div className="space-y-2 pt-2 border-t">
           <Label htmlFor="label-name">Name</Label>

@@ -86,10 +86,8 @@ function App() {
           <TeamProvider>
             <Suspense fallback={<PageLoader />}>
               <Routes>
-                {}
                 <Route path="/" element={<Navigate to="/app" replace />} />
 
-                {}
                 <Route
                   path="/login"
                   element={
@@ -131,10 +129,8 @@ function App() {
                   }
                 />
 
-                {}
                 <Route path="/p/:token" element={<PublicBoardWrapper />} />
 
-                {}
                 <Route
                   path="/app"
                   element={
@@ -196,7 +192,6 @@ function App() {
                   }
                 />
 
-                {}
                 <Route path="*" element={<Navigate to="/app" replace />} />
               </Routes>
             </Suspense>

@@ -14,12 +14,10 @@ export function MainLayout({ children }: MainLayoutProps) {
   return (
     <TooltipProvider delayDuration={0}>
       <div className="flex h-screen bg-background">
-        {}
         <div className="hidden lg:block">
           <Sidebar />
         </div>
 
-        {}
         <Sheet open={sidebarOpen} onOpenChange={setSidebarOpen}>
           <SheetContent side="left" className="p-0 w-64">
             <Sidebar onNavigate={() => setSidebarOpen(false)} />

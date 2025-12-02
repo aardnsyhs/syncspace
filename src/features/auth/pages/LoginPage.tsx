@@ -94,7 +94,6 @@ export function LoginPage() {
       <Card className="border-0 shadow-none lg:border lg:shadow-sm">
         <form onSubmit={handleSubmit(onSubmit)}>
           <CardContent className="space-y-4 px-0 lg:px-6 pt-0 lg:pt-6">
-            {}
             <div className="space-y-2">
               <Label htmlFor="email">Email</Label>
               <div className="relative">
@@ -115,7 +114,6 @@ export function LoginPage() {
               )}
             </div>
 
-            {}
             <div className="space-y-2">
               <div className="flex items-center justify-between">
                 <Label htmlFor="password">Password</Label>
@@ -144,7 +142,6 @@ export function LoginPage() {
               )}
             </div>
 
-            {}
             <div className="flex items-center gap-2 mb-2">
               <Checkbox id="remember" {...register("remember")} />
               <Label htmlFor="remember" className="text-sm font-normal">

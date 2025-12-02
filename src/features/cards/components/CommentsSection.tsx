@@ -170,7 +170,6 @@ export function CommentsSection({
         </span>
       </div>
 
-      {}
       <div className="relative">
         <textarea
           ref={textareaRef}
@@ -181,7 +180,6 @@ export function CommentsSection({
           className="w-full min-h-[80px] p-2 border rounded-md text-sm resize-none focus:outline-none focus:ring-2 focus:ring-primary"
         />
 
-        {}
         {showMentions && filteredMembers.length > 0 && (
           <div className="absolute top-full left-0 mt-1 w-full bg-background border rounded-md shadow-lg z-50">
             <ScrollArea className="max-h-40">
@@ -225,7 +223,6 @@ export function CommentsSection({
         </Button>
       </div>
 
-      {}
       {isLoading ? (
         <div className="flex justify-center py-4">
           <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />

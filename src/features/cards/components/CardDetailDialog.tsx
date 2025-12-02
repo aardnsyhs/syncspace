@@ -52,6 +52,8 @@ import {
   AlignLeft,
   X,
   Trash2,
+  Circle,
+  CheckCircle2,
 } from "lucide-react";
 import { toast } from "sonner";
 import { format } from "date-fns";
@@ -115,7 +117,6 @@ export function CardDetailDialog({
   const [isEditingDescription, setIsEditingDescription] = useState(false);
   const [editedDescription, setEditedDescription] = useState("");
 
-  // Sync edited values when card loads
   useEffect(() => {
     if (card) {
       setEditedTitle(card.title);
@@ -123,7 +124,6 @@ export function CardDetailDialog({
     }
   }, [card]);
 
-  // Handle keyboard shortcuts
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.key === "Escape" && isOpen) {
@@ -208,11 +208,31 @@ export function CardDetailDialog({
           </div>
         ) : (
           <div className="flex flex-col md:flex-row h-[85vh]">
-            {}
             <div className="flex-1 overflow-y-auto p-4 md:p-6">
               <DialogHeader className="pr-8">
                 <div className="flex items-start justify-between gap-2">
-                  {}
+                  <button
+                    onClick={async () => {
+                      try {
+                        await updateCard({ is_completed: !card.is_completed });
+                        onCardUpdated?.();
+                      } catch {
+                        toast.error("Failed to update card");
+                      }
+                    }}
+                    className="flex-shrink-0 mt-1 text-muted-foreground hover:text-primary transition-colors"
+                    aria-label={
+                      card.is_completed
+                        ? "Mark as incomplete"
+                        : "Mark as complete"
+                    }
+                  >
+                    {card.is_completed ? (
+                      <CheckCircle2 className="h-5 w-5 text-green-500" />
+                    ) : (
+                      <Circle className="h-5 w-5" />
+                    )}
+                  </button>
                   {isEditingTitle ? (
                     <Input
                       value={editedTitle}
@@ -224,13 +244,16 @@ export function CardDetailDialog({
                     />
                   ) : (
                     <DialogTitle
-                      className="cursor-pointer hover:bg-muted px-2 py-1 -mx-2 rounded flex-1"
+                      className={`cursor-pointer hover:bg-muted px-2 py-1 -mx-2 rounded flex-1 ${
+                        card.is_completed
+                          ? "line-through text-muted-foreground"
+                          : ""
+                      }`}
                       onClick={() => setIsEditingTitle(true)}
                     >
                       {card.title}
                     </DialogTitle>
                   )}
-                  {}
                   <AlertDialog>
                     <AlertDialogTrigger asChild>
                       <Button
@@ -273,7 +296,6 @@ export function CardDetailDialog({
               </DialogHeader>
 
               <div className="space-y-6 mt-4">
-                {}
                 <div className="space-y-2">
                   <div className="flex items-center gap-2">
                     <Tag className="h-4 w-4 text-muted-foreground" />
@@ -307,9 +329,7 @@ export function CardDetailDialog({
                   </div>
                 </div>
 
-                {}
                 <div className="flex gap-6">
-                  {}
                   <div className="space-y-1">
                     <div className="flex items-center gap-2 text-sm text-muted-foreground">
                       <CalendarIcon className="h-4 w-4" />
@@ -342,7 +362,6 @@ export function CardDetailDialog({
                           }
                           onSelect={async (date: Date | undefined) => {
                             try {
-                              
                               const formattedDate = date
                                 ? `${date.getFullYear()}-${String(
                                     date.getMonth() + 1
@@ -358,7 +377,6 @@ export function CardDetailDialog({
                               toast.error("Failed to update due date");
                             }
                           }}
-                          initialFocus
                         />
                         {card.due_date && (
                           <div className="p-2 border-t">
@@ -384,7 +402,6 @@ export function CardDetailDialog({
                     </Popover>
                   </div>
 
-                  {}
                   <div className="space-y-1">
                     <div className="flex items-center gap-2 text-sm text-muted-foreground">
                       <User className="h-4 w-4" />
@@ -422,7 +439,6 @@ export function CardDetailDialog({
                   </div>
                 </div>
 
-                {}
                 <div className="space-y-2">
                   <div className="flex items-center gap-2">
                     <AlignLeft className="h-4 w-4 text-muted-foreground" />
@@ -467,7 +483,6 @@ export function CardDetailDialog({
                   )}
                 </div>
 
-                {}
                 <ChecklistView
                   checklists={card.checklists}
                   onAddChecklist={async (title) => {
@@ -510,7 +525,6 @@ export function CardDetailDialog({
                   }}
                 />
 
-                {}
                 <AttachmentList
                   attachments={card.attachments}
                   onUpload={async (file) => {
@@ -544,7 +558,6 @@ export function CardDetailDialog({
               </div>
             </div>
 
-            {}
             <div className="md:hidden border-t p-3">
               <Button
                 variant="outline"
@@ -555,7 +568,6 @@ export function CardDetailDialog({
               </Button>
             </div>
 
-            {}
             <div
               className={`${
                 showComments ? "block" : "hidden"

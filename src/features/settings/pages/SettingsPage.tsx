@@ -341,7 +341,6 @@ export function SettingsPage() {
           <TabsTrigger value="notifications">Notifications</TabsTrigger>
         </TabsList>
 
-        {}
         <TabsContent value="workspace" className="space-y-6">
           <Card>
             <CardHeader>
@@ -401,7 +400,6 @@ export function SettingsPage() {
           </Card>
         </TabsContent>
 
-        {}
         <TabsContent value="members" className="space-y-6">
           <Card>
             <CardHeader>
@@ -501,7 +499,6 @@ export function SettingsPage() {
           </Card>
         </TabsContent>
 
-        {}
         <TabsContent value="notifications" className="space-y-6">
           <Card>
             <CardHeader>

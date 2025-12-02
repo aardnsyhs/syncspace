@@ -16,6 +16,8 @@ export interface FilteredCard {
   description: string | null;
   position: number;
   due_date: string | null;
+  is_completed: boolean;
+  completed_at: string | null;
   assignee: { id: number; name: string; avatar_url?: string } | null;
   labels: { id: number; board_id: number; name: string; color: string }[];
   column: { id: number; name: string; position: number };

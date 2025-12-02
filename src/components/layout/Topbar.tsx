@@ -78,9 +78,7 @@ export function Topbar({ onMenuClick }: TopbarProps) {
 
   return (
     <header className="flex h-14 items-center justify-between border-b bg-card px-4 md:px-6">
-      {}
       <div className="flex items-center gap-2 md:gap-4">
-        {}
         <Button
           variant="ghost"
           size="icon"
@@ -94,9 +92,7 @@ export function Topbar({ onMenuClick }: TopbarProps) {
         </h1>
       </div>
 
-      {}
       <div className="flex items-center gap-2">
-        {}
         <Tooltip>
           <TooltipTrigger asChild>
             <Button
@@ -112,10 +108,8 @@ export function Topbar({ onMenuClick }: TopbarProps) {
           </TooltipContent>
         </Tooltip>
 
-        {}
         <NotificationsDropdown />
 
-        {}
         <Tooltip>
           <TooltipTrigger asChild>
             <Button variant="ghost" size="icon" onClick={() => toggleTheme()}>
@@ -129,12 +123,14 @@ export function Topbar({ onMenuClick }: TopbarProps) {
           <TooltipContent>Toggle theme</TooltipContent>
         </Tooltip>
 
-        {}
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
             <Button variant="ghost" className="relative h-8 w-8 rounded-full">
               <Avatar className="h-8 w-8">
-                <AvatarImage src={normalizeAvatarUrl(user?.avatar_url)} alt={user?.name} />
+                <AvatarImage
+                  src={normalizeAvatarUrl(user?.avatar_url)}
+                  alt={user?.name}
+                />
                 <AvatarFallback>
                   {user?.name ? getInitials(user.name) : "U"}
                 </AvatarFallback>
@@ -171,7 +167,6 @@ export function Topbar({ onMenuClick }: TopbarProps) {
         </DropdownMenu>
       </div>
 
-      {}
       <SearchDialog open={searchOpen} onOpenChange={setSearchOpen} />
     </header>
   );

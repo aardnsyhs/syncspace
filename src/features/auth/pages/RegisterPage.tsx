@@ -108,7 +108,6 @@ export function RegisterPage() {
       <Card className="border-0 shadow-none lg:border lg:shadow-sm">
         <form onSubmit={handleSubmit(onSubmit)}>
           <CardContent className="space-y-4 px-0 lg:px-6 pt-0 lg:pt-6">
-            {}
             <div className="space-y-2">
               <Label htmlFor="name">Full Name</Label>
               <div className="relative">
@@ -129,7 +128,6 @@ export function RegisterPage() {
               )}
             </div>
 
-            {}
             <div className="space-y-2">
               <Label htmlFor="email">Email</Label>
               <div className="relative">
@@ -150,7 +148,6 @@ export function RegisterPage() {
               )}
             </div>
 
-            {}
             <div className="space-y-2">
               <Label htmlFor="password">Password</Label>
               <div className="relative">

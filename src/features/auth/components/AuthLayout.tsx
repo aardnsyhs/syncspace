@@ -10,7 +10,6 @@ interface Props {
 export function AuthLayout({ children, title, subtitle }: Props) {
   return (
     <div className="min-h-screen flex">
-      {}
       <div className="hidden lg:flex lg:w-1/2 bg-primary text-primary-foreground flex-col justify-between p-12">
         <div>
           <div className="flex items-center gap-3">
@@ -38,10 +37,8 @@ export function AuthLayout({ children, title, subtitle }: Props) {
         </div>
       </div>
 
-      {}
       <div className="flex-1 flex items-center justify-center p-8 bg-background">
         <div className="w-full max-w-md space-y-8">
-          {}
           <div className="lg:hidden flex items-center justify-center gap-2 mb-8">
             <div className="p-2 bg-primary text-primary-foreground rounded-lg">
               <Layers className="h-6 w-6" />
@@ -49,7 +46,6 @@ export function AuthLayout({ children, title, subtitle }: Props) {
             <span className="text-xl font-bold">Syncspace</span>
           </div>
 
-          {}
           <div className="text-center lg:text-left">
             <h2 className="text-2xl font-bold tracking-tight">{title}</h2>
             {subtitle && (
@@ -57,7 +53,6 @@ export function AuthLayout({ children, title, subtitle }: Props) {
             )}
           </div>
 
-          {}
           {children}
         </div>
       </div>

@@ -45,7 +45,6 @@ export function BoardAnalyticsPage({
 
   return (
     <div className="min-h-screen bg-background">
-      {}
       <div className="border-b">
         <div className="container mx-auto px-4 py-4">
           <div className="flex items-center justify-between">
@@ -76,7 +75,6 @@ export function BoardAnalyticsPage({
         </div>
       </div>
 
-      {}
       <div className="container mx-auto px-4 py-6">
         <Tabs defaultValue="overview" className="space-y-6">
           <TabsList>

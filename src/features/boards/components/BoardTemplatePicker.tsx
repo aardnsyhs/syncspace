@@ -23,18 +23,18 @@ import {
 import type { BoardTemplate } from "../hooks/useBoardTemplates";
 
 const BOARD_COLORS = [
-  "#6366f1", 
-  "#8b5cf6", 
-  "#ec4899", 
-  "#ef4444", 
-  "#f97316", 
-  "#eab308", 
-  "#22c55e", 
-  "#14b8a6", 
-  "#06b6d4", 
-  "#3b82f6", 
-  "#64748b", 
-  "#78716c", 
+  "#6366f1",
+  "#8b5cf6",
+  "#ec4899",
+  "#ef4444",
+  "#f97316",
+  "#eab308",
+  "#22c55e",
+  "#14b8a6",
+  "#06b6d4",
+  "#3b82f6",
+  "#64748b",
+  "#78716c",
 ];
 
 interface Props {
@@ -92,7 +92,7 @@ export function BoardTemplatePicker({
           boardColor
         );
       }
-      
+
       setSelectedTemplate(null);
       setBoardName("");
       setBoardDescription("");
@@ -136,7 +136,6 @@ export function BoardTemplatePicker({
                 </div>
               ) : (
                 <div className="space-y-4">
-                  {}
                   {globalTemplates.length > 0 && (
                     <div>
                       <h4 className="text-sm font-medium text-muted-foreground mb-2 flex items-center gap-1">
@@ -156,7 +155,6 @@ export function BoardTemplatePicker({
                     </div>
                   )}
 
-                  {}
                   {teamTemplates.length > 0 && (
                     <div>
                       <h4 className="text-sm font-medium text-muted-foreground mb-2 flex items-center gap-1">
@@ -184,7 +182,6 @@ export function BoardTemplatePicker({
                 </div>
               )}
 
-              {}
               {selectedTemplate && (
                 <div className="mt-4 p-4 border rounded-lg bg-muted/30">
                   <h4 className="font-medium mb-2">{selectedTemplate.name}</h4>
@@ -213,7 +210,6 @@ export function BoardTemplatePicker({
           </TabsContent>
         </Tabs>
 
-        {}
         <div className="space-y-3 pt-4 border-t">
           <div className="space-y-2">
             <Label htmlFor="board-name">Board Name</Label>

@@ -162,7 +162,6 @@ export function PublicSharingSettings({
         </div>
       )}
 
-      {}
       <Dialog open={showConfirmEnable} onOpenChange={setShowConfirmEnable}>
         <DialogContent>
           <DialogHeader>
@@ -199,7 +198,6 @@ export function PublicSharingSettings({
         </DialogContent>
       </Dialog>
 
-      {}
       <Dialog
         open={showConfirmRegenerate}
         onOpenChange={setShowConfirmRegenerate}

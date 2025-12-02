@@ -45,7 +45,6 @@ export function CardQuickInfo({
 
   return (
     <div className="space-y-2">
-      {}
       {hasLabels && (
         <div className="flex flex-wrap gap-1">
           {labels.slice(0, 3).map((label) => (
@@ -64,7 +63,6 @@ export function CardQuickInfo({
         </div>
       )}
 
-      {}
       <div className="flex items-center gap-3 text-xs text-muted-foreground">
         {hasDueDate && (
           <span

@@ -81,7 +81,6 @@ export function AttachmentList({
         )}
       </div>
 
-      {}
       {isAdding && (
         <div className="border rounded-lg p-3 space-y-3">
           <div className="flex gap-2">
@@ -149,7 +148,6 @@ export function AttachmentList({
         </div>
       )}
 
-      {}
       {attachments.length === 0 && !isAdding && (
         <p className="text-sm text-muted-foreground">No attachments yet</p>
       )}

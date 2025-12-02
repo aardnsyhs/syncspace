@@ -24,12 +24,12 @@ interface Props {
 }
 
 const COLORS = [
-  "hsl(220, 70%, 50%)", 
-  "hsl(280, 70%, 50%)", 
-  "hsl(340, 70%, 50%)", 
-  "hsl(40, 70%, 50%)", 
-  "hsl(160, 70%, 50%)", 
-  "hsl(100, 70%, 50%)", 
+  "hsl(220, 70%, 50%)",
+  "hsl(280, 70%, 50%)",
+  "hsl(340, 70%, 50%)",
+  "hsl(40, 70%, 50%)",
+  "hsl(160, 70%, 50%)",
+  "hsl(100, 70%, 50%)",
 ];
 
 export function BoardCumulativeFlowChart({ data, isLoading }: Props) {
@@ -163,7 +163,6 @@ export function BoardCumulativeFlowChart({ data, isLoading }: Props) {
           </ResponsiveContainer>
         </div>
 
-        {}
         <div className="flex flex-wrap gap-4 mt-4 justify-center">
           {data.columns.map((col, idx) => (
             <div key={col.id} className="flex items-center gap-2 text-sm">

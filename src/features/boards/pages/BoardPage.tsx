@@ -87,7 +87,7 @@ export function BoardPage({ boardId: propBoardId }: BoardPageProps) {
       const cardId = parseInt(cardParam);
       if (!isNaN(cardId)) {
         setSelectedCardId(cardId);
-        
+
         setSearchParams({}, { replace: true });
       }
     }
@@ -101,12 +101,10 @@ export function BoardPage({ boardId: propBoardId }: BoardPageProps) {
   const [newCardTitle, setNewCardTitle] = useState("");
   const [isCreatingCard, setIsCreatingCard] = useState(false);
 
-  // Add Column state
   const [isAddingColumn, setIsAddingColumn] = useState(false);
   const [newColumnName, setNewColumnName] = useState("");
   const [isCreatingColumn, setIsCreatingColumn] = useState(false);
 
-  // Drag state
   const [activeCard, setActiveCard] = useState<{
     id: number;
     title: string;
@@ -116,16 +114,13 @@ export function BoardPage({ boardId: propBoardId }: BoardPageProps) {
     column_id: number;
   } | null>(null);
 
-  // Team members state
   const [teamMembers, setTeamMembers] = useState<
     Array<{ id: number; name: string; avatar_url?: string }>
   >([]);
 
-  // Get token from localStorage
   const token = localStorage.getItem("token") || "";
   const boardId = propBoardId || 1;
 
-  // DnD sensors
   const sensors = useSensors(
     useSensor(PointerSensor, {
       activationConstraint: {
@@ -134,9 +129,8 @@ export function BoardPage({ boardId: propBoardId }: BoardPageProps) {
     })
   );
   const teamId = board?.team_id || 1;
-  const canManage = true; // Would check RBAC
+  const canManage = true;
 
-  // Hooks
   const {
     filters,
     setSearch,
@@ -157,7 +151,6 @@ export function BoardPage({ boardId: propBoardId }: BoardPageProps) {
   const { activities, isLoading: isLoadingActivities } =
     useBoardActivities(boardId);
 
-  // Fetch board data
   const fetchBoard = useCallback(async () => {
     setIsLoadingBoard(true);
     try {
@@ -277,6 +270,18 @@ export function BoardPage({ boardId: propBoardId }: BoardPageProps) {
     }
   };
 
+  const handleToggleCardComplete = async (
+    cardId: number,
+    isCompleted: boolean
+  ) => {
+    try {
+      await api.put(`/api/cards/${cardId}`, { is_completed: isCompleted });
+      refetchCards();
+    } catch {
+      toast.error("Failed to update card");
+    }
+  };
+
   const handleDragStart = (event: DragStartEvent) => {
     const { active } = event;
     const cardData = active.data.current?.card;
@@ -296,13 +301,11 @@ export function BoardPage({ boardId: propBoardId }: BoardPageProps) {
 
     const cardId = parseInt(activeId.replace("card-", ""));
 
-    // Determine target column
     let targetColumnId: number | null = null;
 
     if (overId.startsWith("column-")) {
       targetColumnId = parseInt(overId.replace("column-", ""));
     } else if (overId.startsWith("card-")) {
-      // Dropped on another card - get its column
       const overCard = cards.find(
         (c) => c.id === parseInt(overId.replace("card-", ""))
       );
@@ -313,11 +316,9 @@ export function BoardPage({ boardId: propBoardId }: BoardPageProps) {
 
     if (!targetColumnId) return;
 
-    // Find current card
     const currentCard = cards.find((c) => c.id === cardId);
     if (!currentCard || currentCard.column_id === targetColumnId) return;
 
-    // Move card via API
     try {
       await api.put(`/api/cards/${cardId}/move`, {
         column_id: targetColumnId,
@@ -359,10 +360,8 @@ export function BoardPage({ boardId: propBoardId }: BoardPageProps) {
 
   return (
     <div className="h-full flex flex-col -m-4 md:-m-6">
-      {}
       <div className="px-3 md:px-4 py-2 md:py-3 border-b flex flex-col sm:flex-row sm:items-center justify-between gap-2">
         <div className="flex items-center gap-2 md:gap-4 min-w-0">
-          {}
           {board.color && (
             <div
               className="w-3 h-10 rounded-full flex-shrink-0"
@@ -392,7 +391,6 @@ export function BoardPage({ boardId: propBoardId }: BoardPageProps) {
         <div className="flex items-center gap-1 md:gap-2 flex-shrink-0 overflow-x-auto">
           <OnlineUsers members={onlineMembers} />
 
-          {}
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <Button variant="outline" size="icon" className="sm:hidden">
@@ -410,7 +408,6 @@ export function BoardPage({ boardId: propBoardId }: BoardPageProps) {
             </DropdownMenuContent>
           </DropdownMenu>
 
-          {}
           <Button
             variant="outline"
             size="sm"
@@ -450,7 +447,6 @@ export function BoardPage({ boardId: propBoardId }: BoardPageProps) {
         </div>
       </div>
 
-      {}
       <BoardFiltersBar
         filters={filters}
         onSearchChange={setSearch}
@@ -465,9 +461,7 @@ export function BoardPage({ boardId: propBoardId }: BoardPageProps) {
         isLoading={isLoadingCards}
       />
 
-      {}
       <div className="flex-1 flex overflow-hidden">
-        {}
         <DndContext
           sensors={sensors}
           collisionDetection={closestCorners}
@@ -496,10 +490,10 @@ export function BoardPage({ boardId: propBoardId }: BoardPageProps) {
                   }}
                   onCardTitleChange={setNewCardTitle}
                   onCreateCard={() => handleCreateCard(column.id)}
+                  onToggleCardComplete={handleToggleCardComplete}
                 />
               ))}
 
-              {/* Add Column */}
               <div className="w-64 md:w-72 flex-shrink-0">
                 {isAddingColumn ? (
                   <div className="bg-muted/30 rounded-lg p-3 space-y-2">
@@ -554,7 +548,6 @@ export function BoardPage({ boardId: propBoardId }: BoardPageProps) {
             </div>
           </div>
 
-          {}
           <DragOverlay>
             {activeCard && (
               <div className="bg-background rounded-lg border p-3 shadow-lg w-72 opacity-90">
@@ -568,7 +561,6 @@ export function BoardPage({ boardId: propBoardId }: BoardPageProps) {
           </DragOverlay>
         </DndContext>
 
-        {}
         {showActivity && (
           <div className="w-80 border-l bg-background overflow-y-auto">
             <div className="p-4">
@@ -582,7 +574,6 @@ export function BoardPage({ boardId: propBoardId }: BoardPageProps) {
         )}
       </div>
 
-      {}
       <CardDetailDialog
         cardId={selectedCardId}
         boardId={boardId}
@@ -594,7 +585,6 @@ export function BoardPage({ boardId: propBoardId }: BoardPageProps) {
         teamMembers={teamMembers}
       />
 
-      {}
       <BoardSettingsPanel
         boardId={boardId}
         boardName={board.name}
@@ -610,7 +600,6 @@ export function BoardPage({ boardId: propBoardId }: BoardPageProps) {
         onBoardUpdated={fetchBoard}
       />
 
-      {}
       <BoardAnalyticsDialog
         boardId={boardId}
         boardName={board.name}

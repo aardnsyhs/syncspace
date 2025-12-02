@@ -110,7 +110,6 @@ export function ProfilePage() {
 
     setIsUploadingAvatar(true);
     try {
-      
       const compressedBlob = await compressImage(file, 400, 400, 0.8);
       const compressedFile = blobToFile(compressedBlob, "avatar.jpg");
 
@@ -137,7 +136,7 @@ export function ProfilePage() {
       setAvatarPreview(null);
     } finally {
       setIsUploadingAvatar(false);
-      
+
       if (fileInputRef.current) {
         fileInputRef.current.value = "";
       }
@@ -158,7 +157,6 @@ export function ProfilePage() {
         </p>
       </div>
 
-      {}
       <Card>
         <CardHeader>
           <CardTitle>Avatar</CardTitle>
@@ -205,7 +203,6 @@ export function ProfilePage() {
         </CardContent>
       </Card>
 
-      {}
       <Card>
         <CardHeader>
           <CardTitle>Profile Information</CardTitle>
@@ -241,7 +238,6 @@ export function ProfilePage() {
 
       <Separator />
 
-      {}
       <Card>
         <CardHeader>
           <CardTitle>Change Password</CardTitle>

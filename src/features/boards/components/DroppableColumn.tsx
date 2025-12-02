@@ -20,6 +20,7 @@ interface CardData {
   title: string;
   description: string | null;
   due_date: string | null;
+  is_completed?: boolean;
   labels: CardLabel[];
   column_id: number;
 }
@@ -47,6 +48,7 @@ interface DroppableColumnProps {
   onAddCardCancel: () => void;
   onCardTitleChange: (title: string) => void;
   onCreateCard: () => void;
+  onToggleCardComplete?: (cardId: number, isCompleted: boolean) => void;
 }
 
 export function DroppableColumn({
@@ -64,6 +66,7 @@ export function DroppableColumn({
   onAddCardCancel,
   onCardTitleChange,
   onCreateCard,
+  onToggleCardComplete,
 }: DroppableColumnProps) {
   const { setNodeRef, isOver } = useDroppable({
     id: `column-${column.id}`,
@@ -96,7 +99,6 @@ export function DroppableColumn({
         onUpdate={onUpdate}
       />
 
-      {}
       <div
         ref={setNodeRef}
         className="flex-1 p-2 space-y-2 overflow-y-auto min-h-[100px]"
@@ -107,6 +109,7 @@ export function DroppableColumn({
               key={card.id}
               card={card}
               onClick={() => onCardClick(card.id)}
+              onToggleComplete={onToggleCardComplete}
             />
           ))}
         </SortableContext>
@@ -118,7 +121,6 @@ export function DroppableColumn({
         )}
       </div>
 
-      {}
       <div className="p-2">
         {isAddingCard ? (
           <div className="space-y-2">

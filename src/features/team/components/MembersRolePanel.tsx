@@ -183,7 +183,10 @@ export function MembersRolePanel({
           >
             <div className="flex items-center gap-3">
               <Avatar>
-                <AvatarImage src={normalizeAvatarUrl(member.avatar_url)} alt={member.name} />
+                <AvatarImage
+                  src={normalizeAvatarUrl(member.avatar_url)}
+                  alt={member.name}
+                />
                 <AvatarFallback>{getInitials(member.name)}</AvatarFallback>
               </Avatar>
               <div>
@@ -221,7 +224,6 @@ export function MembersRolePanel({
                       <DropdownMenuLabel>Actions</DropdownMenuLabel>
                       <DropdownMenuSeparator />
 
-                      {}
                       {canAssignRole(currentUserRole, "admin") &&
                         member.role !== "admin" && (
                           <DropdownMenuItem

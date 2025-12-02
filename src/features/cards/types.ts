@@ -51,6 +51,8 @@ export interface CardDetail {
   description: string | null;
   position: number;
   due_date: string | null;
+  is_completed: boolean;
+  completed_at: string | null;
   assignee: {
     id: number;
     name: string;
