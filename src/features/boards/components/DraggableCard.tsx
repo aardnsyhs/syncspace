@@ -71,25 +71,29 @@ export function DraggableCard({
       onClick={onClick}
     >
       <CardQuickInfo labels={card.labels} dueDate={card.due_date} />
-      <div className="flex items-start gap-2 mt-1">
-        <button
-          onClick={handleCheckboxClick}
+      <div className="flex items-start mt-1">
+        <div
           className={cn(
-            "flex-shrink-0 mt-0.5 text-muted-foreground hover:text-primary transition-all",
+            "flex-shrink-0 overflow-hidden transition-all duration-150",
             card.is_completed
-              ? "opacity-100"
-              : "opacity-0 group-hover:opacity-100"
+              ? "w-6 opacity-100"
+              : "w-0 opacity-0 group-hover:w-6 group-hover:opacity-100"
           )}
-          aria-label={
-            card.is_completed ? "Mark as incomplete" : "Mark as complete"
-          }
         >
-          {card.is_completed ? (
-            <CheckCircle2 className="h-4 w-4 text-green-500" />
-          ) : (
-            <Circle className="h-4 w-4" />
-          )}
-        </button>
+          <button
+            onClick={handleCheckboxClick}
+            className="text-muted-foreground hover:text-primary mt-0.5"
+            aria-label={
+              card.is_completed ? "Mark as incomplete" : "Mark as complete"
+            }
+          >
+            {card.is_completed ? (
+              <CheckCircle2 className="h-4 w-4 text-green-500" />
+            ) : (
+              <Circle className="h-4 w-4" />
+            )}
+          </button>
+        </div>
         <div className="flex-1 min-w-0">
           <h4
             className={cn(

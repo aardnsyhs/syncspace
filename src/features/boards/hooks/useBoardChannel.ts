@@ -9,6 +9,10 @@ import {
   type CardDeletedPayload,
   type CardMovedPayload,
   type CommentCreatedPayload,
+  type CommentDeletedPayload,
+  type LabelCreatedPayload,
+  type LabelUpdatedPayload,
+  type LabelDeletedPayload,
 } from "../types";
 
 export interface BoardChannelCallbacks {
@@ -21,6 +25,10 @@ export interface BoardChannelCallbacks {
   onCardDeleted?: (payload: CardDeletedPayload) => void;
   onCardMoved?: (payload: CardMovedPayload) => void;
   onCommentCreated?: (payload: CommentCreatedPayload) => void;
+  onCommentDeleted?: (payload: CommentDeletedPayload) => void;
+  onLabelCreated?: (payload: LabelCreatedPayload) => void;
+  onLabelUpdated?: (payload: LabelUpdatedPayload) => void;
+  onLabelDeleted?: (payload: LabelDeletedPayload) => void;
 }
 
 export function useBoardChannel(
@@ -37,6 +45,10 @@ export function useBoardChannel(
     onCardDeleted,
     onCardMoved,
     onCommentCreated,
+    onCommentDeleted,
+    onLabelCreated,
+    onLabelUpdated,
+    onLabelDeleted,
   } = callbacks;
 
   const subscribe = useCallback(() => {
@@ -87,6 +99,22 @@ export function useBoardChannel(
       channel.listen(BOARD_EVENTS.COMMENT_CREATED, onCommentCreated);
     }
 
+    if (onCommentDeleted) {
+      channel.listen(BOARD_EVENTS.COMMENT_DELETED, onCommentDeleted);
+    }
+
+    if (onLabelCreated) {
+      channel.listen(BOARD_EVENTS.LABEL_CREATED, onLabelCreated);
+    }
+
+    if (onLabelUpdated) {
+      channel.listen(BOARD_EVENTS.LABEL_UPDATED, onLabelUpdated);
+    }
+
+    if (onLabelDeleted) {
+      channel.listen(BOARD_EVENTS.LABEL_DELETED, onLabelDeleted);
+    }
+
     return channel;
   }, [
     boardId,
@@ -99,6 +127,10 @@ export function useBoardChannel(
     onCardDeleted,
     onCardMoved,
     onCommentCreated,
+    onCommentDeleted,
+    onLabelCreated,
+    onLabelUpdated,
+    onLabelDeleted,
   ]);
 
   useEffect(() => {

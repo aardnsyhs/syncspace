@@ -40,7 +40,7 @@ export interface CardEventPayload {
       color: string;
     }>;
   };
-  column_id?: number; 
+  column_id?: number;
 }
 
 export interface CardDeletedPayload {
@@ -69,6 +69,33 @@ export interface CommentCreatedPayload {
   card_id: number;
 }
 
+export interface CommentDeletedPayload {
+  card_id: number;
+  comment_id: number;
+}
+
+export interface LabelCreatedPayload {
+  label: {
+    id: number;
+    board_id: number;
+    name: string;
+    color: string;
+  };
+}
+
+export interface LabelUpdatedPayload {
+  label: {
+    id: number;
+    board_id: number;
+    name: string;
+    color: string;
+  };
+}
+
+export interface LabelDeletedPayload {
+  label_id: number;
+}
+
 export const BOARD_EVENTS = {
   BOARD_UPDATED: ".BoardUpdated",
   COLUMN_CREATED: ".ColumnCreated",
@@ -79,5 +106,9 @@ export const BOARD_EVENTS = {
   CARD_DELETED: ".CardDeleted",
   CARD_MOVED: ".CardMoved",
   COMMENT_CREATED: ".CommentCreated",
+  COMMENT_DELETED: ".CommentDeleted",
+  LABEL_CREATED: ".LabelCreated",
+  LABEL_UPDATED: ".LabelUpdated",
+  LABEL_DELETED: ".LabelDeleted",
   ACTIVITY_CREATED: ".ActivityCreated",
 } as const;
