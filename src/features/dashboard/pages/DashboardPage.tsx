@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import {
   LayoutDashboard,
@@ -8,7 +8,9 @@ import {
   CheckCircle2,
   AlertCircle,
   Loader2,
+  RefreshCw,
 } from "lucide-react";
+import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { api } from "@/lib/api";
@@ -80,32 +82,44 @@ export function DashboardPage() {
   const [activities, setActivities] = useState<RecentActivity[]>([]);
   const [assignedCards, setAssignedCards] = useState<AssignedCard[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [isRefreshing, setIsRefreshing] = useState(false);
+
+  const fetchDashboardData = useCallback(async (showRefreshing = false) => {
+    if (showRefreshing) setIsRefreshing(true);
+    try {
+      const [statsRes, activitiesRes, cardsRes] = await Promise.all([
+        api.get<{ data: DashboardStats }>("/api/dashboard/stats"),
+        api.get<{ data: RecentActivity[] }>("/api/dashboard/activities", {
+          limit: 5,
+        }),
+        api.get<{ data: AssignedCard[] }>("/api/dashboard/my-cards", {
+          limit: 5,
+        }),
+      ]);
+
+      setStats(statsRes.data);
+      setActivities(activitiesRes.data || []);
+      setAssignedCards(cardsRes.data || []);
+    } catch (error) {
+      console.error("Failed to fetch dashboard data:", error);
+    } finally {
+      setIsLoading(false);
+      setIsRefreshing(false);
+    }
+  }, []);
 
   useEffect(() => {
-    const fetchDashboardData = async () => {
-      try {
-        const [statsRes, activitiesRes, cardsRes] = await Promise.all([
-          api.get<{ data: DashboardStats }>("/api/dashboard/stats"),
-          api.get<{ data: RecentActivity[] }>("/api/dashboard/activities", {
-            limit: 5,
-          }),
-          api.get<{ data: AssignedCard[] }>("/api/dashboard/my-cards", {
-            limit: 5,
-          }),
-        ]);
-
-        setStats(statsRes.data);
-        setActivities(activitiesRes.data || []);
-        setAssignedCards(cardsRes.data || []);
-      } catch (error) {
-        console.error("Failed to fetch dashboard data:", error);
-      } finally {
-        setIsLoading(false);
-      }
-    };
-
     fetchDashboardData();
-  }, []);
+  }, [fetchDashboardData]);
+
+  // Auto-refresh every 30 seconds
+  useEffect(() => {
+    const interval = setInterval(() => {
+      fetchDashboardData();
+    }, 30000);
+
+    return () => clearInterval(interval);
+  }, [fetchDashboardData]);
 
   if (isLoading) {
     return (
@@ -117,11 +131,24 @@ export function DashboardPage() {
 
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="text-2xl font-bold">Welcome back, {user?.name}!</h1>
-        <p className="text-muted-foreground">
-          Here's what's happening in your workspace
-        </p>
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-2xl font-bold">Welcome back, {user?.name}!</h1>
+          <p className="text-muted-foreground">
+            Here's what's happening in your workspace
+          </p>
+        </div>
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={() => fetchDashboardData(true)}
+          disabled={isRefreshing}
+        >
+          <RefreshCw
+            className={`h-4 w-4 mr-2 ${isRefreshing ? "animate-spin" : ""}`}
+          />
+          Refresh
+        </Button>
       </div>
 
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
@@ -226,7 +253,9 @@ export function DashboardPage() {
                 {activities.map((activity) => (
                   <div key={activity.id} className="flex items-start gap-3">
                     <Avatar className="h-8 w-8">
-                      <AvatarImage src={normalizeAvatarUrl(activity.user.avatar_url)} />
+                      <AvatarImage
+                        src={normalizeAvatarUrl(activity.user.avatar_url)}
+                      />
                       <AvatarFallback>
                         {getInitials(activity.user.name)}
                       </AvatarFallback>

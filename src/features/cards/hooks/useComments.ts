@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback } from "react";
 import { api } from "@/lib/api";
+import { getEcho, initializeEcho } from "@/lib/echo";
 import type { Comment } from "../components/CommentsSection";
 
 interface UseCommentsReturn {
@@ -11,7 +12,10 @@ interface UseCommentsReturn {
   refetch: () => Promise<void>;
 }
 
-export function useComments(cardId: number | null): UseCommentsReturn {
+export function useComments(
+  cardId: number | null,
+  boardId?: number | null
+): UseCommentsReturn {
   const [comments, setComments] = useState<Comment[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -40,6 +44,44 @@ export function useComments(cardId: number | null): UseCommentsReturn {
   useEffect(() => {
     fetchComments();
   }, [fetchComments]);
+
+  // Subscribe to realtime comment updates
+  useEffect(() => {
+    if (!cardId || !boardId) return;
+
+    const echo = getEcho() || initializeEcho();
+    const channel = echo.private(`board.${boardId}`);
+
+    const handleCommentCreated = (payload: {
+      card_id: number;
+      comment: Comment;
+    }) => {
+      if (payload.card_id === cardId) {
+        setComments((prev) => {
+          // Avoid duplicates
+          if (prev.some((c) => c.id === payload.comment.id)) return prev;
+          return [payload.comment, ...prev];
+        });
+      }
+    };
+
+    const handleCommentDeleted = (payload: {
+      card_id: number;
+      comment_id: number;
+    }) => {
+      if (payload.card_id === cardId) {
+        setComments((prev) => prev.filter((c) => c.id !== payload.comment_id));
+      }
+    };
+
+    channel.listen(".CommentCreated", handleCommentCreated);
+    channel.listen(".CommentDeleted", handleCommentDeleted);
+
+    return () => {
+      channel.stopListening(".CommentCreated", handleCommentCreated);
+      channel.stopListening(".CommentDeleted", handleCommentDeleted);
+    };
+  }, [cardId, boardId]);
 
   const addComment = async (body: string) => {
     if (!cardId) return;

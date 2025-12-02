@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import {
   UserPlus,
   MoreHorizontal,
@@ -8,6 +8,7 @@ import {
   Users,
   Mail,
 } from "lucide-react";
+import { getEcho, initializeEcho } from "@/lib/echo";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -113,24 +114,66 @@ export function MembersPage() {
     fetchTeams();
   }, []);
 
+  const fetchMembers = useCallback(async () => {
+    if (!selectedTeamId) return;
+
+    setIsLoading(true);
+    try {
+      const json = await api.get<{ data: Member[] }>(
+        `/api/teams/${selectedTeamId}/members`
+      );
+      setMembers(json.data || []);
+    } catch {
+      toast.error("Failed to load members");
+    } finally {
+      setIsLoading(false);
+    }
+  }, [selectedTeamId]);
+
   useEffect(() => {
-    const fetchMembers = async () => {
-      if (!selectedTeamId) return;
-
-      setIsLoading(true);
-      try {
-        const json = await api.get<{ data: Member[] }>(
-          `/api/teams/${selectedTeamId}/members`
-        );
-        setMembers(json.data || []);
-      } catch {
-        toast.error("Failed to load members");
-      } finally {
-        setIsLoading(false);
-      }
-    };
-
     fetchMembers();
+  }, [fetchMembers]);
+
+  // Subscribe to realtime member updates
+  useEffect(() => {
+    if (!selectedTeamId) return;
+
+    const echo = getEcho() || initializeEcho();
+    const channel = echo.private(`team.${selectedTeamId}`);
+
+    channel.listen(
+      ".TeamMemberAdded",
+      (payload: { member: Member; role: string }) => {
+        setMembers((prev) => {
+          if (prev.some((m) => m.id === payload.member.id)) return prev;
+          return [
+            ...prev,
+            { ...payload.member, role: payload.role as TeamRole },
+          ];
+        });
+      }
+    );
+
+    channel.listen(
+      ".TeamMemberUpdated",
+      (payload: { member: Member; new_role: string }) => {
+        setMembers((prev) =>
+          prev.map((m) =>
+            m.id === payload.member.id
+              ? { ...m, role: payload.new_role as TeamRole }
+              : m
+          )
+        );
+      }
+    );
+
+    channel.listen(".TeamMemberRemoved", (payload: { user_id: number }) => {
+      setMembers((prev) => prev.filter((m) => m.id !== payload.user_id));
+    });
+
+    return () => {
+      echo.leave(`team.${selectedTeamId}`);
+    };
   }, [selectedTeamId]);
 
   const currentUserRole = members.find((m) => m.id === user?.id)?.role;
@@ -350,7 +393,10 @@ export function MembersPage() {
                 >
                   <div className="flex items-center gap-3">
                     <Avatar>
-                      <AvatarImage src={normalizeAvatarUrl(member.avatar_url)} alt={member.name} />
+                      <AvatarImage
+                        src={normalizeAvatarUrl(member.avatar_url)}
+                        alt={member.name}
+                      />
                       <AvatarFallback>
                         {getInitials(member.name)}
                       </AvatarFallback>

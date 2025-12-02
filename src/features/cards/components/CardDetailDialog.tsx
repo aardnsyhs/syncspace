@@ -101,7 +101,7 @@ export function CardDetailDialog({
     uploadAttachment,
     addExternalAttachment,
     deleteAttachment,
-  } = useCard(cardId, token);
+  } = useCard(cardId, token, boardId);
 
   const { labels: boardLabels, createLabel } = useBoardLabels(boardId, token);
 
@@ -110,7 +110,7 @@ export function CardDetailDialog({
     isLoading: commentsLoading,
     addComment,
     deleteComment,
-  } = useComments(isOpen ? cardId : null);
+  } = useComments(isOpen ? cardId : null, boardId);
 
   const [isEditingTitle, setIsEditingTitle] = useState(false);
   const [editedTitle, setEditedTitle] = useState("");

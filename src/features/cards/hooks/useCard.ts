@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback } from "react";
 import { api } from "@/lib/api";
+import { getEcho, initializeEcho } from "@/lib/echo";
 import type { CardDetail, Checklist } from "../types";
 
 interface UseCardReturn {
@@ -25,7 +26,8 @@ interface UseCardReturn {
 
 export function useCard(
   cardId: number | null,
-  _token: string | null
+  _token: string | null,
+  boardId?: number | null
 ): UseCardReturn {
   const [card, setCard] = useState<CardDetail | null>(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -69,6 +71,43 @@ export function useCard(
   useEffect(() => {
     fetchCard();
   }, [fetchCard]);
+
+  // Subscribe to realtime updates for this card
+  useEffect(() => {
+    if (!cardId || !boardId) return;
+
+    const echo = getEcho() || initializeEcho();
+    const channel = echo.private(`board.${boardId}`);
+
+    const handleCardUpdated = (payload: { card: CardDetail }) => {
+      if (payload.card.id === cardId) {
+        // Refetch to get full card data with checklists and attachments
+        fetchCard();
+      }
+    };
+
+    const handleCommentCreated = (payload: { card_id: number }) => {
+      if (payload.card_id === cardId) {
+        // Comments are handled by useComments hook, but we can trigger a refetch if needed
+      }
+    };
+
+    const handleCommentDeleted = (payload: { card_id: number }) => {
+      if (payload.card_id === cardId) {
+        // Comments are handled by useComments hook
+      }
+    };
+
+    channel.listen(".CardUpdated", handleCardUpdated);
+    channel.listen(".CommentCreated", handleCommentCreated);
+    channel.listen(".CommentDeleted", handleCommentDeleted);
+
+    return () => {
+      channel.stopListening(".CardUpdated", handleCardUpdated);
+      channel.stopListening(".CommentCreated", handleCommentCreated);
+      channel.stopListening(".CommentDeleted", handleCommentDeleted);
+    };
+  }, [cardId, boardId, fetchCard]);
 
   const updateCard = async (
     data: Partial<CardDetail> & { assignee_id?: number | null }

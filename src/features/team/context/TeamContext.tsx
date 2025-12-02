@@ -7,6 +7,7 @@ import {
   type ReactNode,
 } from "react";
 import { api } from "@/lib/api";
+import { getEcho, initializeEcho } from "@/lib/echo";
 
 interface Team {
   id: number;
@@ -77,6 +78,104 @@ export function TeamProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     fetchTeams();
   }, [fetchTeams]);
+
+  // Subscribe to realtime team updates
+  useEffect(() => {
+    if (teams.length === 0) return;
+
+    const echo = getEcho() || initializeEcho();
+    const channels: ReturnType<typeof echo.private>[] = [];
+
+    teams.forEach((team) => {
+      const channel = echo.private(`team.${team.id}`);
+      channels.push(channel);
+
+      // Board created
+      channel.listen(".BoardCreated", (payload: { board: Board }) => {
+        setTeams((prev) =>
+          prev.map((t) =>
+            t.id === team.id
+              ? { ...t, boards: [...(t.boards || []), payload.board] }
+              : t
+          )
+        );
+        // Update selectedTeam if it's the current team
+        setSelectedTeamState((prev) =>
+          prev?.id === team.id
+            ? { ...prev, boards: [...(prev.boards || []), payload.board] }
+            : prev
+        );
+      });
+
+      // Board deleted
+      channel.listen(".BoardDeleted", (payload: { board_id: number }) => {
+        setTeams((prev) =>
+          prev.map((t) =>
+            t.id === team.id
+              ? {
+                  ...t,
+                  boards: (t.boards || []).filter(
+                    (b) => b.id !== payload.board_id
+                  ),
+                }
+              : t
+          )
+        );
+        setSelectedTeamState((prev) =>
+          prev?.id === team.id
+            ? {
+                ...prev,
+                boards: (prev.boards || []).filter(
+                  (b) => b.id !== payload.board_id
+                ),
+              }
+            : prev
+        );
+      });
+
+      // Team updated
+      channel.listen(".TeamUpdated", (payload: { team: Team }) => {
+        setTeams((prev) =>
+          prev.map((t) =>
+            t.id === payload.team.id ? { ...t, ...payload.team } : t
+          )
+        );
+        setSelectedTeamState((prev) =>
+          prev?.id === payload.team.id ? { ...prev, ...payload.team } : prev
+        );
+      });
+
+      // Team deleted
+      channel.listen(".TeamDeleted", (payload: { team_id: number }) => {
+        setTeams((prev) => prev.filter((t) => t.id !== payload.team_id));
+        setSelectedTeamState((prev) => {
+          if (prev?.id === payload.team_id) {
+            // Select another team if current one is deleted
+            const remaining = teams.filter((t) => t.id !== payload.team_id);
+            return remaining.length > 0 ? remaining[0] : null;
+          }
+          return prev;
+        });
+      });
+
+      // Member added
+      channel.listen(".TeamMemberAdded", () => {
+        // Refresh to get updated member count
+        fetchTeams();
+      });
+
+      // Member removed
+      channel.listen(".TeamMemberRemoved", () => {
+        fetchTeams();
+      });
+    });
+
+    return () => {
+      teams.forEach((team) => {
+        echo.leave(`team.${team.id}`);
+      });
+    };
+  }, [teams.length, fetchTeams]);
 
   const setSelectedTeam = useCallback((team: Team) => {
     setSelectedTeamState(team);
