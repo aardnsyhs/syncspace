@@ -11,6 +11,8 @@ import {
   register as apiRegister,
   logout as apiLogout,
   fetchCurrentUser,
+  getGoogleAuthUrl,
+  googleCallback as apiGoogleCallback,
   type User,
   type LoginCredentials,
   type RegisterData,
@@ -29,6 +31,8 @@ interface AuthContextValue extends AuthState {
   logout: () => Promise<void>;
   clearError: () => void;
   updateUser: (updates: Partial<User>) => void;
+  loginWithGoogle: () => Promise<void>;
+  handleGoogleCallback: (code: string) => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextValue | null>(null);
@@ -133,6 +137,44 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }));
   }, []);
 
+  const loginWithGoogle = useCallback(async () => {
+    try {
+      const { url } = await getGoogleAuthUrl();
+      window.location.href = url;
+    } catch (err) {
+      const message =
+        err instanceof Error ? err.message : "Failed to initiate Google login";
+      setState((prev) => ({
+        ...prev,
+        error: message,
+      }));
+      throw err;
+    }
+  }, []);
+
+  const handleGoogleCallback = useCallback(async (code: string) => {
+    setState((prev) => ({ ...prev, isLoading: true, error: null }));
+
+    try {
+      const response = await apiGoogleCallback(code);
+      setState({
+        user: response.user,
+        isLoading: false,
+        isAuthenticated: true,
+        error: null,
+      });
+    } catch (err) {
+      const message =
+        err instanceof Error ? err.message : "Google login failed";
+      setState((prev) => ({
+        ...prev,
+        isLoading: false,
+        error: message,
+      }));
+      throw err;
+    }
+  }, []);
+
   return (
     <AuthContext.Provider
       value={{
@@ -142,6 +184,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         logout,
         clearError,
         updateUser,
+        loginWithGoogle,
+        handleGoogleCallback,
       }}
     >
       {children}

@@ -29,6 +29,9 @@ const ResetPasswordPage = lazy(() =>
 const VerifyOTPPage = lazy(() =>
   import("@/features/auth").then((m) => ({ default: m.VerifyOTPPage }))
 );
+const GoogleCallbackPage = lazy(() =>
+  import("@/features/auth").then((m) => ({ default: m.GoogleCallbackPage }))
+);
 const DashboardPage = lazy(() =>
   import("@/features/dashboard").then((m) => ({ default: m.DashboardPage }))
 );
@@ -127,6 +130,10 @@ function App() {
                       <VerifyOTPPage />
                     </GuestRoute>
                   }
+                />
+                <Route
+                  path="/auth/google/callback"
+                  element={<GoogleCallbackPage />}
                 />
 
                 <Route path="/p/:token" element={<PublicBoardWrapper />} />

@@ -6,6 +6,7 @@ import { Link, useNavigate, useLocation } from "react-router-dom";
 import { Mail, Lock, Loader2 } from "lucide-react";
 
 import { AuthLayout } from "../components/AuthLayout";
+import { GoogleLoginButton } from "../components/GoogleLoginButton";
 import { useAuth } from "../store/AuthContext";
 
 import { Button } from "@/components/ui/button";
@@ -161,6 +162,19 @@ export function LoginPage() {
                 "Sign in"
               )}
             </Button>
+
+            <div className="relative w-full">
+              <div className="absolute inset-0 flex items-center">
+                <span className="w-full border-t" />
+              </div>
+              <div className="relative flex justify-center text-xs uppercase">
+                <span className="bg-background px-2 text-muted-foreground">
+                  Or continue with
+                </span>
+              </div>
+            </div>
+
+            <GoogleLoginButton />
 
             <p className="text-sm text-center text-muted-foreground">
               Don't have an account?{" "}

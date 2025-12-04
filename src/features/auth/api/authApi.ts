@@ -143,10 +143,11 @@ export async function verifyOTP(
 ): Promise<{ message: string; data: User; token: string }> {
   await getCsrfCookie();
 
-  const response = await api.post<{ message: string; data: User; token: string }>(
-    "/api/verify-otp",
-    data
-  );
+  const response = await api.post<{
+    message: string;
+    data: User;
+    token: string;
+  }>("/api/verify-otp", data);
 
   if (response.token) {
     localStorage.setItem("token", response.token);
@@ -160,10 +161,27 @@ export async function resendOTP(
 ): Promise<{ message: string }> {
   await getCsrfCookie();
 
-  const response = await api.post<{ message: string }>(
-    "/api/resend-otp",
-    data
-  );
+  const response = await api.post<{ message: string }>("/api/resend-otp", data);
 
   return response;
+}
+
+export async function getGoogleAuthUrl(): Promise<{ url: string }> {
+  const response = await api.get<{ url: string }>("/api/auth/google");
+  return response;
+}
+
+export async function googleCallback(code: string): Promise<AuthResponse> {
+  await getCsrfCookie();
+
+  const response = await api.post<{ data: User; token: string }>(
+    "/api/auth/google/callback",
+    { code }
+  );
+
+  if (response.token) {
+    localStorage.setItem("token", response.token);
+  }
+
+  return { user: response.data, token: response.token };
 }
