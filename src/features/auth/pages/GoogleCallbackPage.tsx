@@ -34,8 +34,10 @@ export function GoogleCallbackPage() {
         toast.success("Welcome!");
         navigate("/app", { replace: true });
       })
-      .catch(() => {
-        toast.error("Failed to sign in with Google");
+      .catch((err: Error & { data?: { message?: string } }) => {
+        const message =
+          err.data?.message || err.message || "Failed to sign in with Google";
+        toast.error(message);
         navigate("/login", { replace: true });
       });
   }, [searchParams, handleGoogleCallback, navigate]);
