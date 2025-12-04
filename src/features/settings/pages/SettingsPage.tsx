@@ -69,7 +69,6 @@ export function SettingsPage() {
   const [teamName, setTeamName] = useState("");
   const [isSaving, setIsSaving] = useState(false);
 
-  // Invite member state
   const [inviteEmail, setInviteEmail] = useState("");
   const [inviteRole, setInviteRole] = useState("member");
   const [isInviting, setIsInviting] = useState(false);
@@ -150,7 +149,6 @@ export function SettingsPage() {
     fetchMembers();
   }, [fetchMembers]);
 
-  // Subscribe to realtime member updates
   useEffect(() => {
     if (!selectedTeam) return;
 
@@ -249,7 +247,6 @@ export function SettingsPage() {
       toast.success("Member invited successfully!");
       setInviteEmail("");
 
-      // Refresh members
       const membersRes = await fetch(
         `${API_URL}/api/teams/${selectedTeam.id}/members`,
         {

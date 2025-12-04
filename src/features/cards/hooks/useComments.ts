@@ -45,7 +45,6 @@ export function useComments(
     fetchComments();
   }, [fetchComments]);
 
-  // Subscribe to realtime comment updates
   useEffect(() => {
     if (!cardId || !boardId) return;
 
@@ -58,7 +57,6 @@ export function useComments(
     }) => {
       if (payload.card_id === cardId) {
         setComments((prev) => {
-          // Avoid duplicates
           if (prev.some((c) => c.id === payload.comment.id)) return prev;
           return [payload.comment, ...prev];
         });
@@ -91,7 +89,6 @@ export function useComments(
       { body }
     );
 
-    // Add comment only if not already added by broadcast
     setComments((prev) => {
       if (prev.some((c) => c.id === res.data.id)) return prev;
       return [res.data, ...prev];
@@ -99,7 +96,6 @@ export function useComments(
   };
 
   const deleteComment = async (commentId: number) => {
-    // Optimistically remove from UI first
     setComments((prev) => prev.filter((c) => c.id !== commentId));
     await api.delete(`/api/comments/${commentId}`);
   };

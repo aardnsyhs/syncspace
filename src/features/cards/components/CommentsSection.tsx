@@ -71,7 +71,6 @@ export function CommentsSection({
     setNewComment(value);
     setCursorPosition(position);
 
-    // Check for @ mention trigger
     const textBeforeCursor = value.slice(0, position);
     const mentionMatch = textBeforeCursor.match(/@(\w*)$/);
 
@@ -96,7 +95,6 @@ export function CommentsSection({
     setNewComment(newText);
     setShowMentions(false);
 
-    // Focus back to textarea
     setTimeout(() => {
       if (textareaRef.current) {
         const newPosition = mentionStart + member.name.length + 2;
@@ -146,7 +144,6 @@ export function CommentsSection({
       .slice(0, 2);
   };
 
-  // Render comment body with highlighted mentions
   const renderCommentBody = (body: string) => {
     const parts = body.split(/(@\w+(?:\s\w+)?)/g);
     return parts.map((part, index) => {

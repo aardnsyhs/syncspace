@@ -134,7 +134,6 @@ export function MembersPage() {
     fetchMembers();
   }, [fetchMembers]);
 
-  // Subscribe to realtime member updates
   useEffect(() => {
     if (!selectedTeamId) return;
 

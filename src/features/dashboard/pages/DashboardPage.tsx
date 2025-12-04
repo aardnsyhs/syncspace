@@ -112,7 +112,6 @@ export function DashboardPage() {
     fetchDashboardData();
   }, [fetchDashboardData]);
 
-  // Auto-refresh every 30 seconds
   useEffect(() => {
     const interval = setInterval(() => {
       fetchDashboardData();

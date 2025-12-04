@@ -50,7 +50,6 @@ export function useBoardLabels(
     fetchLabels();
   }, [fetchLabels]);
 
-  // Subscribe to realtime label updates
   useEffect(() => {
     if (!boardId) return;
 

@@ -1,4 +1,3 @@
-// src/test/utils.tsx
 import type { ReactElement, ReactNode } from "react";
 import { render, type RenderOptions } from "@testing-library/react";
 import { BrowserRouter } from "react-router-dom";
@@ -23,6 +22,5 @@ function customRender(
   return render(ui, { wrapper: AllProviders, ...options });
 }
 
-// Re-export everything
 export * from "@testing-library/react";
 export { customRender as render };

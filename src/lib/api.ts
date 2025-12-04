@@ -50,7 +50,19 @@ class ApiClient {
 
       if (response.status === 401) {
         localStorage.removeItem("token");
-        window.location.href = "/login";
+        const authPages = [
+          "/login",
+          "/register",
+          "/forgot-password",
+          "/reset-password",
+          "/verify-otp",
+          "/auth/google/callback",
+        ];
+        if (
+          !authPages.some((page) => window.location.pathname.startsWith(page))
+        ) {
+          window.location.href = "/login";
+        }
       }
 
       throw error;

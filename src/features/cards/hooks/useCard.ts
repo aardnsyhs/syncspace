@@ -72,7 +72,6 @@ export function useCard(
     fetchCard();
   }, [fetchCard]);
 
-  // Fetch only checklists (for realtime updates)
   const fetchChecklists = useCallback(async () => {
     if (!cardId) return;
     try {
@@ -80,12 +79,9 @@ export function useCard(
         `/api/cards/${cardId}/checklists`
       );
       setCard((prev) => (prev ? { ...prev, checklists: data.data } : null));
-    } catch {
-      // Silently fail for background refresh
-    }
+    } catch {}
   }, [cardId]);
 
-  // Fetch only attachments (for realtime updates)
   const fetchAttachments = useCallback(async () => {
     if (!cardId) return;
     try {
@@ -93,12 +89,9 @@ export function useCard(
         `/api/cards/${cardId}/attachments`
       );
       setCard((prev) => (prev ? { ...prev, attachments: data.data } : null));
-    } catch {
-      // Silently fail for background refresh
-    }
+    } catch {}
   }, [cardId]);
 
-  // Subscribe to realtime updates for this card
   useEffect(() => {
     if (!cardId || !boardId) return;
 
@@ -107,7 +100,6 @@ export function useCard(
 
     const handleCardUpdated = (payload: { card: Partial<CardDetail> }) => {
       if (payload.card.id === cardId) {
-        // Merge basic card fields directly (title, description, due_date, etc.)
         setCard((prev) => {
           if (!prev) return null;
           return {
@@ -119,13 +111,11 @@ export function useCard(
             completed_at: payload.card.completed_at ?? prev.completed_at,
             assignee: payload.card.assignee ?? prev.assignee,
             labels: payload.card.labels ?? prev.labels,
-            // Keep existing checklists and attachments
             checklists: prev.checklists,
             attachments: prev.attachments,
           };
         });
 
-        // Background refresh checklists and attachments (they might have changed)
         fetchChecklists();
         fetchAttachments();
       }

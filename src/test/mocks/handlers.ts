@@ -1,10 +1,7 @@
-// src/test/mocks/handlers.ts
 import { http, HttpResponse } from "msw";
 
-// Use the same API URL as the app
-const API_URL = import.meta.env.VITE_API_URL || "http://localhost:8000";
+const API_URL = "http://syncspace-api.test";
 
-// Mock user data
 const mockUser = {
   id: 1,
   name: "Test User",
@@ -12,7 +9,6 @@ const mockUser = {
   created_at: "2025-01-01T00:00:00.000Z",
 };
 
-// Mock board data
 const mockBoard = {
   id: 1,
   name: "Test Board",
@@ -47,7 +43,6 @@ const mockBoard = {
 };
 
 export const handlers = [
-  // Auth handlers
   http.get(`${API_URL}/sanctum/csrf-cookie`, () => {
     return new HttpResponse(null, { status: 204 });
   }),
@@ -123,7 +118,6 @@ export const handlers = [
     return HttpResponse.json(mockUser);
   }),
 
-  // Board handlers
   http.get(`${API_URL}/api/boards/:boardId`, () => {
     return HttpResponse.json({ data: mockBoard });
   }),
@@ -148,7 +142,6 @@ export const handlers = [
     });
   }),
 
-  // Card handlers
   http.get(`${API_URL}/api/cards/:cardId`, () => {
     return HttpResponse.json({
       data: {
@@ -185,7 +178,6 @@ export const handlers = [
     return HttpResponse.json({ data: [] });
   }),
 
-  // Labels
   http.get(`${API_URL}/api/boards/:boardId/labels`, () => {
     return HttpResponse.json({
       data: [

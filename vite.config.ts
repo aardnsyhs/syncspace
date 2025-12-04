@@ -14,7 +14,8 @@ export default defineConfig({
   server: {
     host: "0.0.0.0",
     port: 5173,
-    allowedHosts: ["syncspace.test"],
+    allowedHosts: ["syncspace.test", "localhost"],
+    hmr: false,
   },
   build: {
     rollupOptions: {
