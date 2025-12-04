@@ -166,9 +166,21 @@ export async function resendOTP(
   return response;
 }
 
-export async function getGoogleAuthUrl(): Promise<{ url: string }> {
-  const response = await api.get<{ url: string }>("/api/auth/google");
-  return response;
+export function getGoogleAuthUrl(): string {
+  const clientId = import.meta.env.VITE_GOOGLE_CLIENT_ID;
+  const redirectUri = `${window.location.origin}/auth/google/callback`;
+  const scope = "openid email profile";
+
+  const params = new URLSearchParams({
+    client_id: clientId,
+    redirect_uri: redirectUri,
+    response_type: "code",
+    scope: scope,
+    access_type: "offline",
+    prompt: "select_account",
+  });
+
+  return `https://accounts.google.com/o/oauth2/v2/auth?${params.toString()}`;
 }
 
 export async function googleCallback(code: string): Promise<AuthResponse> {

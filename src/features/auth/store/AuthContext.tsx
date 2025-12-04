@@ -31,7 +31,7 @@ interface AuthContextValue extends AuthState {
   logout: () => Promise<void>;
   clearError: () => void;
   updateUser: (updates: Partial<User>) => void;
-  loginWithGoogle: () => Promise<void>;
+  loginWithGoogle: () => void;
   handleGoogleCallback: (code: string) => Promise<void>;
 }
 
@@ -137,19 +137,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }));
   }, []);
 
-  const loginWithGoogle = useCallback(async () => {
-    try {
-      const { url } = await getGoogleAuthUrl();
-      window.location.href = url;
-    } catch (err) {
-      const message =
-        err instanceof Error ? err.message : "Failed to initiate Google login";
-      setState((prev) => ({
-        ...prev,
-        error: message,
-      }));
-      throw err;
-    }
+  const loginWithGoogle = useCallback(() => {
+    const url = getGoogleAuthUrl();
+    window.location.href = url;
   }, []);
 
   const handleGoogleCallback = useCallback(async (code: string) => {
