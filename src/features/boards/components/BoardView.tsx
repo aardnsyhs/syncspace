@@ -14,7 +14,7 @@ import type { Board, Column, Card } from "@/types";
 
 const initialBoard: Board & { columns: (Column & { cards: Card[] })[] } = {
   id: 1,
-  workspace_id: 1,
+  team_id: 1,
   name: "Project Alpha",
   description: "Main project board",
   created_at: new Date().toISOString(),

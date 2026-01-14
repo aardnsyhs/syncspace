@@ -28,7 +28,12 @@ export interface ColumnDeletedPayload {
 // Card Events
 export interface CardEventPayload {
   card: Card & {
-    labels: Label[];
+    labels: Array<{
+      id: number;
+      name: string;
+      color: string;
+      board_id?: number;
+    }>;
   };
   column_id?: number;
 }

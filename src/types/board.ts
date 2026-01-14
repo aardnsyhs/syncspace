@@ -28,7 +28,7 @@ export interface Column {
   name: string;
   position: number;
   wip_limit?: number | null;
-  cards?: Card[];
+  cards: Card[];
 }
 
 export interface ColumnWithWip {
@@ -58,7 +58,7 @@ export interface Card {
 
 export interface Label {
   id: number;
-  board_id: number;
+  board_id?: number;
   name: string;
   color: string;
 }
