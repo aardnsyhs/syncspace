@@ -1,73 +1,99 @@
-# React + TypeScript + Vite
+# SyncSpace
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+Frontend aplikasi SyncSpace - Collaborative Kanban Board.
 
-Currently, two official plugins are available:
+## Tech Stack
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Babel](https://babeljs.io/) (or [oxc](https://oxc.rs) when used in [rolldown-vite](https://vite.dev/guide/rolldown)) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+- **Framework**: React 19 + TypeScript
+- **Build**: Vite 7
+- **Styling**: Tailwind CSS v4
+- **UI**: Radix UI + shadcn/ui components
+- **Data Fetching**: @tanstack/react-query
+- **Drag & Drop**: @dnd-kit
+- **Realtime**: Laravel Echo + Ably
+- **Testing**: Vitest + Testing Library + MSW
 
-## React Compiler
+## Quick Start
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+```bash
+# Install dependencies
+pnpm install
 
-## Expanding the ESLint configuration
+# Copy environment
+cp .env.example .env
 
-If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
-
-```js
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-
-      // Remove tseslint.configs.recommended and replace with this
-      tseslint.configs.recommendedTypeChecked,
-      // Alternatively, use this for stricter rules
-      tseslint.configs.strictTypeChecked,
-      // Optionally, add this for stylistic rules
-      tseslint.configs.stylisticTypeChecked,
-
-      // Other configs...
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+# Start development server
+pnpm dev
 ```
 
-You can also install [eslint-plugin-react-x](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-dom) for React-specific lint rules:
+## Project Structure
 
-```js
-// eslint.config.js
-import reactX from 'eslint-plugin-react-x'
-import reactDom from 'eslint-plugin-react-dom'
-
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-      // Enable lint rules for React
-      reactX.configs['recommended-typescript'],
-      // Enable lint rules for React DOM
-      reactDom.configs.recommended,
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
 ```
+src/
+├── components/     # Shared UI components
+├── features/       # Feature modules
+│   ├── auth/       # Authentication
+│   ├── boards/     # Board management
+│   ├── cards/      # Card details
+│   ├── dashboard/  # Dashboard
+│   ├── team/       # Team management
+│   └── ...
+├── hooks/          # Reusable hooks
+│   ├── useDebounce.ts
+│   ├── useLocalStorage.ts
+│   ├── useOnClickOutside.ts
+│   └── useTheme.ts
+├── lib/            # Utilities
+│   ├── api.ts      # API client
+│   ├── queries/    # React Query hooks
+│   └── utils.ts
+├── types/          # Centralized types
+│   ├── api.ts
+│   ├── user.ts
+│   ├── team.ts
+│   ├── board.ts
+│   ├── card.ts
+│   ├── notification.ts
+│   └── events.ts
+└── test/           # Test setup & mocks
+```
+
+## Scripts
+
+```bash
+pnpm dev          # Start dev server
+pnpm build        # Build for production
+pnpm preview      # Preview production build
+pnpm test         # Run tests in watch mode
+pnpm test:run     # Run tests once
+pnpm lint         # Run ESLint
+```
+
+## Testing
+
+```bash
+# Run all tests
+pnpm test:run
+
+# Run specific test file
+pnpm test:run src/features/boards/__tests__/
+
+# With coverage
+pnpm test:coverage
+```
+
+## Environment Variables
+
+```env
+VITE_API_URL=http://localhost:8000  # Backend API URL
+```
+
+## Deployment
+
+Build untuk production:
+
+```bash
+pnpm build
+```
+
+Deploy folder `dist/` ke static hosting (Vercel, Netlify, dll).

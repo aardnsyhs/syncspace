@@ -42,6 +42,47 @@ const mockBoard = {
   ],
 };
 
+const mockTeam = {
+  id: 1,
+  name: "Test Team",
+  slug: "test-team",
+  owner_id: 1,
+  created_at: "2025-01-01T00:00:00.000Z",
+  boards: [
+    {
+      id: 1,
+      name: "Test Board",
+      description: "A test board",
+      color: "#3b82f6",
+      cards_count: 5,
+      members_count: 3,
+      created_at: "2025-01-01T00:00:00.000Z",
+    },
+    {
+      id: 2,
+      name: "Another Board",
+      description: null,
+      color: "#10b981",
+      cards_count: 0,
+      members_count: 1,
+      created_at: "2025-01-02T00:00:00.000Z",
+    },
+  ],
+  pivot: { role: "owner" },
+};
+
+const mockEmptyTeam = {
+  id: 2,
+  name: "Empty Team",
+  slug: "empty-team",
+  owner_id: 1,
+  created_at: "2025-01-01T00:00:00.000Z",
+  boards: [],
+  pivot: { role: "owner" },
+};
+
+export const mockTeams = [mockTeam, mockEmptyTeam];
+
 export const handlers = [
   http.get(`${API_URL}/sanctum/csrf-cookie`, () => {
     return new HttpResponse(null, { status: 204 });
@@ -116,6 +157,51 @@ export const handlers = [
     }
 
     return HttpResponse.json(mockUser);
+  }),
+
+  http.get(`${API_URL}/api/teams`, () => {
+    return HttpResponse.json({ data: mockTeams });
+  }),
+
+  http.get(`${API_URL}/api/teams/:teamId`, () => {
+    return HttpResponse.json({ data: mockTeams[0] });
+  }),
+
+  http.get(`${API_URL}/api/teams/:teamId/boards`, () => {
+    return HttpResponse.json({ data: mockTeams[0].boards });
+  }),
+
+  http.post(`${API_URL}/api/teams/:teamId/boards`, async ({ request }) => {
+    const body = (await request.json()) as {
+      name: string;
+      description?: string;
+    };
+    return HttpResponse.json(
+      {
+        data: {
+          id: 3,
+          name: body.name,
+          description: body.description || null,
+          color: "#3b82f6",
+          cards_count: 0,
+          members_count: 1,
+          created_at: new Date().toISOString(),
+        },
+      },
+      { status: 201 }
+    );
+  }),
+
+  http.get(`${API_URL}/api/teams/:teamId/members`, () => {
+    return HttpResponse.json({
+      data: [
+        { id: 1, name: "Test User", email: "test@example.com", role: "owner" },
+      ],
+    });
+  }),
+
+  http.get(`${API_URL}/api/boards/:boardId/activities`, () => {
+    return HttpResponse.json({ data: [] });
   }),
 
   http.get(`${API_URL}/api/boards/:boardId`, () => {
