@@ -120,11 +120,27 @@ export function useBoardChannel(
         callbacksRef.current.onLabelDeleted?.(p as LabelDeletedPayload),
     };
 
-    subscribePrivateMany(channelName, events);
+    // Attempt to subscribe. If Echo isn't ready yet (e.g. on page refresh
+    // where checkAuth is still in-flight), retry with a short delay.
+    let subscribed = false;
+    let retryTimer: ReturnType<typeof setTimeout> | null = null;
+
+    const trySubscribe = () => {
+      const result = subscribePrivateMany(channelName, events);
+      if (result) {
+        subscribed = true;
+      } else {
+        // Echo not ready — retry in 500ms (up to 10 attempts = 5 seconds)
+        retryTimer = setTimeout(trySubscribe, 500);
+      }
+    };
+
+    trySubscribe();
 
     // Strict cleanup: leave the channel exactly once on unmount or boardId change.
     return () => {
-      leave(channelName);
+      if (retryTimer) clearTimeout(retryTimer);
+      if (subscribed) leave(channelName);
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [boardId, subscribePrivateMany, leave]);

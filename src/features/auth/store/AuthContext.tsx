@@ -93,21 +93,22 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     try {
       const response = await apiLogin(credentials);
 
-      setState({
-        user: response.user,
-        isLoading: false,
-        isAuthenticated: true,
-        error: null,
-      });
-
-      // Boot WebSocket AFTER setting auth state so a connection failure
-      // never blocks a successful login or shows a false "invalid credentials" error.
+      // Initialize Echo BEFORE setting authenticated state so that when React
+      // re-renders and mounts board/team components, getEcho() is already
+      // available for their subscription effects.
       const token = localStorage.getItem(TOKEN_KEY) ?? response.token;
       try {
         initializeEcho(token);
       } catch (echoErr) {
         console.warn("[AuthContext] WebSocket init failed (non-fatal):", echoErr);
       }
+
+      setState({
+        user: response.user,
+        isLoading: false,
+        isAuthenticated: true,
+        error: null,
+      });
     } catch (err) {
       const message = err instanceof Error ? err.message : "Login failed";
       setState((prev) => ({
@@ -194,19 +195,19 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     try {
       const response = await apiGoogleCallback(code);
 
-      setState({
-        user: response.user,
-        isLoading: false,
-        isAuthenticated: true,
-        error: null,
-      });
-
       const token = localStorage.getItem(TOKEN_KEY) ?? response.token;
       try {
         initializeEcho(token);
       } catch (echoErr) {
         console.warn("[AuthContext] WebSocket init failed (non-fatal):", echoErr);
       }
+
+      setState({
+        user: response.user,
+        isLoading: false,
+        isAuthenticated: true,
+        error: null,
+      });
     } catch (err) {
       const message =
         err instanceof Error ? err.message : "Google login failed";

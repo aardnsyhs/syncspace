@@ -29,6 +29,7 @@ import {
 import { api } from "@/lib/api";
 import { getEcho } from "@/lib/echo";
 import { SELECTED_WORKSPACE_KEY, TOKEN_KEY } from "@/lib/constants";
+import { useAuth } from "@/features/auth/store/AuthContext";
 
 // ---------------------------------------------------------------------------
 // Types
@@ -76,6 +77,7 @@ const SELECTED_TEAM_KEY = SELECTED_WORKSPACE_KEY;
 // ---------------------------------------------------------------------------
 
 export function TeamProvider({ children }: { children: ReactNode }) {
+  const { isAuthenticated } = useAuth();
   const [teams, setTeams] = useState<Team[]>([]);
   const [selectedTeam, setSelectedTeamState] = useState<Team | null>(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -131,8 +133,15 @@ export function TeamProvider({ children }: { children: ReactNode }) {
   }, []);
 
   useEffect(() => {
-    fetchTeams();
-  }, [fetchTeams]);
+    if (isAuthenticated) {
+      fetchTeams();
+    } else {
+      // User logged out — clear team state.
+      setTeams([]);
+      setSelectedTeamState(null);
+      setIsLoading(false);
+    }
+  }, [fetchTeams, isAuthenticated]);
 
   // ---------------------------------------------------------------------------
   // Incremental WebSocket subscriptions
