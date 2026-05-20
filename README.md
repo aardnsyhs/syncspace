@@ -17,13 +17,13 @@ Frontend aplikasi SyncSpace - Collaborative Kanban Board.
 
 ```bash
 # Install dependencies
-pnpm install
+yarn install
 
 # Copy environment
 cp .env.example .env
 
 # Start development server
-pnpm dev
+yarn dev
 ```
 
 ## Project Structure
@@ -61,25 +61,25 @@ src/
 ## Scripts
 
 ```bash
-pnpm dev          # Start dev server
-pnpm build        # Build for production
-pnpm preview      # Preview production build
-pnpm test         # Run tests in watch mode
-pnpm test:run     # Run tests once
-pnpm lint         # Run ESLint
+yarn dev          # Start dev server
+yarn build        # Build for production
+yarn preview      # Preview production build
+yarn test         # Run tests in watch mode
+yarn test:run     # Run tests once
+yarn lint         # Run ESLint
 ```
 
 ## Testing
 
 ```bash
 # Run all tests
-pnpm test:run
+yarn test:run
 
 # Run specific test file
-pnpm test:run src/features/boards/__tests__/
+yarn test:run src/features/boards/__tests__/
 
 # With coverage
-pnpm test:coverage
+yarn test:coverage
 ```
 
 ## Environment Variables
@@ -93,7 +93,7 @@ VITE_API_URL=http://localhost:8000  # Backend API URL
 Build untuk production:
 
 ```bash
-pnpm build
+yarn build
 ```
 
 Deploy folder `dist/` ke static hosting (Vercel, Netlify, dll).
