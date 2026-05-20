@@ -70,20 +70,15 @@ export async function login(
 ): Promise<AuthResponse> {
   await getCsrfCookie();
 
-  // The API returns: { data: { id, name, email, ... }, token: "1|abc..." }
-  // We type the generic exactly as the server sends it so there is no
-  // ambiguity between the envelope `data` key and a hypothetical `user` key.
-  const json = await api.post<{ data: User; token: string }>(
+  // api.post returns the raw parsed JSON body from the server.
+  // Server sends: { "data": { id, name, email, ... }, "token": "2|abc..." }
+  const body = await api.post<{ data: User; token: string }>(
     "/api/login",
     credentials
   );
 
-  const user = json.data;
-  const token = json.token;
-
-  if (!user || !token) {
-    throw new Error("Login failed: unexpected response from server.");
-  }
+  const user = body.data;
+  const token = body.token;
 
   localStorage.setItem(TOKEN_KEY, token);
 

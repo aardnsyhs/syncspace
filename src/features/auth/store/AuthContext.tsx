@@ -55,10 +55,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       try {
         const user = await fetchCurrentUser();
         if (user) {
-          // Token is valid — boot the WebSocket connection immediately so
-          // hooks that mount before the user navigates are ready to subscribe.
           const token = localStorage.getItem(TOKEN_KEY);
-          if (token) initializeEcho(token);
+          if (token) {
+            try {
+              initializeEcho(token);
+            } catch {
+              // WebSocket failure is non-fatal — user is still authenticated.
+            }
+          }
         }
         setState({
           user,
@@ -78,7 +82,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
     checkAuth();
 
-    // Tear down the WebSocket when the tab/window closes.
     return () => {
       disconnectEcho();
     };
@@ -90,17 +93,21 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     try {
       const response = await apiLogin(credentials);
 
-      // apiLogin stores the token in localStorage — read it back here so
-      // Echo is always initialised with the freshest token.
-      const token = localStorage.getItem(TOKEN_KEY) ?? response.token;
-      initializeEcho(token);
-
       setState({
         user: response.user,
         isLoading: false,
         isAuthenticated: true,
         error: null,
       });
+
+      // Boot WebSocket AFTER setting auth state so a connection failure
+      // never blocks a successful login or shows a false "invalid credentials" error.
+      const token = localStorage.getItem(TOKEN_KEY) ?? response.token;
+      try {
+        initializeEcho(token);
+      } catch (echoErr) {
+        console.warn("[AuthContext] WebSocket init failed (non-fatal):", echoErr);
+      }
     } catch (err) {
       const message = err instanceof Error ? err.message : "Login failed";
       setState((prev) => ({
@@ -187,15 +194,19 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     try {
       const response = await apiGoogleCallback(code);
 
-      const token = localStorage.getItem(TOKEN_KEY) ?? response.token;
-      initializeEcho(token);
-
       setState({
         user: response.user,
         isLoading: false,
         isAuthenticated: true,
         error: null,
       });
+
+      const token = localStorage.getItem(TOKEN_KEY) ?? response.token;
+      try {
+        initializeEcho(token);
+      } catch (echoErr) {
+        console.warn("[AuthContext] WebSocket init failed (non-fatal):", echoErr);
+      }
     } catch (err) {
       const message =
         err instanceof Error ? err.message : "Google login failed";
