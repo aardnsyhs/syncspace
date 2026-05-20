@@ -52,9 +52,17 @@ export interface ResendOTPData {
 }
 
 export async function getCsrfCookie(): Promise<void> {
-  await fetch(`${API_URL}/sanctum/csrf-cookie`, {
-    credentials: "include",
-  });
+  // The CSRF cookie endpoint is only needed for cookie-based (session) auth.
+  // This boilerplate uses token-based auth (Sanctum personal access tokens),
+  // so this call is a no-op in most setups. We swallow any error so a missing
+  // or unreachable /sanctum/csrf-cookie endpoint never blocks login.
+  try {
+    await fetch(`${API_URL}/sanctum/csrf-cookie`, {
+      credentials: "include",
+    });
+  } catch {
+    // Non-fatal — token auth does not require the CSRF cookie.
+  }
 }
 
 export async function login(
@@ -62,31 +70,45 @@ export async function login(
 ): Promise<AuthResponse> {
   await getCsrfCookie();
 
-  const response = await api.post<{ data: User; token: string }>(
+  // The API returns: { data: { id, name, email, ... }, token: "1|abc..." }
+  // We type the generic exactly as the server sends it so there is no
+  // ambiguity between the envelope `data` key and a hypothetical `user` key.
+  const json = await api.post<{ data: User; token: string }>(
     "/api/login",
     credentials
   );
 
-  if (response.token) {
-    localStorage.setItem(TOKEN_KEY, response.token);
+  const user = json.data;
+  const token = json.token;
+
+  if (!user || !token) {
+    throw new Error("Login failed: unexpected response from server.");
   }
 
-  return { user: response.data, token: response.token };
+  localStorage.setItem(TOKEN_KEY, token);
+
+  return { user, token };
 }
 
 export async function register(data: RegisterData): Promise<AuthResponse> {
   await getCsrfCookie();
 
-  const response = await api.post<{ data: User; token: string }>(
+  // Registration returns the same envelope as login on some flows,
+  // but the primary path returns { message, data: { email }, requires_verification: true }
+  // with no token yet. We store the token only if the server sends one.
+  const json = await api.post<{ data: User; token: string }>(
     "/api/register",
     data
   );
 
-  if (response.token) {
-    localStorage.setItem(TOKEN_KEY, response.token);
+  const user = json.data;
+  const token = json.token;
+
+  if (token) {
+    localStorage.setItem(TOKEN_KEY, token);
   }
 
-  return { user: response.data, token: response.token };
+  return { user, token };
 }
 
 export async function logout(): Promise<void> {
@@ -144,17 +166,17 @@ export async function verifyOTP(
 ): Promise<{ message: string; data: User; token: string }> {
   await getCsrfCookie();
 
-  const response = await api.post<{
+  const json = await api.post<{
     message: string;
     data: User;
     token: string;
   }>("/api/verify-otp", data);
 
-  if (response.token) {
-    localStorage.setItem(TOKEN_KEY, response.token);
+  if (json.token) {
+    localStorage.setItem(TOKEN_KEY, json.token);
   }
 
-  return response;
+  return json;
 }
 
 export async function resendOTP(
@@ -187,14 +209,17 @@ export function getGoogleAuthUrl(): string {
 export async function googleCallback(code: string): Promise<AuthResponse> {
   await getCsrfCookie();
 
-  const response = await api.post<{ data: User; token: string }>(
+  const json = await api.post<{ data: User; token: string }>(
     "/api/auth/google/callback",
     { code }
   );
 
-  if (response.token) {
-    localStorage.setItem(TOKEN_KEY, response.token);
+  const user = json.data;
+  const token = json.token;
+
+  if (token) {
+    localStorage.setItem(TOKEN_KEY, token);
   }
 
-  return { user: response.data, token: response.token };
+  return { user, token };
 }
