@@ -87,12 +87,13 @@ export function getRoleLabel(role: TeamRole): string {
 }
 
 export function getRoleBadgeColor(role: TeamRole): string {
+  // Uses semantic Tailwind classes that respect the design token system.
+  // Swap these for your own palette if you change the brand colours.
   const colors: Record<TeamRole, string> = {
-    owner:
-      "bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-200",
-    admin: "bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200",
-    member: "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200",
-    viewer: "bg-gray-100 text-gray-800 dark:bg-gray-900 dark:text-gray-200",
+    owner:  "bg-primary/15 text-primary border border-primary/20",
+    admin:  "bg-secondary text-secondary-foreground border border-border",
+    member: "bg-muted text-muted-foreground border border-border",
+    viewer: "bg-muted/50 text-muted-foreground border border-border",
   };
   return colors[role];
 }

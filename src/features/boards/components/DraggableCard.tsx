@@ -23,7 +23,8 @@ interface CardData {
 interface DraggableCardProps {
   card: CardData;
   onClick: () => void;
-  onToggleComplete?: (cardId: number, isCompleted: boolean) => void;
+  /** Optional — if not provided the completion toggle is not rendered. */
+  onToggleComplete?: (cardId: number, isCompleted: boolean) => void | Promise<void>;
 }
 
 export function DraggableCard({

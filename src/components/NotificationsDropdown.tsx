@@ -44,20 +44,17 @@ interface NotificationIconConfig {
 function getNotificationIcon(type: string): NotificationIconConfig {
   switch (type) {
     case "card_assigned":
-      return { icon: UserPlus, className: "text-blue-500 bg-blue-500/10" };
+      return { icon: UserPlus,     className: "text-primary bg-primary/10" };
     case "comment":
-      return {
-        icon: MessageSquare,
-        className: "text-green-500 bg-green-500/10",
-      };
+      return { icon: MessageSquare, className: "text-accent-foreground bg-accent" };
     case "mention":
-      return { icon: AtSign, className: "text-purple-500 bg-purple-500/10" };
+      return { icon: AtSign,        className: "text-primary bg-primary/10" };
     case "due_soon":
-      return { icon: Clock, className: "text-orange-500 bg-orange-500/10" };
+      return { icon: Clock,         className: "text-destructive bg-destructive/10" };
     case "card_moved":
-      return { icon: ArrowRight, className: "text-cyan-500 bg-cyan-500/10" };
+      return { icon: ArrowRight,    className: "text-muted-foreground bg-muted" };
     default:
-      return { icon: Bell, className: "text-muted-foreground bg-muted" };
+      return { icon: Bell,          className: "text-muted-foreground bg-muted" };
   }
 }
 
@@ -155,7 +152,7 @@ export function NotificationsDropdown() {
                   key={notification.id}
                   className={cn(
                     "px-4 py-3 hover:bg-muted/50 transition-colors cursor-pointer",
-                    !notification.read && "bg-blue-50 dark:bg-blue-950/20"
+                    !notification.read && "bg-primary/5 border-l-2 border-primary"
                   )}
                   onClick={() => handleNotificationClick(notification)}
                 >

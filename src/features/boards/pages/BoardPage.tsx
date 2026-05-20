@@ -1,10 +1,23 @@
+/**
+ * BoardPage
+ * =========
+ * Data-fetching shell for the Kanban board view.
+ *
+ * This page is responsible for:
+ *   - Loading board metadata and team members from the API
+ *   - Subscribing to real-time board events via `useBoardChannel`
+ *   - Providing all mutation callbacks to `<KanbanBoard />`
+ *   - Rendering the page chrome (header, filters, settings panel, dialogs)
+ *
+ * The `<KanbanBoard />` component below this layer is purely presentational
+ * and can be used independently with any data source.
+ */
+
 import { useState, useCallback, useEffect } from "react";
 import { useSearchParams } from "react-router-dom";
 import {
-  Plus,
   Settings,
   Globe,
-  X,
   Loader2,
   BarChart3,
   MoreHorizontal,
@@ -12,7 +25,6 @@ import {
 import { useAuth } from "@/features/auth/store/AuthContext";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Input } from "@/components/ui/input";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -20,26 +32,15 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { toast } from "sonner";
-import {
-  DndContext,
-  DragOverlay,
-  closestCorners,
-  PointerSensor,
-  useSensor,
-  useSensors,
-  type DragStartEvent,
-  type DragEndEvent,
-} from "@dnd-kit/core";
 
 import { BoardFiltersBar } from "../components/BoardFiltersBar";
 import { BoardSettingsPanel } from "../components/BoardSettingsPanel";
 import { CreateBoardDialog } from "../components/CreateBoardDialog";
 import { CardDetailDialog } from "@/features/cards/components/CardDetailDialog";
-import { CardQuickInfo } from "@/features/cards/components/CardQuickInfo";
 import { ActivityFeed } from "../components/ActivityFeed";
 import { OnlineUsers } from "../components/OnlineUsers";
-import { DroppableColumn } from "../components/DroppableColumn";
 import { BoardAnalyticsDialog } from "../components/BoardAnalyticsDialog";
+import { KanbanBoard } from "../components/KanbanBoard";
 
 import { useBoardChannel } from "../hooks/useBoardChannel";
 import { useBoardFilters } from "../hooks/useBoardFilters";
@@ -58,6 +59,10 @@ import type {
   ColumnDeletedPayload,
 } from "../types";
 
+// ---------------------------------------------------------------------------
+// Types
+// ---------------------------------------------------------------------------
+
 interface BoardData {
   id: number;
   team_id: number;
@@ -73,6 +78,10 @@ interface BoardPageProps {
   boardId?: number;
 }
 
+// ---------------------------------------------------------------------------
+// Component
+// ---------------------------------------------------------------------------
+
 export function BoardPage({ boardId: propBoardId }: BoardPageProps) {
   const { user } = useAuth();
   const [searchParams, setSearchParams] = useSearchParams();
@@ -81,57 +90,30 @@ export function BoardPage({ boardId: propBoardId }: BoardPageProps) {
   const [isLoadingBoard, setIsLoadingBoard] = useState(true);
   const [selectedCardId, setSelectedCardId] = useState<number | null>(null);
   const [showSettings, setShowSettings] = useState(false);
+  const [showActivity, setShowActivity] = useState(false);
+  const [showAnalytics, setShowAnalytics] = useState(false);
+  const [teamMembers, setTeamMembers] = useState<
+    Array<{ id: number; name: string; avatar_url?: string }>
+  >([]);
 
+  const token = localStorage.getItem(TOKEN_KEY) ?? "";
+  const boardId = propBoardId ?? 1;
+  const teamId = board?.team_id ?? 1;
+  const canManage = true;
+
+  // Open card detail from URL param (e.g. /app/boards/1?card=42)
   useEffect(() => {
     const cardParam = searchParams.get("card");
     if (cardParam) {
       const cardId = parseInt(cardParam);
       if (!isNaN(cardId)) {
         setSelectedCardId(cardId);
-
         setSearchParams({}, { replace: true });
       }
     }
   }, [searchParams, setSearchParams]);
-  const [showActivity, setShowActivity] = useState(false);
-  const [showAnalytics, setShowAnalytics] = useState(false);
 
-  const [addingCardToColumn, setAddingCardToColumn] = useState<number | null>(
-    null
-  );
-  const [newCardTitle, setNewCardTitle] = useState("");
-  const [isCreatingCard, setIsCreatingCard] = useState(false);
-
-  const [isAddingColumn, setIsAddingColumn] = useState(false);
-  const [newColumnName, setNewColumnName] = useState("");
-  const [isCreatingColumn, setIsCreatingColumn] = useState(false);
-
-  const [activeCard, setActiveCard] = useState<{
-    id: number;
-    title: string;
-    description: string | null;
-    due_date: string | null;
-    labels: Array<{ id: number; name: string; color: string }>;
-    column_id: number;
-  } | null>(null);
-
-  const [teamMembers, setTeamMembers] = useState<
-    Array<{ id: number; name: string; avatar_url?: string }>
-  >([]);
-
-  const token = localStorage.getItem(TOKEN_KEY) ?? "";
-  const boardId = propBoardId || 1;
-
-  const sensors = useSensors(
-    useSensor(PointerSensor, {
-      activationConstraint: {
-        distance: 1,
-      },
-    })
-  );
-  const teamId = board?.team_id || 1;
-  const canManage = true;
-
+  // ── Data hooks ─────────────────────────────────────────────────────────────
   const {
     filters,
     setSearch,
@@ -149,9 +131,9 @@ export function BoardPage({ boardId: propBoardId }: BoardPageProps) {
 
   const { labels: boardLabels } = useBoardLabels(boardId, token);
   const { members: onlineMembers } = useBoardPresence(boardId);
-  const { activities, isLoading: isLoadingActivities } =
-    useBoardActivities(boardId);
+  const { activities, isLoading: isLoadingActivities } = useBoardActivities(boardId);
 
+  // ── Board metadata ─────────────────────────────────────────────────────────
   const fetchBoard = useCallback(async () => {
     setIsLoadingBoard(true);
     try {
@@ -164,192 +146,105 @@ export function BoardPage({ boardId: propBoardId }: BoardPageProps) {
     }
   }, [boardId]);
 
-  useEffect(() => {
-    fetchBoard();
-  }, [fetchBoard]);
+  useEffect(() => { fetchBoard(); }, [fetchBoard]);
 
   useEffect(() => {
     const fetchTeamMembers = async () => {
       if (!board?.team_id) return;
-
       try {
         const json = await api.get<{
           data: Array<{ id: number; name: string; avatar_url?: string }>;
         }>(`/api/teams/${board.team_id}/members`);
-        setTeamMembers(json.data || []);
+        setTeamMembers(json.data ?? []);
       } catch {
         console.error("Failed to fetch team members");
       }
     };
-
     fetchTeamMembers();
   }, [board?.team_id]);
 
-  const handleColumnCreated = useCallback(
-    (_payload: ColumnEventPayload) => {
+  // ── Real-time event handlers ───────────────────────────────────────────────
+  const handleColumnCreated  = useCallback((_p: ColumnEventPayload)  => refetchCards(), [refetchCards]);
+  const handleColumnUpdated  = useCallback((_p: ColumnEventPayload)  => refetchCards(), [refetchCards]);
+  const handleColumnDeleted  = useCallback((_p: ColumnDeletedPayload) => refetchCards(), [refetchCards]);
+  const handleCardCreated    = useCallback((_p: CardEventPayload)    => refetchCards(), [refetchCards]);
+  const handleCardUpdated    = useCallback((_p: CardEventPayload)    => refetchCards(), [refetchCards]);
+  const handleCardMoved      = useCallback((_p: CardMovedPayload)    => refetchCards(), [refetchCards]);
+  const handleCardDeleted    = useCallback(
+    (p: CardDeletedPayload) => {
       refetchCards();
-    },
-    [refetchCards]
-  );
-
-  const handleColumnUpdated = useCallback(
-    (_payload: ColumnEventPayload) => {
-      refetchCards();
-    },
-    [refetchCards]
-  );
-
-  const handleColumnDeleted = useCallback(
-    (_payload: ColumnDeletedPayload) => {
-      refetchCards();
-    },
-    [refetchCards]
-  );
-
-  const handleCardCreated = useCallback(
-    (_payload: CardEventPayload) => {
-      refetchCards();
-    },
-    [refetchCards]
-  );
-
-  const handleCardUpdated = useCallback(
-    (_payload: CardEventPayload) => {
-      refetchCards();
-    },
-    [refetchCards]
-  );
-
-  const handleCardDeleted = useCallback(
-    (_payload: CardDeletedPayload) => {
-      refetchCards();
-      if (selectedCardId === _payload.card_id) {
-        setSelectedCardId(null);
-      }
+      if (selectedCardId === p.card_id) setSelectedCardId(null);
     },
     [refetchCards, selectedCardId]
   );
 
-  const handleCardMoved = useCallback(
-    (_payload: CardMovedPayload) => {
-      refetchCards();
+  useBoardChannel(boardId, {
+    onColumnCreated:  handleColumnCreated,
+    onColumnUpdated:  handleColumnUpdated,
+    onColumnDeleted:  handleColumnDeleted,
+    onCardCreated:    handleCardCreated,
+    onCardUpdated:    handleCardUpdated,
+    onCardDeleted:    handleCardDeleted,
+    onCardMoved:      handleCardMoved,
+  });
+
+  // ── KanbanBoard mutation callbacks ────────────────────────────────────────
+
+  const handleCardMove = useCallback(
+    async (cardId: number, toColumnId: number, position: number) => {
+      try {
+        await api.put(`/api/cards/${cardId}/move`, {
+          column_id: toColumnId,
+          position,
+        });
+        refetchCards();
+      } catch {
+        toast.error("Failed to move card");
+      }
     },
     [refetchCards]
   );
 
-  const handleCreateCard = async (columnId: number) => {
-    if (!newCardTitle.trim()) return;
-
-    setIsCreatingCard(true);
-    try {
-      await api.post(`/api/columns/${columnId}/cards`, { title: newCardTitle });
-      toast.success("Card created!");
-      setNewCardTitle("");
-      setAddingCardToColumn(null);
-      refetchCards();
-    } catch {
-      toast.error("Failed to create card");
-    } finally {
-      setIsCreatingCard(false);
-    }
-  };
-
-  const handleCreateColumn = async () => {
-    if (!newColumnName.trim()) return;
-
-    setIsCreatingColumn(true);
-    try {
-      await api.post(`/api/boards/${boardId}/columns`, { name: newColumnName });
-      toast.success("Column created!");
-      setNewColumnName("");
-      setIsAddingColumn(false);
-      refetchCards();
-    } catch {
-      toast.error("Failed to create column");
-    } finally {
-      setIsCreatingColumn(false);
-    }
-  };
-
-  const handleToggleCardComplete = async (
-    cardId: number,
-    isCompleted: boolean
-  ) => {
-    try {
-      await api.put(`/api/cards/${cardId}`, { is_completed: isCompleted });
-      refetchCards();
-    } catch {
-      toast.error("Failed to update card");
-    }
-  };
-
-  const handleDragStart = (event: DragStartEvent) => {
-    const { active } = event;
-    const cardData = active.data.current?.card;
-    if (cardData) {
-      setActiveCard(cardData);
-    }
-  };
-
-  const handleDragEnd = async (event: DragEndEvent) => {
-    const { active, over } = event;
-    setActiveCard(null);
-
-    if (!over) return;
-
-    const activeId = String(active.id);
-    const overId = String(over.id);
-
-    const cardId = parseInt(activeId.replace("card-", ""));
-
-    let targetColumnId: number | null = null;
-
-    if (overId.startsWith("column-")) {
-      targetColumnId = parseInt(overId.replace("column-", ""));
-    } else if (overId.startsWith("card-")) {
-      const overCard = cards.find(
-        (c) => c.id === parseInt(overId.replace("card-", ""))
-      );
-      if (overCard) {
-        targetColumnId = overCard.column_id;
+  const handleToggleCardComplete = useCallback(
+    async (cardId: number, isCompleted: boolean) => {
+      try {
+        await api.put(`/api/cards/${cardId}`, { is_completed: isCompleted });
+        refetchCards();
+      } catch {
+        toast.error("Failed to update card");
       }
-    }
+    },
+    [refetchCards]
+  );
 
-    if (!targetColumnId) return;
+  const handleCreateCard = useCallback(
+    async (columnId: number, title: string) => {
+      try {
+        await api.post(`/api/columns/${columnId}/cards`, { title });
+        toast.success("Card created!");
+        refetchCards();
+      } catch {
+        toast.error("Failed to create card");
+      }
+    },
+    [refetchCards]
+  );
 
-    const currentCard = cards.find((c) => c.id === cardId);
-    if (!currentCard || currentCard.column_id === targetColumnId) return;
+  const handleCreateColumn = useCallback(
+    async (name: string) => {
+      try {
+        await api.post(`/api/boards/${boardId}/columns`, { name });
+        toast.success("Column created!");
+        refetchCards();
+      } catch {
+        toast.error("Failed to create column");
+      }
+    },
+    [boardId, refetchCards]
+  );
 
-    try {
-      await api.put(`/api/cards/${cardId}/move`, {
-        column_id: targetColumnId,
-        position: 0,
-      });
-      refetchCards();
-    } catch {
-      toast.error("Failed to move card");
-    }
-  };
-
-  useBoardChannel(boardId, {
-    onColumnCreated: handleColumnCreated,
-    onColumnUpdated: handleColumnUpdated,
-    onColumnDeleted: handleColumnDeleted,
-    onCardCreated: handleCardCreated,
-    onCardUpdated: handleCardUpdated,
-    onCardDeleted: handleCardDeleted,
-    onCardMoved: handleCardMoved,
-  });
-
-  const cardsByColumn = cards.reduce((acc, card) => {
-    if (!acc[card.column_id]) acc[card.column_id] = [];
-    acc[card.column_id].push(card);
-    return acc;
-  }, {} as Record<number, typeof cards>);
-
-  if (isLoadingBoard) {
-    return <BoardPageSkeleton />;
-  }
+  // ── Render ────────────────────────────────────────────────────────────────
+  if (isLoadingBoard) return <BoardPageSkeleton />;
 
   if (!board) {
     return (
@@ -361,11 +256,12 @@ export function BoardPage({ boardId: propBoardId }: BoardPageProps) {
 
   return (
     <div className="h-full flex flex-col -m-4 md:-m-6">
+      {/* ── Page header ── */}
       <div className="px-3 md:px-4 py-2 md:py-3 border-b flex flex-col sm:flex-row sm:items-center justify-between gap-2">
         <div className="flex items-center gap-2 md:gap-4 min-w-0">
           {board.color && (
             <div
-              className="w-3 h-10 rounded-full flex-shrink-0"
+              className="w-3 h-10 rounded-full shrink-0"
               style={{ backgroundColor: board.color }}
             />
           )}
@@ -375,7 +271,7 @@ export function BoardPage({ boardId: propBoardId }: BoardPageProps) {
                 {board.name}
               </h1>
               {board.is_public && (
-                <span className="px-2 py-0.5 text-xs bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-200 rounded-full flex items-center gap-1 flex-shrink-0">
+                <span className="px-2 py-0.5 text-xs bg-primary/10 text-primary rounded-full flex items-center gap-1 shrink-0">
                   <Globe className="h-3 w-3" />
                   Public
                 </span>
@@ -389,9 +285,10 @@ export function BoardPage({ boardId: propBoardId }: BoardPageProps) {
           </div>
         </div>
 
-        <div className="flex items-center gap-1 md:gap-2 flex-shrink-0 overflow-x-auto">
+        <div className="flex items-center gap-1 md:gap-2 shrink-0 overflow-x-auto">
           <OnlineUsers members={onlineMembers} />
 
+          {/* Mobile overflow menu */}
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <Button variant="outline" size="icon" className="sm:hidden">
@@ -417,7 +314,6 @@ export function BoardPage({ boardId: propBoardId }: BoardPageProps) {
           >
             Activity
           </Button>
-
           <Button
             variant="outline"
             size="sm"
@@ -441,13 +337,12 @@ export function BoardPage({ boardId: propBoardId }: BoardPageProps) {
           <CreateBoardDialog
             teamId={teamId}
             token={token}
-            onBoardCreated={() => {
-              toast.success("Board created!");
-            }}
+            onBoardCreated={() => toast.success("Board created!")}
           />
         </div>
       </div>
 
+      {/* ── Filters bar ── */}
       <BoardFiltersBar
         filters={filters}
         onSearchChange={setSearch}
@@ -462,105 +357,23 @@ export function BoardPage({ boardId: propBoardId }: BoardPageProps) {
         isLoading={isLoadingCards}
       />
 
+      {/* ── Board canvas ── */}
       <div className="flex-1 flex overflow-hidden">
-        <DndContext
-          sensors={sensors}
-          collisionDetection={closestCorners}
-          onDragStart={handleDragStart}
-          onDragEnd={handleDragEnd}
-        >
-          <div className="flex-1 overflow-x-auto p-4">
-            <div className="flex gap-4 h-full">
-              {columns.map((column) => (
-                <DroppableColumn
-                  key={column.id}
-                  column={column}
-                  cards={cardsByColumn[column.id] || []}
-                  token={token}
-                  canManage={canManage}
-                  hasActiveFilters={hasActiveFilters}
-                  isAddingCard={addingCardToColumn === column.id}
-                  newCardTitle={newCardTitle}
-                  isCreatingCard={isCreatingCard}
-                  onCardClick={(cardId) => setSelectedCardId(cardId)}
-                  onUpdate={refetchCards}
-                  onAddCardStart={() => setAddingCardToColumn(column.id)}
-                  onAddCardCancel={() => {
-                    setAddingCardToColumn(null);
-                    setNewCardTitle("");
-                  }}
-                  onCardTitleChange={setNewCardTitle}
-                  onCreateCard={() => handleCreateCard(column.id)}
-                  onToggleCardComplete={handleToggleCardComplete}
-                />
-              ))}
-
-              <div className="w-64 md:w-72 flex-shrink-0">
-                {isAddingColumn ? (
-                  <div className="bg-muted/30 rounded-lg p-3 space-y-2">
-                    <Input
-                      placeholder="Enter column name..."
-                      value={newColumnName}
-                      onChange={(e) => setNewColumnName(e.target.value)}
-                      onKeyDown={(e) => {
-                        if (e.key === "Enter") handleCreateColumn();
-                        if (e.key === "Escape") {
-                          setIsAddingColumn(false);
-                          setNewColumnName("");
-                        }
-                      }}
-                      autoFocus
-                      disabled={isCreatingColumn}
-                    />
-                    <div className="flex gap-2">
-                      <Button
-                        size="sm"
-                        onClick={handleCreateColumn}
-                        disabled={isCreatingColumn || !newColumnName.trim()}
-                      >
-                        {isCreatingColumn && (
-                          <Loader2 className="h-3 w-3 mr-1 animate-spin" />
-                        )}
-                        Add Column
-                      </Button>
-                      <Button
-                        size="sm"
-                        variant="ghost"
-                        onClick={() => {
-                          setIsAddingColumn(false);
-                          setNewColumnName("");
-                        }}
-                      >
-                        <X className="h-4 w-4" />
-                      </Button>
-                    </div>
-                  </div>
-                ) : (
-                  <Button
-                    variant="outline"
-                    className="w-full justify-start"
-                    onClick={() => setIsAddingColumn(true)}
-                  >
-                    <Plus className="h-4 w-4 mr-2" />
-                    Add column
-                  </Button>
-                )}
-              </div>
-            </div>
-          </div>
-
-          <DragOverlay>
-            {activeCard && (
-              <div className="bg-background rounded-lg border p-3 shadow-lg w-72 opacity-90">
-                <CardQuickInfo
-                  labels={activeCard.labels}
-                  dueDate={activeCard.due_date}
-                />
-                <h4 className="text-sm font-medium mt-1">{activeCard.title}</h4>
-              </div>
-            )}
-          </DragOverlay>
-        </DndContext>
+        <div className="flex-1 overflow-x-auto p-4">
+          <KanbanBoard
+            columns={columns}
+            cards={cards}
+            canManage={canManage}
+            hasActiveFilters={hasActiveFilters}
+            token={token}
+            onCardClick={(cardId) => setSelectedCardId(cardId)}
+            onCardMove={handleCardMove}
+            onToggleCardComplete={handleToggleCardComplete}
+            onCreateCard={handleCreateCard}
+            onCreateColumn={handleCreateColumn}
+            onColumnUpdate={refetchCards}
+          />
+        </div>
 
         {showActivity && (
           <div className="w-80 border-l bg-background overflow-y-auto">
@@ -575,11 +388,12 @@ export function BoardPage({ boardId: propBoardId }: BoardPageProps) {
         )}
       </div>
 
+      {/* ── Dialogs & panels ── */}
       <CardDetailDialog
         cardId={selectedCardId}
         boardId={boardId}
         token={token}
-        currentUserId={user?.id || 0}
+        currentUserId={user?.id ?? 0}
         isOpen={selectedCardId !== null}
         onClose={() => setSelectedCardId(null)}
         onCardUpdated={refetchCards}
@@ -612,6 +426,10 @@ export function BoardPage({ boardId: propBoardId }: BoardPageProps) {
   );
 }
 
+// ---------------------------------------------------------------------------
+// Skeleton
+// ---------------------------------------------------------------------------
+
 function BoardPageSkeleton() {
   return (
     <div className="h-full flex flex-col">
@@ -624,7 +442,7 @@ function BoardPageSkeleton() {
       </div>
       <div className="flex-1 p-4 flex gap-4">
         {[...Array(4)].map((_, i) => (
-          <div key={i} className="w-72 flex-shrink-0">
+          <div key={i} className="w-72 shrink-0">
             <Skeleton className="h-10 w-full mb-2" />
             <div className="space-y-2">
               {[...Array(3)].map((_, j) => (
@@ -633,6 +451,9 @@ function BoardPageSkeleton() {
             </div>
           </div>
         ))}
+      </div>
+      <div className="flex items-center justify-center py-4">
+        <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
       </div>
     </div>
   );
