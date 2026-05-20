@@ -37,7 +37,11 @@ let echoInstance: Echo<"pusher"> | null = null;
 // Driver-specific config builders
 // ---------------------------------------------------------------------------
 
-function buildReverbConfig(): ConstructorParameters<typeof Echo>[0] {
+// Typed as Record<string, unknown> so TypeScript allows spreading into the
+// Echo constructor options object without a "never" inference error.
+// The Echo constructor accepts a broad options bag at runtime.
+
+function buildReverbConfig(): Record<string, unknown> {
   return {
     broadcaster: "pusher",
     key: import.meta.env.VITE_REVERB_APP_KEY,
@@ -51,7 +55,7 @@ function buildReverbConfig(): ConstructorParameters<typeof Echo>[0] {
   };
 }
 
-function buildAblyConfig(): ConstructorParameters<typeof Echo>[0] {
+function buildAblyConfig(): Record<string, unknown> {
   // Ably uses the public key portion (before the colon) as the Pusher key.
   const ablyKey = import.meta.env.VITE_ABLY_KEY ?? "";
   const [keyPart] = ablyKey.split(":");
@@ -89,11 +93,12 @@ export function initializeEcho(token: string): Echo<"pusher"> {
   }
 
   const driver = import.meta.env.VITE_BROADCAST_DRIVER ?? "reverb";
-  const driverConfig =
+  const driverConfig: Record<string, unknown> =
     driver === "ably" ? buildAblyConfig() : buildReverbConfig();
 
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   echoInstance = new Echo({
-    ...driverConfig,
+    ...(driverConfig as any),
     authEndpoint: `${import.meta.env.VITE_API_URL}/api/broadcasting/auth`,
     auth: {
       headers: {

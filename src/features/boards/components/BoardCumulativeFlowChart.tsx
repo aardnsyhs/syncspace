@@ -111,38 +111,36 @@ export function BoardCumulativeFlowChart({ data, isLoading }: Props) {
                 allowDecimals={false}
               />
               <RechartsTooltip
-                content={({
-                  active,
-                  payload,
-                  label,
-                }: {
-                  active?: boolean;
-                  payload?: readonly {
-                    dataKey?: string;
-                    color?: string;
-                    value?: number;
-                  }[];
-                  label?: string | number;
-                }) => {
+                content={(props: any) => {
+                  const { active, payload, label } = props;
                   if (!active || !payload?.length) return null;
                   return (
                     <div className="bg-popover border rounded-lg shadow-lg p-3 text-sm">
                       <p className="font-medium mb-2">{label}</p>
-                      {[...payload].reverse().map((entry, idx) => {
-                        const col = data.columns.find(
-                          (c) => `col_${c.id}` === entry.dataKey
-                        );
-                        return (
-                          <div key={idx} className="flex items-center gap-2">
-                            <div
-                              className="w-3 h-3 rounded-sm"
-                              style={{ backgroundColor: entry.color }}
-                            />
-                            <span>{col?.name}:</span>
-                            <span className="font-medium">{entry.value}</span>
-                          </div>
-                        );
-                      })}
+                      {[...payload].reverse().map(
+                        (
+                          entry: {
+                            dataKey?: string;
+                            color?: string;
+                            value?: number;
+                          },
+                          idx: number
+                        ) => {
+                          const col = data.columns.find(
+                            (c) => `col_${c.id}` === entry.dataKey
+                          );
+                          return (
+                            <div key={idx} className="flex items-center gap-2">
+                              <div
+                                className="w-3 h-3 rounded-sm"
+                                style={{ backgroundColor: entry.color }}
+                              />
+                              <span>{col?.name}:</span>
+                              <span className="font-medium">{entry.value}</span>
+                            </div>
+                          );
+                        }
+                      )}
                     </div>
                   );
                 }}

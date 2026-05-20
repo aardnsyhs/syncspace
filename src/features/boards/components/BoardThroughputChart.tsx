@@ -90,17 +90,12 @@ export function BoardThroughputChart({ data, isLoading }: Props) {
                   allowDecimals={false}
                 />
                 <RechartsTooltip
-                  content={({
-                    active,
-                    payload,
-                  }: {
-                    active?: boolean;
-                    payload?: readonly {
-                      payload: ThroughputData & { label: string };
-                    }[];
-                  }) => {
+                  content={(props: any) => {
+                    const { active, payload } = props;
                     if (!active || !payload?.length) return null;
-                    const d = payload[0].payload;
+                    const d = payload[0].payload as ThroughputData & {
+                      label: string;
+                    };
                     return (
                       <div className="bg-popover border rounded-lg shadow-lg p-3 text-sm">
                         <p className="font-medium">{d.label}</p>
