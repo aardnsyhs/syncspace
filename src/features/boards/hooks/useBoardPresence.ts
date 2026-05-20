@@ -1,5 +1,15 @@
+/**
+ * useBoardPresence
+ * ================
+ * Tracks which users are currently viewing a board in real-time via the
+ * `presence-board.{boardId}` channel.
+ *
+ * Uses `useWorkspaceSocket` so the presence channel is managed through the
+ * same lifecycle-safe abstraction as all other real-time hooks.
+ */
+
 import { useEffect, useState, useCallback } from "react";
-import { getEcho, initializeEcho } from "@/lib/echo";
+import { useWorkspaceSocket } from "@/hooks/useWorkspaceSocket";
 
 export interface PresenceMember {
   id: number;
@@ -16,6 +26,8 @@ interface UseBoardPresenceReturn {
 export function useBoardPresence(
   boardId: number | null
 ): UseBoardPresenceReturn {
+  const { joinPresence, leave } = useWorkspaceSocket();
+
   const [members, setMembers] = useState<PresenceMember[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -27,7 +39,6 @@ export function useBoardPresence(
 
   const handleJoining = useCallback((user: PresenceMember) => {
     setMembers((prev) => {
-      
       if (prev.some((m) => m.id === user.id)) return prev;
       return [...prev, user];
     });
@@ -52,22 +63,20 @@ export function useBoardPresence(
     setIsLoading(true);
     setError(null);
 
-    const echo = getEcho() || initializeEcho();
+    // Echo's join() prepends "presence-" — pass the bare name.
+    const channelName = `presence-board.${boardId}`;
 
-    echo
-      .join(`presence-board.${boardId}`)
-      .here(handleHere)
-      .joining(handleJoining)
-      .leaving(handleLeaving)
-      .error(handleError);
+    joinPresence<PresenceMember>(channelName, {
+      here: handleHere,
+      joining: handleJoining,
+      leaving: handleLeaving,
+      error: handleError,
+    });
 
     return () => {
-      const echoInstance = getEcho();
-      if (echoInstance) {
-        echoInstance.leave(`presence-board.${boardId}`);
-      }
+      leave(channelName);
     };
-  }, [boardId, handleHere, handleJoining, handleLeaving, handleError]);
+  }, [boardId, joinPresence, leave, handleHere, handleJoining, handleLeaving, handleError]);
 
   return { members, isLoading, error };
 }

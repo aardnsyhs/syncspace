@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from "react";
 import { api } from "@/lib/api";
-import { getEcho, initializeEcho } from "@/lib/echo";
+import { getEcho } from "@/lib/echo";
 import type { Comment } from "../components/CommentsSection";
 
 interface UseCommentsReturn {
@@ -48,7 +48,8 @@ export function useComments(
   useEffect(() => {
     if (!cardId || !boardId) return;
 
-    const echo = getEcho() || initializeEcho();
+    const echo = getEcho();
+    if (!echo) return;
     const channel = echo.private(`board.${boardId}`);
 
     const handleCommentCreated = (payload: {

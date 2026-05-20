@@ -17,6 +17,8 @@ import {
   type LoginCredentials,
   type RegisterData,
 } from "../api/authApi";
+import { initializeEcho, disconnectEcho } from "@/lib/echo";
+import { TOKEN_KEY } from "@/lib/constants";
 
 interface AuthState {
   user: User | null;
@@ -31,6 +33,8 @@ interface AuthContextValue extends AuthState {
   logout: () => Promise<void>;
   clearError: () => void;
   updateUser: (updates: Partial<User>) => void;
+  /** Call this after OTP verification to boot the WebSocket with the new token. */
+  initEchoAfterVerification: () => void;
   loginWithGoogle: () => void;
   handleGoogleCallback: (code: string) => Promise<void>;
 }
@@ -45,10 +49,17 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     error: null,
   });
 
+  // On mount: restore session from stored token and initialise Echo if valid.
   useEffect(() => {
     const checkAuth = async () => {
       try {
         const user = await fetchCurrentUser();
+        if (user) {
+          // Token is valid — boot the WebSocket connection immediately so
+          // hooks that mount before the user navigates are ready to subscribe.
+          const token = localStorage.getItem(TOKEN_KEY);
+          if (token) initializeEcho(token);
+        }
         setState({
           user,
           isLoading: false,
@@ -66,6 +77,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     };
 
     checkAuth();
+
+    // Tear down the WebSocket when the tab/window closes.
+    return () => {
+      disconnectEcho();
+    };
   }, []);
 
   const login = useCallback(async (credentials: LoginCredentials) => {
@@ -73,6 +89,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
     try {
       const response = await apiLogin(credentials);
+
+      // apiLogin stores the token in localStorage — read it back here so
+      // Echo is always initialised with the freshest token.
+      const token = localStorage.getItem(TOKEN_KEY) ?? response.token;
+      initializeEcho(token);
+
       setState({
         user: response.user,
         isLoading: false,
@@ -95,6 +117,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
     try {
       await apiRegister(data);
+      // Registration does not issue a token — OTP verification does.
+      // Echo is initialised in handleGoogleCallback / after OTP verification
+      // via the VerifyOTPPage calling login() or the token being stored.
       setState((prev) => ({
         ...prev,
         isLoading: false,
@@ -117,6 +142,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     try {
       await apiLogout();
     } finally {
+      // Disconnect WebSocket BEFORE clearing state so any in-flight
+      // channel leave messages can still use the token.
+      disconnectEcho();
+
       setState({
         user: null,
         isLoading: false,
@@ -137,6 +166,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }));
   }, []);
 
+  /**
+   * Initialise Echo using the token that was just stored in localStorage
+   * by `verifyOTP()`. Call this from VerifyOTPPage after a successful
+   * verification so the WebSocket is ready before the user hits /app.
+   */
+  const initEchoAfterVerification = useCallback(() => {
+    const token = localStorage.getItem(TOKEN_KEY);
+    if (token) initializeEcho(token);
+  }, []);
+
   const loginWithGoogle = useCallback(() => {
     const url = getGoogleAuthUrl();
     window.location.href = url;
@@ -147,6 +186,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
     try {
       const response = await apiGoogleCallback(code);
+
+      const token = localStorage.getItem(TOKEN_KEY) ?? response.token;
+      initializeEcho(token);
+
       setState({
         user: response.user,
         isLoading: false,
@@ -174,6 +217,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         logout,
         clearError,
         updateUser,
+        initEchoAfterVerification,
         loginWithGoogle,
         handleGoogleCallback,
       }}

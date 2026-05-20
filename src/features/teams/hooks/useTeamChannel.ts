@@ -1,5 +1,13 @@
-import { useEffect, useCallback } from "react";
-import { getEcho, initializeEcho } from "@/lib/echo";
+/**
+ * useTeamChannel
+ * ==============
+ * Subscribes to the private `team.{teamId}` channel.
+ * Uses the same `useRef` stability pattern as `useBoardChannel` to prevent
+ * re-subscription churn when callback references change.
+ */
+
+import { useEffect, useRef } from "react";
+import { useWorkspaceSocket } from "@/hooks/useWorkspaceSocket";
 import {
   TEAM_EVENTS,
   type TeamEventPayload,
@@ -24,73 +32,41 @@ export interface TeamChannelCallbacks {
 export function useTeamChannel(
   teamId: number | null,
   callbacks: TeamChannelCallbacks
-) {
-  const {
-    onTeamUpdated,
-    onTeamDeleted,
-    onMemberAdded,
-    onMemberUpdated,
-    onMemberRemoved,
-    onBoardCreated,
-    onBoardDeleted,
-  } = callbacks;
+): void {
+  const { subscribePrivateMany, leave } = useWorkspaceSocket();
 
-  const subscribe = useCallback(() => {
-    if (!teamId) return null;
-
-    const echo = getEcho() || initializeEcho();
-    const channel = echo.private(`team.${teamId}`);
-
-    if (onTeamUpdated) {
-      channel.listen(TEAM_EVENTS.TEAM_UPDATED, onTeamUpdated);
-    }
-
-    if (onTeamDeleted) {
-      channel.listen(TEAM_EVENTS.TEAM_DELETED, onTeamDeleted);
-    }
-
-    if (onMemberAdded) {
-      channel.listen(TEAM_EVENTS.TEAM_MEMBER_ADDED, onMemberAdded);
-    }
-
-    if (onMemberUpdated) {
-      channel.listen(TEAM_EVENTS.TEAM_MEMBER_UPDATED, onMemberUpdated);
-    }
-
-    if (onMemberRemoved) {
-      channel.listen(TEAM_EVENTS.TEAM_MEMBER_REMOVED, onMemberRemoved);
-    }
-
-    if (onBoardCreated) {
-      channel.listen(TEAM_EVENTS.BOARD_CREATED, onBoardCreated);
-    }
-
-    if (onBoardDeleted) {
-      channel.listen(TEAM_EVENTS.BOARD_DELETED, onBoardDeleted);
-    }
-
-    return channel;
-  }, [
-    teamId,
-    onTeamUpdated,
-    onTeamDeleted,
-    onMemberAdded,
-    onMemberUpdated,
-    onMemberRemoved,
-    onBoardCreated,
-    onBoardDeleted,
-  ]);
+  const callbacksRef = useRef<TeamChannelCallbacks>(callbacks);
+  useEffect(() => {
+    callbacksRef.current = callbacks;
+  });
 
   useEffect(() => {
-    subscribe();
+    if (!teamId) return;
+
+    const channelName = `team.${teamId}`;
+
+    const events: Record<string, (payload: unknown) => void> = {
+      [TEAM_EVENTS.TEAM_UPDATED]: (p) =>
+        callbacksRef.current.onTeamUpdated?.(p as TeamEventPayload),
+      [TEAM_EVENTS.TEAM_DELETED]: (p) =>
+        callbacksRef.current.onTeamDeleted?.(p as TeamDeletedPayload),
+      [TEAM_EVENTS.TEAM_MEMBER_ADDED]: (p) =>
+        callbacksRef.current.onMemberAdded?.(p as TeamMemberAddedPayload),
+      [TEAM_EVENTS.TEAM_MEMBER_UPDATED]: (p) =>
+        callbacksRef.current.onMemberUpdated?.(p as TeamMemberUpdatedPayload),
+      [TEAM_EVENTS.TEAM_MEMBER_REMOVED]: (p) =>
+        callbacksRef.current.onMemberRemoved?.(p as TeamMemberRemovedPayload),
+      [TEAM_EVENTS.BOARD_CREATED]: (p) =>
+        callbacksRef.current.onBoardCreated?.(p as BoardCreatedPayload),
+      [TEAM_EVENTS.BOARD_DELETED]: (p) =>
+        callbacksRef.current.onBoardDeleted?.(p as BoardDeletedPayload),
+    };
+
+    subscribePrivateMany(channelName, events);
 
     return () => {
-      if (teamId) {
-        const echo = getEcho();
-        if (echo) {
-          echo.leave(`team.${teamId}`);
-        }
-      }
+      leave(channelName);
     };
-  }, [teamId, subscribe]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [teamId, subscribePrivateMany, leave]);
 }

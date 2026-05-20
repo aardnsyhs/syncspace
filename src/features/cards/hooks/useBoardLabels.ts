@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from "react";
 import { api } from "@/lib/api";
-import { getEcho, initializeEcho } from "@/lib/echo";
+import { getEcho } from "@/lib/echo";
 import type { Label } from "../types";
 
 interface UseBoardLabelsReturn {
@@ -53,7 +53,8 @@ export function useBoardLabels(
   useEffect(() => {
     if (!boardId) return;
 
-    const echo = getEcho() || initializeEcho();
+    const echo = getEcho();
+    if (!echo) return;
     const channel = echo.private(`board.${boardId}`);
 
     const handleLabelCreated = (payload: { label: Label }) => {

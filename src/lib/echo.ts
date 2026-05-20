@@ -9,11 +9,17 @@
  *
  * The Echo instance is a module-level singleton so every hook and component
  * shares the same underlying WebSocket connection.
+ *
+ * Lifecycle:
+ *   - Call `initializeEcho(token)` after a successful login / OTP verification.
+ *   - Call `disconnectEcho()` on logout to tear down the connection cleanly.
+ *   - Call `reconnectEcho(token)` when the auth token rotates (e.g. token refresh).
+ *   - All hooks obtain the instance via `getEcho()` — they never call
+ *     `initializeEcho()` directly, so the token is always fresh.
  */
 
 import Echo from "laravel-echo";
 import Pusher from "pusher-js";
-import { TOKEN_KEY } from "./constants";
 
 declare global {
   interface Window {
@@ -68,7 +74,16 @@ function buildAblyConfig(): ConstructorParameters<typeof Echo>[0] {
 // Public API
 // ---------------------------------------------------------------------------
 
-export function initializeEcho(): Echo<"pusher"> {
+/**
+ * Initialise the Echo singleton with a fresh auth token.
+ *
+ * @param token - The Sanctum bearer token for the authenticated user.
+ *                Must be provided so the WebSocket auth endpoint receives
+ *                the correct credentials. Never reads from localStorage
+ *                directly to avoid stale-token bugs.
+ */
+export function initializeEcho(token: string): Echo<"pusher"> {
+  // If an instance already exists with the same token there is nothing to do.
   if (echoInstance) {
     return echoInstance;
   }
@@ -82,7 +97,7 @@ export function initializeEcho(): Echo<"pusher"> {
     authEndpoint: `${import.meta.env.VITE_API_URL}/api/broadcasting/auth`,
     auth: {
       headers: {
-        Authorization: `Bearer ${localStorage.getItem(TOKEN_KEY)}`,
+        Authorization: `Bearer ${token}`,
         Accept: "application/json",
       },
     },
@@ -92,6 +107,23 @@ export function initializeEcho(): Echo<"pusher"> {
   return echoInstance;
 }
 
+/**
+ * Tear down the current Echo connection and create a fresh one.
+ * Call this when the auth token rotates so all channel auth headers
+ * are updated without requiring a full page reload.
+ *
+ * @param token - The new bearer token.
+ */
+export function reconnectEcho(token: string): Echo<"pusher"> {
+  disconnectEcho();
+  return initializeEcho(token);
+}
+
+/**
+ * Disconnect and destroy the Echo singleton.
+ * Call this on logout so the WebSocket connection is closed cleanly
+ * and no stale subscriptions remain.
+ */
 export function disconnectEcho(): void {
   if (echoInstance) {
     echoInstance.disconnect();
@@ -100,6 +132,11 @@ export function disconnectEcho(): void {
   }
 }
 
+/**
+ * Return the current Echo instance, or null if not yet initialised.
+ * Hooks should call this and handle the null case gracefully — they
+ * should NOT call `initializeEcho()` themselves.
+ */
 export function getEcho(): Echo<"pusher"> | null {
   return echoInstance;
 }

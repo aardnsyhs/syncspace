@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from "react";
 import { Loader2, Trash2, UserPlus } from "lucide-react";
-import { getEcho, initializeEcho } from "@/lib/echo";
+import { getEcho } from "@/lib/echo";
 import { useAuth } from "@/features/auth/store/AuthContext";
 import { TOKEN_KEY } from "@/lib/constants";
 import { Button } from "@/components/ui/button";
@@ -153,7 +153,8 @@ export function SettingsPage() {
   useEffect(() => {
     if (!selectedTeam) return;
 
-    const echo = getEcho() || initializeEcho();
+    const echo = getEcho();
+    if (!echo) return;
     const channel = echo.private(`team.${selectedTeam.id}`);
 
     channel.listen(

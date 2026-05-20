@@ -1,6 +1,16 @@
+/**
+ * useUserNotifications (lightweight in-memory variant)
+ * =====================================================
+ * A simpler notification hook that keeps notifications in local state only
+ * (no API persistence). Useful for components that need a quick toast-only
+ * notification feed without the full CRUD surface of `useNotifications`.
+ *
+ * Uses `useWorkspaceSocket` so it participates in the shared Echo lifecycle.
+ */
+
 import { useEffect, useCallback, useState } from "react";
 import { toast } from "sonner";
-import { initializeEcho, getEcho } from "@/lib/echo";
+import { useWorkspaceSocket } from "@/hooks/useWorkspaceSocket";
 
 export interface Notification {
   id: string;
@@ -26,6 +36,7 @@ interface UseUserNotificationsReturn {
 export function useUserNotifications(
   userId: number | null
 ): UseUserNotificationsReturn {
+  const { subscribePrivate, leave } = useWorkspaceSocket();
   const [notifications, setNotifications] = useState<Notification[]>([]);
 
   const handleNotification = useCallback(
@@ -44,7 +55,6 @@ export function useUserNotifications(
           ? {
               label: "View",
               onClick: () => {
-                
                 console.log("Navigate to:", payload.data);
               },
             }
@@ -57,18 +67,17 @@ export function useUserNotifications(
   useEffect(() => {
     if (!userId) return;
 
-    const echo = initializeEcho();
-    const channel = echo.private(`user.${userId}`);
-    channel.listen(".UserNotification", handleNotification);
+    const channelName = `user.${userId}`;
+    subscribePrivate<Omit<Notification, "id" | "read">>(
+      channelName,
+      ".UserNotification",
+      handleNotification
+    );
 
     return () => {
-      channel.stopListening(".UserNotification");
-      const echoInstance = getEcho();
-      if (echoInstance) {
-        echoInstance.leave(`user.${userId}`);
-      }
+      leave(channelName);
     };
-  }, [userId, handleNotification]);
+  }, [userId, subscribePrivate, leave, handleNotification]);
 
   const markAsRead = useCallback((id: string) => {
     setNotifications((prev) =>

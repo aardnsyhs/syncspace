@@ -19,7 +19,7 @@ export function VerifyOTPPage() {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const email = searchParams.get("email");
-  const { updateUser } = useAuth();
+  const { updateUser, initEchoAfterVerification } = useAuth();
 
   const [otp, setOtp] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -57,6 +57,9 @@ export function VerifyOTPPage() {
 
     try {
       const response = await verifyOTP({ email, otp });
+      // Boot the WebSocket connection with the fresh token before navigating
+      // so TeamContext and notification hooks are ready on first render.
+      initEchoAfterVerification();
       updateUser(response.data);
       toast.success(response.message || "Email verified successfully!");
       navigate("/app", { replace: true });

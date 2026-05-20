@@ -1,5 +1,30 @@
-import { useEffect, useCallback } from "react";
-import { getEcho, initializeEcho } from "@/lib/echo";
+/**
+ * useBoardChannel
+ * ===============
+ * Subscribes to the private `board.{boardId}` channel and dispatches
+ * incoming events to the caller's handlers.
+ *
+ * ─── Stability guarantee ────────────────────────────────────────────────────
+ * Handlers are stored in a ref so the channel subscription is created ONCE
+ * per `boardId` and never torn down due to callback identity changes.
+ * This eliminates the stale-closure / re-subscription churn that occurred
+ * when callers wrapped handlers in `useCallback` with changing dependencies.
+ *
+ * The channel is left (unsubscribed) exactly once: when the component that
+ * called this hook unmounts, or when `boardId` changes. Zero ghost
+ * subscriptions remain after unmount.
+ *
+ * ─── Usage ──────────────────────────────────────────────────────────────────
+ * useBoardChannel(boardId, {
+ *   onCardMoved: (payload) => refetchCards(),
+ *   onColumnDeleted: (payload) => removeColumn(payload.column_id),
+ * });
+ *
+ * All callbacks are optional — only supply the events you care about.
+ */
+
+import { useEffect, useRef } from "react";
+import { useWorkspaceSocket } from "@/hooks/useWorkspaceSocket";
 import {
   BOARD_EVENTS,
   type BoardEventPayload,
@@ -14,6 +39,10 @@ import {
   type LabelUpdatedPayload,
   type LabelDeletedPayload,
 } from "../types";
+
+// ---------------------------------------------------------------------------
+// Public types
+// ---------------------------------------------------------------------------
 
 export interface BoardChannelCallbacks {
   onBoardUpdated?: (payload: BoardEventPayload) => void;
@@ -31,118 +60,73 @@ export interface BoardChannelCallbacks {
   onLabelDeleted?: (payload: LabelDeletedPayload) => void;
 }
 
+// ---------------------------------------------------------------------------
+// Hook
+// ---------------------------------------------------------------------------
+
 export function useBoardChannel(
   boardId: number | null,
   callbacks: BoardChannelCallbacks
-) {
-  const {
-    onBoardUpdated,
-    onColumnCreated,
-    onColumnUpdated,
-    onColumnDeleted,
-    onCardCreated,
-    onCardUpdated,
-    onCardDeleted,
-    onCardMoved,
-    onCommentCreated,
-    onCommentDeleted,
-    onLabelCreated,
-    onLabelUpdated,
-    onLabelDeleted,
-  } = callbacks;
+): void {
+  const { subscribePrivateMany, leave } = useWorkspaceSocket();
 
-  const subscribe = useCallback(() => {
-    if (!boardId) return null;
-
-    const echo = getEcho() || initializeEcho();
-    const channel = echo.private(`board.${boardId}`);
-
-    if (onBoardUpdated) {
-      channel.listen(BOARD_EVENTS.BOARD_UPDATED, onBoardUpdated);
-    }
-
-    if (onColumnCreated) {
-      channel.listen(BOARD_EVENTS.COLUMN_CREATED, onColumnCreated);
-    }
-    if (onColumnUpdated) {
-      channel.listen(BOARD_EVENTS.COLUMN_UPDATED, onColumnUpdated);
-    }
-    if (onColumnDeleted) {
-      channel.listen(BOARD_EVENTS.COLUMN_DELETED, onColumnDeleted);
-    }
-
-    if (onCardCreated) {
-      channel.listen(BOARD_EVENTS.CARD_CREATED, (payload: CardEventPayload) => {
-        onCardCreated(payload);
-      });
-    }
-    if (onCardUpdated) {
-      channel.listen(BOARD_EVENTS.CARD_UPDATED, (payload: CardEventPayload) => {
-        onCardUpdated(payload);
-      });
-    }
-    if (onCardDeleted) {
-      channel.listen(
-        BOARD_EVENTS.CARD_DELETED,
-        (payload: CardDeletedPayload) => {
-          onCardDeleted(payload);
-        }
-      );
-    }
-    if (onCardMoved) {
-      channel.listen(BOARD_EVENTS.CARD_MOVED, (payload: CardMovedPayload) => {
-        onCardMoved(payload);
-      });
-    }
-
-    if (onCommentCreated) {
-      channel.listen(BOARD_EVENTS.COMMENT_CREATED, onCommentCreated);
-    }
-
-    if (onCommentDeleted) {
-      channel.listen(BOARD_EVENTS.COMMENT_DELETED, onCommentDeleted);
-    }
-
-    if (onLabelCreated) {
-      channel.listen(BOARD_EVENTS.LABEL_CREATED, onLabelCreated);
-    }
-
-    if (onLabelUpdated) {
-      channel.listen(BOARD_EVENTS.LABEL_UPDATED, onLabelUpdated);
-    }
-
-    if (onLabelDeleted) {
-      channel.listen(BOARD_EVENTS.LABEL_DELETED, onLabelDeleted);
-    }
-
-    return channel;
-  }, [
-    boardId,
-    onBoardUpdated,
-    onColumnCreated,
-    onColumnUpdated,
-    onColumnDeleted,
-    onCardCreated,
-    onCardUpdated,
-    onCardDeleted,
-    onCardMoved,
-    onCommentCreated,
-    onCommentDeleted,
-    onLabelCreated,
-    onLabelUpdated,
-    onLabelDeleted,
-  ]);
+  /**
+   * Store the latest callbacks in a ref so the subscription effect never
+   * needs to re-run when the caller's handler references change.
+   * The channel always calls the *current* version of each handler.
+   */
+  const callbacksRef = useRef<BoardChannelCallbacks>(callbacks);
+  useEffect(() => {
+    callbacksRef.current = callbacks;
+  });
 
   useEffect(() => {
-    subscribe();
+    if (!boardId) return;
 
-    return () => {
-      if (boardId) {
-        const echo = getEcho();
-        if (echo) {
-          echo.leave(`board.${boardId}`);
-        }
-      }
+    const channelName = `board.${boardId}`;
+
+    // Build the event map. Each wrapper reads from the ref so it always
+    // invokes the latest handler without re-subscribing.
+    const events: Record<string, (payload: unknown) => void> = {
+      [BOARD_EVENTS.BOARD_UPDATED]: (p) =>
+        callbacksRef.current.onBoardUpdated?.(p as BoardEventPayload),
+
+      [BOARD_EVENTS.COLUMN_CREATED]: (p) =>
+        callbacksRef.current.onColumnCreated?.(p as ColumnEventPayload),
+      [BOARD_EVENTS.COLUMN_UPDATED]: (p) =>
+        callbacksRef.current.onColumnUpdated?.(p as ColumnEventPayload),
+      [BOARD_EVENTS.COLUMN_DELETED]: (p) =>
+        callbacksRef.current.onColumnDeleted?.(p as ColumnDeletedPayload),
+
+      [BOARD_EVENTS.CARD_CREATED]: (p) =>
+        callbacksRef.current.onCardCreated?.(p as CardEventPayload),
+      [BOARD_EVENTS.CARD_UPDATED]: (p) =>
+        callbacksRef.current.onCardUpdated?.(p as CardEventPayload),
+      [BOARD_EVENTS.CARD_DELETED]: (p) =>
+        callbacksRef.current.onCardDeleted?.(p as CardDeletedPayload),
+      [BOARD_EVENTS.CARD_MOVED]: (p) =>
+        callbacksRef.current.onCardMoved?.(p as CardMovedPayload),
+
+      [BOARD_EVENTS.COMMENT_CREATED]: (p) =>
+        callbacksRef.current.onCommentCreated?.(p as CommentCreatedPayload),
+      [BOARD_EVENTS.COMMENT_DELETED]: (p) =>
+        callbacksRef.current.onCommentDeleted?.(p as CommentDeletedPayload),
+
+      [BOARD_EVENTS.LABEL_CREATED]: (p) =>
+        callbacksRef.current.onLabelCreated?.(p as LabelCreatedPayload),
+      [BOARD_EVENTS.LABEL_UPDATED]: (p) =>
+        callbacksRef.current.onLabelUpdated?.(p as LabelUpdatedPayload),
+      [BOARD_EVENTS.LABEL_DELETED]: (p) =>
+        callbacksRef.current.onLabelDeleted?.(p as LabelDeletedPayload),
     };
-  }, [boardId, subscribe]);
+
+    subscribePrivateMany(channelName, events);
+
+    // Strict cleanup: leave the channel exactly once on unmount or boardId change.
+    return () => {
+      leave(channelName);
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [boardId, subscribePrivateMany, leave]);
+  // Intentionally omitting `callbacks` from deps — the ref handles freshness.
 }

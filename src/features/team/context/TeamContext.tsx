@@ -1,24 +1,38 @@
+/**
+ * TeamContext
+ * ===========
+ * Provides the list of workspaces (teams) the authenticated user belongs to,
+ * the currently-selected workspace, and real-time updates for each workspace.
+ *
+ * ─── WebSocket strategy ─────────────────────────────────────────────────────
+ * Each team gets its own private channel subscription. Subscriptions are
+ * managed incrementally: when a new team is added to the list we subscribe
+ * to its channel; when a team is removed we leave only that channel.
+ *
+ * This avoids the "full reconnect storm" that occurred when the previous
+ * implementation used `teams.length` as a dependency and tore down ALL
+ * channels on every list change.
+ *
+ * A `subscribedTeamIds` ref tracks which channels are currently open so we
+ * never double-subscribe and always clean up the correct set on unmount.
+ */
+
 import {
   createContext,
   useContext,
   useState,
   useEffect,
+  useRef,
   useCallback,
   type ReactNode,
 } from "react";
 import { api } from "@/lib/api";
-import { getEcho, initializeEcho } from "@/lib/echo";
+import { getEcho } from "@/lib/echo";
 import { SELECTED_WORKSPACE_KEY, TOKEN_KEY } from "@/lib/constants";
 
-interface Team {
-  id: number;
-  name: string;
-  slug: string;
-  owner_id: number;
-  members_count?: number;
-  boards_count?: number;
-  boards?: Board[];
-}
+// ---------------------------------------------------------------------------
+// Types
+// ---------------------------------------------------------------------------
 
 interface Board {
   id: number;
@@ -30,6 +44,16 @@ interface Board {
   created_at?: string;
 }
 
+interface Team {
+  id: number;
+  name: string;
+  slug: string;
+  owner_id: number;
+  members_count?: number;
+  boards_count?: number;
+  boards?: Board[];
+}
+
 interface TeamContextType {
   teams: Team[];
   selectedTeam: Team | null;
@@ -39,14 +63,32 @@ interface TeamContextType {
   createTeam: (name: string) => Promise<Team | null>;
 }
 
+// ---------------------------------------------------------------------------
+// Context
+// ---------------------------------------------------------------------------
+
 const TeamContext = createContext<TeamContextType | undefined>(undefined);
 
 const SELECTED_TEAM_KEY = SELECTED_WORKSPACE_KEY;
+
+// ---------------------------------------------------------------------------
+// Provider
+// ---------------------------------------------------------------------------
 
 export function TeamProvider({ children }: { children: ReactNode }) {
   const [teams, setTeams] = useState<Team[]>([]);
   const [selectedTeam, setSelectedTeamState] = useState<Team | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+
+  /**
+   * Tracks which team IDs currently have an active channel subscription.
+   * Using a ref (not state) so mutations don't trigger re-renders.
+   */
+  const subscribedTeamIds = useRef<Set<number>>(new Set());
+
+  // ---------------------------------------------------------------------------
+  // Data fetching
+  // ---------------------------------------------------------------------------
 
   const fetchTeams = useCallback(async () => {
     const token = localStorage.getItem(TOKEN_KEY);
@@ -71,9 +113,15 @@ export function TeamProvider({ children }: { children: ReactNode }) {
         }
       }
 
-      if (fetchedTeams.length > 0 && !selectedTeam) {
-        setSelectedTeamState(fetchedTeams[0]);
-        localStorage.setItem(SELECTED_TEAM_KEY, fetchedTeams[0].id.toString());
+      if (fetchedTeams.length > 0) {
+        setSelectedTeamState((prev) => {
+          if (prev) return prev; // keep existing selection
+          localStorage.setItem(
+            SELECTED_TEAM_KEY,
+            fetchedTeams[0].id.toString()
+          );
+          return fetchedTeams[0];
+        });
       }
     } catch (error) {
       console.error("Failed to fetch teams:", error);
@@ -86,27 +134,34 @@ export function TeamProvider({ children }: { children: ReactNode }) {
     fetchTeams();
   }, [fetchTeams]);
 
-  useEffect(() => {
-    if (teams.length === 0) return;
+  // ---------------------------------------------------------------------------
+  // Incremental WebSocket subscriptions
+  // ---------------------------------------------------------------------------
 
-    const echo = getEcho() || initializeEcho();
-    const channels: ReturnType<typeof echo.private>[] = [];
+  /**
+   * Subscribe to a single team's private channel.
+   * Registers all team-level event handlers and records the team ID in the
+   * `subscribedTeamIds` ref so we can clean up precisely later.
+   */
+  const subscribeToTeam = useCallback(
+    (team: Team) => {
+      const echo = getEcho();
+      if (!echo || subscribedTeamIds.current.has(team.id)) return;
 
-    teams.forEach((team) => {
       const channel = echo.private(`team.${team.id}`);
-      channels.push(channel);
+      subscribedTeamIds.current.add(team.id);
 
       channel.listen(".BoardCreated", (payload: { board: Board }) => {
         setTeams((prev) =>
           prev.map((t) =>
             t.id === team.id
-              ? { ...t, boards: [...(t.boards || []), payload.board] }
+              ? { ...t, boards: [...(t.boards ?? []), payload.board] }
               : t
           )
         );
         setSelectedTeamState((prev) =>
           prev?.id === team.id
-            ? { ...prev, boards: [...(prev.boards || []), payload.board] }
+            ? { ...prev, boards: [...(prev.boards ?? []), payload.board] }
             : prev
         );
       });
@@ -117,7 +172,7 @@ export function TeamProvider({ children }: { children: ReactNode }) {
             t.id === team.id
               ? {
                   ...t,
-                  boards: (t.boards || []).filter(
+                  boards: (t.boards ?? []).filter(
                     (b) => b.id !== payload.board_id
                   ),
                 }
@@ -128,7 +183,7 @@ export function TeamProvider({ children }: { children: ReactNode }) {
           prev?.id === team.id
             ? {
                 ...prev,
-                boards: (prev.boards || []).filter(
+                boards: (prev.boards ?? []).filter(
                   (b) => b.id !== payload.board_id
                 ),
               }
@@ -148,31 +203,71 @@ export function TeamProvider({ children }: { children: ReactNode }) {
       });
 
       channel.listen(".TeamDeleted", (payload: { team_id: number }) => {
-        setTeams((prev) => prev.filter((t) => t.id !== payload.team_id));
-        setSelectedTeamState((prev) => {
-          if (prev?.id === payload.team_id) {
-            const remaining = teams.filter((t) => t.id !== payload.team_id);
+        setTeams((prev) => {
+          const remaining = prev.filter((t) => t.id !== payload.team_id);
+          setSelectedTeamState((sel) => {
+            if (sel?.id !== payload.team_id) return sel;
             return remaining.length > 0 ? remaining[0] : null;
-          }
-          return prev;
+          });
+          return remaining;
         });
+        // Clean up the subscription for the deleted team.
+        unsubscribeFromTeam(payload.team_id);
       });
 
-      channel.listen(".TeamMemberAdded", () => {
-        fetchTeams();
-      });
+      channel.listen(".TeamMemberAdded", () => fetchTeams());
+      channel.listen(".TeamMemberRemoved", () => fetchTeams());
+    },
+    [fetchTeams] // eslint-disable-line react-hooks/exhaustive-deps
+  );
 
-      channel.listen(".TeamMemberRemoved", () => {
-        fetchTeams();
-      });
+  /** Leave a single team channel and remove it from the tracking ref. */
+  const unsubscribeFromTeam = useCallback((teamId: number) => {
+    const echo = getEcho();
+    if (echo) {
+      try {
+        echo.leave(`team.${teamId}`);
+      } catch {
+        // Echo may already be disconnected (e.g. on logout).
+      }
+    }
+    subscribedTeamIds.current.delete(teamId);
+  }, []);
+
+  /**
+   * When the teams list changes, subscribe to any NEW teams and leave any
+   * channels for teams that are no longer in the list.
+   */
+  useEffect(() => {
+    if (teams.length === 0) return;
+
+    const currentIds = new Set(teams.map((t) => t.id));
+
+    // Subscribe to teams we haven't subscribed to yet.
+    teams.forEach((team) => {
+      if (!subscribedTeamIds.current.has(team.id)) {
+        subscribeToTeam(team);
+      }
     });
 
+    // Unsubscribe from teams that were removed from the list.
+    subscribedTeamIds.current.forEach((id) => {
+      if (!currentIds.has(id)) {
+        unsubscribeFromTeam(id);
+      }
+    });
+  }, [teams, subscribeToTeam, unsubscribeFromTeam]);
+
+  // Leave ALL channels on unmount (e.g. full app teardown / logout).
+  useEffect(() => {
     return () => {
-      teams.forEach((team) => {
-        echo.leave(`team.${team.id}`);
-      });
+      subscribedTeamIds.current.forEach((id) => unsubscribeFromTeam(id));
     };
-  }, [teams.length, fetchTeams]);
+  }, [unsubscribeFromTeam]);
+
+  // ---------------------------------------------------------------------------
+  // Public actions
+  // ---------------------------------------------------------------------------
 
   const setSelectedTeam = useCallback((team: Team) => {
     setSelectedTeamState(team);
@@ -199,6 +294,10 @@ export function TeamProvider({ children }: { children: ReactNode }) {
     },
     [setSelectedTeam]
   );
+
+  // ---------------------------------------------------------------------------
+  // Render
+  // ---------------------------------------------------------------------------
 
   return (
     <TeamContext.Provider

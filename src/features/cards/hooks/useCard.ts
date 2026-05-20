@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from "react";
 import { api } from "@/lib/api";
-import { getEcho, initializeEcho } from "@/lib/echo";
+import { getEcho } from "@/lib/echo";
 import type { CardDetail, Checklist } from "../types";
 
 interface UseCardReturn {
@@ -95,7 +95,8 @@ export function useCard(
   useEffect(() => {
     if (!cardId || !boardId) return;
 
-    const echo = getEcho() || initializeEcho();
+    const echo = getEcho();
+    if (!echo) return;
     const channel = echo.private(`board.${boardId}`);
 
     const handleCardUpdated = (payload: { card: Partial<CardDetail> }) => {

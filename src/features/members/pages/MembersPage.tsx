@@ -8,7 +8,7 @@ import {
   Users,
   Mail,
 } from "lucide-react";
-import { getEcho, initializeEcho } from "@/lib/echo";
+import { getEcho } from "@/lib/echo";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -137,7 +137,8 @@ export function MembersPage() {
   useEffect(() => {
     if (!selectedTeamId) return;
 
-    const echo = getEcho() || initializeEcho();
+    const echo = getEcho();
+    if (!echo) return;
     const channel = echo.private(`team.${selectedTeamId}`);
 
     channel.listen(

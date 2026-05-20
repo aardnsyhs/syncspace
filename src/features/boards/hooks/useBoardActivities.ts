@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from "react";
 import { api } from "@/lib/api";
-import { getEcho, initializeEcho } from "@/lib/echo";
+import { getEcho } from "@/lib/echo";
 
 export interface ActivityUser {
   id: number;
@@ -79,7 +79,8 @@ export function useBoardActivities(
   useEffect(() => {
     if (!boardId) return;
 
-    const echo = getEcho() || initializeEcho();
+    const echo = getEcho();
+    if (!echo) return;
     const channel = echo.private(`board.${boardId}`);
     channel.listen(".ActivityCreated", handleActivityCreated);
 
