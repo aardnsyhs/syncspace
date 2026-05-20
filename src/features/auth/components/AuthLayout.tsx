@@ -16,7 +16,9 @@ export function AuthLayout({ children, title, subtitle }: Props) {
             <div className="p-2 bg-primary-foreground/10 rounded-lg">
               <Layers className="h-8 w-8" />
             </div>
-            <span className="text-2xl font-bold">Syncspace</span>
+            <span className="text-2xl font-bold">
+              {import.meta.env.VITE_APP_NAME ?? "SaaS Boilerplate"}
+            </span>
           </div>
         </div>
 
@@ -33,7 +35,9 @@ export function AuthLayout({ children, title, subtitle }: Props) {
         </div>
 
         <div className="text-sm text-primary-foreground/60">
-          © {new Date().getFullYear()} Syncspace. All rights reserved.
+          © {new Date().getFullYear()}{" "}
+          {import.meta.env.VITE_APP_NAME ?? "SaaS Boilerplate"}. All rights
+          reserved.
         </div>
       </div>
 
@@ -43,7 +47,9 @@ export function AuthLayout({ children, title, subtitle }: Props) {
             <div className="p-2 bg-primary text-primary-foreground rounded-lg">
               <Layers className="h-6 w-6" />
             </div>
-            <span className="text-xl font-bold">Syncspace</span>
+            <span className="text-xl font-bold">
+              {import.meta.env.VITE_APP_NAME ?? "SaaS Boilerplate"}
+            </span>
           </div>
 
           <div className="text-center lg:text-left">

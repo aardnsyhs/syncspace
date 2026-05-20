@@ -1,3 +1,5 @@
+import { TOKEN_KEY } from "./constants";
+
 const API_URL = import.meta.env.VITE_API_URL;
 
 interface RequestConfig extends RequestInit {
@@ -17,7 +19,7 @@ class ApiClient {
   }
 
   private getToken(): string | null {
-    return localStorage.getItem("token");
+    return localStorage.getItem(TOKEN_KEY);
   }
 
   private buildUrl(endpoint: string, params?: RequestConfig["params"]): string {
@@ -49,7 +51,7 @@ class ApiClient {
       }
 
       if (response.status === 401) {
-        localStorage.removeItem("token");
+        localStorage.removeItem(TOKEN_KEY);
         const authPages = [
           "/login",
           "/register",

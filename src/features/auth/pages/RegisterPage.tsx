@@ -103,7 +103,7 @@ export function RegisterPage() {
   return (
     <AuthLayout
       title="Create an account"
-      subtitle="Get started with Syncspace today"
+      subtitle="Get started today"
     >
       <Card className="border-0 shadow-none lg:border lg:shadow-sm">
         <form onSubmit={handleSubmit(onSubmit)}>

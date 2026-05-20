@@ -8,6 +8,7 @@ import {
 } from "react";
 import { api } from "@/lib/api";
 import { getEcho, initializeEcho } from "@/lib/echo";
+import { SELECTED_WORKSPACE_KEY, TOKEN_KEY } from "@/lib/constants";
 
 interface Team {
   id: number;
@@ -40,7 +41,7 @@ interface TeamContextType {
 
 const TeamContext = createContext<TeamContextType | undefined>(undefined);
 
-const SELECTED_TEAM_KEY = "syncspace_selected_team_id";
+const SELECTED_TEAM_KEY = SELECTED_WORKSPACE_KEY;
 
 export function TeamProvider({ children }: { children: ReactNode }) {
   const [teams, setTeams] = useState<Team[]>([]);
@@ -48,7 +49,7 @@ export function TeamProvider({ children }: { children: ReactNode }) {
   const [isLoading, setIsLoading] = useState(true);
 
   const fetchTeams = useCallback(async () => {
-    const token = localStorage.getItem("token");
+    const token = localStorage.getItem(TOKEN_KEY);
     if (!token) {
       setIsLoading(false);
       return;

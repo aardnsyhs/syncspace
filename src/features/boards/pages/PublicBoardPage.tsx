@@ -117,7 +117,8 @@ export function PublicBoardPage({ publicToken }: Props) {
       </main>
 
       <footer className="fixed bottom-0 left-0 right-0 p-2 bg-muted/50 text-center text-xs text-muted-foreground">
-        Powered by Syncspace • Read-only public view
+        {import.meta.env.VITE_APP_NAME ?? "SaaS Boilerplate"} • Read-only
+        public view
       </footer>
     </div>
   );

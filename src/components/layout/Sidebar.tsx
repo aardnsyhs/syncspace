@@ -17,6 +17,7 @@ import {
 } from "@/components/ui/tooltip";
 import { cn } from "@/lib/utils";
 import { api } from "@/lib/api";
+import { TOKEN_KEY } from "@/lib/constants";
 import { toast } from "sonner";
 import { WorkspaceSelector } from "@/components/WorkspaceSelector";
 import { BoardTemplatePicker } from "@/features/boards/components/BoardTemplatePicker";
@@ -68,7 +69,7 @@ export function Sidebar({ onNavigate }: SidebarProps = {}) {
 
   const { selectedTeam, isLoading, refreshTeams } = useTeam();
 
-  const token = localStorage.getItem("token") || "";
+  const token = localStorage.getItem(TOKEN_KEY) ?? "";
   const {
     templates,
     isLoading: templatesLoading,

@@ -1,4 +1,5 @@
 import { api } from "@/lib/api";
+import { TOKEN_KEY } from "@/lib/constants";
 
 const API_URL = import.meta.env.VITE_API_URL;
 
@@ -67,7 +68,7 @@ export async function login(
   );
 
   if (response.token) {
-    localStorage.setItem("token", response.token);
+    localStorage.setItem(TOKEN_KEY, response.token);
   }
 
   return { user: response.data, token: response.token };
@@ -82,7 +83,7 @@ export async function register(data: RegisterData): Promise<AuthResponse> {
   );
 
   if (response.token) {
-    localStorage.setItem("token", response.token);
+    localStorage.setItem(TOKEN_KEY, response.token);
   }
 
   return { user: response.data, token: response.token };
@@ -92,12 +93,12 @@ export async function logout(): Promise<void> {
   try {
     await api.post("/api/logout");
   } finally {
-    localStorage.removeItem("token");
+    localStorage.removeItem(TOKEN_KEY);
   }
 }
 
 export async function fetchCurrentUser(): Promise<User | null> {
-  const token = localStorage.getItem("token");
+  const token = localStorage.getItem(TOKEN_KEY);
 
   if (!token) {
     return null;
@@ -107,7 +108,7 @@ export async function fetchCurrentUser(): Promise<User | null> {
     const response = await api.get<{ data: User }>("/api/user");
     return response.data;
   } catch {
-    localStorage.removeItem("token");
+    localStorage.removeItem(TOKEN_KEY);
     return null;
   }
 }
@@ -150,7 +151,7 @@ export async function verifyOTP(
   }>("/api/verify-otp", data);
 
   if (response.token) {
-    localStorage.setItem("token", response.token);
+    localStorage.setItem(TOKEN_KEY, response.token);
   }
 
   return response;
@@ -172,7 +173,7 @@ export function getGoogleAuthUrl(): string {
   const scope = "openid email profile";
 
   const params = new URLSearchParams({
-    client_id: clientId,
+    client_id: clientId ?? "",
     redirect_uri: redirectUri,
     response_type: "code",
     scope: scope,
@@ -192,7 +193,7 @@ export async function googleCallback(code: string): Promise<AuthResponse> {
   );
 
   if (response.token) {
-    localStorage.setItem("token", response.token);
+    localStorage.setItem(TOKEN_KEY, response.token);
   }
 
   return { user: response.data, token: response.token };

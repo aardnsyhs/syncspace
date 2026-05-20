@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback } from "react";
 import { Loader2, Trash2, UserPlus } from "lucide-react";
 import { getEcho, initializeEcho } from "@/lib/echo";
 import { useAuth } from "@/features/auth/store/AuthContext";
+import { TOKEN_KEY } from "@/lib/constants";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -90,7 +91,7 @@ export function SettingsPage() {
 
   useEffect(() => {
     const fetchTeams = async () => {
-      const token = localStorage.getItem("token");
+      const token = localStorage.getItem(TOKEN_KEY);
       if (!token) return;
 
       try {
@@ -122,7 +123,7 @@ export function SettingsPage() {
   const fetchMembers = useCallback(async () => {
     if (!selectedTeam) return;
 
-    const token = localStorage.getItem("token");
+    const token = localStorage.getItem(TOKEN_KEY);
     if (!token) return;
 
     try {
@@ -188,7 +189,7 @@ export function SettingsPage() {
   const handleSaveTeam = async () => {
     if (!selectedTeam || !teamName.trim()) return;
 
-    const token = localStorage.getItem("token");
+    const token = localStorage.getItem(TOKEN_KEY);
     if (!token) return;
 
     setIsSaving(true);
@@ -221,7 +222,7 @@ export function SettingsPage() {
   const handleInviteMember = async () => {
     if (!selectedTeam || !inviteEmail.trim()) return;
 
-    const token = localStorage.getItem("token");
+    const token = localStorage.getItem(TOKEN_KEY);
     if (!token) return;
 
     setIsInviting(true);
@@ -272,7 +273,7 @@ export function SettingsPage() {
   const handleRemoveMember = async (memberId: number) => {
     if (!selectedTeam) return;
 
-    const token = localStorage.getItem("token");
+    const token = localStorage.getItem(TOKEN_KEY);
     if (!token) return;
 
     try {
@@ -320,7 +321,7 @@ export function SettingsPage() {
     field: "email_notifications" | "desktop_notifications",
     value: boolean
   ) => {
-    const token = localStorage.getItem("token");
+    const token = localStorage.getItem(TOKEN_KEY);
     if (!token) return;
 
     setIsSavingNotifications(true);

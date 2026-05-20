@@ -48,6 +48,7 @@ import { useBoardPresence } from "../hooks/useBoardPresence";
 import { useBoardActivities } from "../hooks/useBoardActivities";
 
 import { api } from "@/lib/api";
+import { TOKEN_KEY } from "@/lib/constants";
 
 import type {
   CardEventPayload,
@@ -118,7 +119,7 @@ export function BoardPage({ boardId: propBoardId }: BoardPageProps) {
     Array<{ id: number; name: string; avatar_url?: string }>
   >([]);
 
-  const token = localStorage.getItem("token") || "";
+  const token = localStorage.getItem(TOKEN_KEY) ?? "";
   const boardId = propBoardId || 1;
 
   const sensors = useSensors(

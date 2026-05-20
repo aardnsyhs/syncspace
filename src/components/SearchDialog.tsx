@@ -16,6 +16,8 @@ import {
   Loader2,
 } from "lucide-react";
 
+import { TOKEN_KEY } from "@/lib/constants";
+
 const API_URL = import.meta.env.VITE_API_URL;
 
 interface SearchResult {
@@ -49,7 +51,7 @@ export function SearchDialog({ open, onOpenChange }: SearchDialogProps) {
       return;
     }
 
-    const token = localStorage.getItem("token");
+    const token = localStorage.getItem(TOKEN_KEY);
     if (!token) return;
 
     setIsLoading(true);

@@ -2,7 +2,7 @@ import { useState, useEffect, useCallback } from "react";
 
 type Theme = "light" | "dark" | "system";
 
-const STORAGE_KEY = "syncspace-theme";
+const STORAGE_KEY = "app-theme";
 
 function getSystemTheme(): "light" | "dark" {
   return window.matchMedia("(prefers-color-scheme: dark)").matches
