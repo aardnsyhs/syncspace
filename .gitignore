@@ -17,6 +17,11 @@ dist-ssr
 .env
 .env.local
 .env.*.local
+.env.*
+!.env.example
+!.env.*.example
+coverage/
+*.tsbuildinfo
 
 # Editor directories and files
 .vscode/*

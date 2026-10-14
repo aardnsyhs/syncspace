@@ -1,0 +1,22 @@
+name: Feature request
+description: Explain a SyncSpace workflow that needs improvement.
+title: "[Feature]: "
+body:
+  - type: textarea
+    id: problem
+    attributes:
+      label: Workflow and current limitation
+      description: Describe who needs this and what currently prevents the task.
+    validations:
+      required: true
+  - type: textarea
+    id: proposal
+    attributes:
+      label: Proposed behavior and alternatives
+    validations:
+      required: true
+  - type: textarea
+    id: compatibility
+    attributes:
+      label: Compatibility considerations
+      description: Note client/API coordination, role permissions, migrations, or deployment changes if known.

@@ -1,0 +1,39 @@
+name: Bug report
+description: Report a reproducible SyncSpace problem.
+title: "[Bug]: "
+body:
+  - type: markdown
+    attributes:
+      value: "For vulnerabilities, read SECURITY.md and use a private channel. Do not include tokens, personal data, or production secrets."
+  - type: input
+    id: revision
+    attributes:
+      label: Repository revision
+      description: Commit hash or branch and approximate checkout date.
+    validations:
+      required: true
+  - type: textarea
+    id: reproduction
+    attributes:
+      label: Reproduction steps
+      description: Describe the browser workflow, page, and API request, using synthetic data.
+    validations:
+      required: true
+  - type: textarea
+    id: expected_actual
+    attributes:
+      label: Expected and observed behavior
+    validations:
+      required: true
+  - type: textarea
+    id: environment
+    attributes:
+      label: Environment
+      description: Browser, Node.js, Yarn, and matching API revision.
+    validations:
+      required: true
+  - type: textarea
+    id: evidence
+    attributes:
+      label: Sanitized logs or screenshots
+      description: Remove secrets, email addresses, private board content, and verification codes.
