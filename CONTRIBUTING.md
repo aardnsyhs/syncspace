@@ -1,6 +1,6 @@
 # Contributing to the SyncSpace client
 
-Start with the [README](README.md), [configuration](docs/CONFIGURATION.md), and [development guide](docs/DEVELOPMENT.md). Licensing and the private vulnerability reporting channel still need maintainer decisions; see [SECURITY.md](SECURITY.md) and the [audit](docs/OSS_READINESS_AUDIT.md).
+Start with the [README](README.md), [configuration](docs/CONFIGURATION.md), and [development guide](docs/DEVELOPMENT.md). Licensing still needs maintainer approval. Private vulnerability reporting is enabled; see [SECURITY.md](SECURITY.md). The original [audit](docs/OSS_READINESS_AUDIT.md) records its earlier state; the [Phase 1 report](docs/OSS_GOVERNANCE_PHASE1.md) records the current governance review.
 
 ## Development workflow
 
@@ -38,3 +38,15 @@ For bugs, include reproduction steps, expected and observed behavior, browser/ru
 Keep pull requests focused, describe the user-visible result, list checks and limitations, and update documentation when setup or behavior changes. If an API contract changes, identify the matching backend change and migration/compatibility plan. Discuss breaking changes with the maintainer before implementation.
 
 No review SLA, release schedule, or contributor approval policy is established in the tracked files. Maintainers decide whether to merge and may request changes. Be respectful, reproduce reported problems, and respond to review with evidence. Follow [SECURITY.md](SECURITY.md) for vulnerabilities.
+
+## Triage, scope, and attribution
+
+Maintainers assess reproducibility, affected revisions, user impact, and compatibility when triaging issues. Contributors can help with sanitized reproductions and links to duplicates. A request may need more information or fall outside the maintained workspace/board workflows; opening an issue does not commit the project to implementation.
+
+For pull requests, explain scope, validation, client/API dependencies, and whether the change breaks an existing workflow. Review may require a smaller change or further evidence. Include migration or upgrade instructions when relevant, and communicate breaking behavior before merging or releasing.
+
+Preserve accurate author metadata and upstream notices. Credit collaborators only with their consent. Identify copied/generated material and its source/license in the pull request; do not imply that credit establishes redistribution permission. Do not submit third-party material whose redistribution rights you cannot establish.
+
+## Maintenance and releases
+
+No supported release series or backport commitment has been adopted. The default client branch is `master`; that is repository configuration, not a support guarantee. The shared [maintenance proposal](docs/OSS_GOVERNANCE_PHASE1.md#governance-improvements) recommends a reviewed default-branch baseline, explicit support scope, versioned releases, and coordinated client/API release notes. It remains a proposal until the maintainer approves it.

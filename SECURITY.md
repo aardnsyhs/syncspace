@@ -6,9 +6,9 @@ No supported release series or security backport policy is established in tracke
 
 ## Private reporting
 
-A verified private reporting contact is not available in the inspected repository. GitHub's public REST endpoint returned `enabled: false` for this repository on 2026-10-14. A maintainer must enable private reporting or publish a verified private contact.
+GitHub Private Vulnerability Reporting is enabled for this repository, verified through GitHub's public REST endpoint on 2026-10-14. Use GitHub's private reporting form; no separate private security email is published in the inspected files.
 
-Check this repository's [Security Advisories](https://github.com/aardnsyhs/syncspace/security/advisories). If GitHub displays **Report a vulnerability**, use that private form. If it does not, a maintainer must configure a private reporting channel. Do not post exploitable details, sensitive attachments, or credentials in public issues. You may open a non-sensitive issue asking the maintainer to establish a private channel without describing the vulnerability.
+Open this repository's [Security Advisories](https://github.com/aardnsyhs/syncspace/security/advisories), select **Report a vulnerability**, sign in if prompted, and submit the report privately. If the form becomes unavailable, ask the maintainer for a private channel without including vulnerability details in the public request. Do not post exploitable details, sensitive attachments, or credentials in public issues.
 
 The matching [syncspace-api repository](https://github.com/aardnsyhs/syncspace-api) is part of the same application. Include the affected repository and revision in your private report; cross-repository issues may need coordinated fixes.
 
@@ -20,6 +20,8 @@ The matching [syncspace-api repository](https://github.com/aardnsyhs/syncspace-a
 - Any suggested mitigation and a contact method for coordination.
 
 Keep reproduction details private until the maintainer coordinates disclosure. No response-time SLA or bounty program is established. The maintainer must assess reports and agree on remediation/disclosure timing; this document does not promise a deadline.
+
+Repository administrators should check their security-alert subscriptions and notification preferences, identify who monitors incoming reports, and coordinate client/API fixes before disclosure. Enabling reporting alone does not prove that notifications reach a responsible maintainer. The [Phase 1 decision register](docs/OSS_GOVERNANCE_PHASE1.md#maintainer-decision-register) records the outstanding support and notification decisions.
 
 ## Secrets and dependencies
 

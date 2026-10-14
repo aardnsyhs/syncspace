@@ -10,6 +10,10 @@ List commands and manual checks actually performed, with outcomes and limitation
 
 Note API/event/schema changes, matching client/backend work, migration risks, and documentation updates. State when none apply.
 
+## Material provenance
+
+If adding third-party code, assets, or fonts, identify the source, license, and required notices. Note collaborator credit only with their consent. State when no new external material is included.
+
 - [ ] I kept the change focused and reviewed the diff for secrets and personal data.
 - [ ] I documented relevant validation results and unresolved failures.
 
