@@ -2,7 +2,7 @@
 
 ## Maintenance scope
 
-No supported release series or security backport policy is established in tracked repository files. Local Git tags and GitHub releases were absent when checked on 2026-10-14. Do not assume that an older revision receives fixes. Maintainers must define the supported branch/release policy before making support guarantees.
+The maintainer accepts responsibility for maintaining the client development branch `master`. This is the initial maintenance baseline; no historical release or backport commitment is implied. Future releases will follow Semantic Versioning, with documented client/API compatibility. Releases depend on reviewed and verified changes, without a fixed schedule or security response-time SLA.
 
 ## Private reporting
 
@@ -21,7 +21,7 @@ The matching [syncspace-api repository](https://github.com/aardnsyhs/syncspace-a
 
 Keep reproduction details private until the maintainer coordinates disclosure. No response-time SLA or bounty program is established. The maintainer must assess reports and agree on remediation/disclosure timing; this document does not promise a deadline.
 
-Repository administrators should check their security-alert subscriptions and notification preferences, identify who monitors incoming reports, and coordinate client/API fixes before disclosure. Enabling reporting alone does not prove that notifications reach a responsible maintainer. The [Phase 1 decision register](docs/OSS_GOVERNANCE_PHASE1.md#maintainer-decision-register) records the outstanding support and notification decisions.
+The maintainer accepts responsibility for monitoring private reports in both repositories and coordinating fixes before disclosure. Security-alert subscriptions, email delivery, and report receipt have not been tested. The maintainer should confirm notification preferences and monitored receipt; enabled reporting alone does not prove delivery. The [Phase 1 decision register](docs/OSS_GOVERNANCE_PHASE1.md#maintainer-decision-register) records the remaining operational checks.
 
 ## Secrets and dependencies
 

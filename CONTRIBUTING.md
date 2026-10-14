@@ -1,6 +1,6 @@
 # Contributing to the SyncSpace client
 
-Start with the [README](README.md), [configuration](docs/CONFIGURATION.md), and [development guide](docs/DEVELOPMENT.md). Licensing still needs maintainer approval. Private vulnerability reporting is enabled; see [SECURITY.md](SECURITY.md). The original [audit](docs/OSS_READINESS_AUDIT.md) records its earlier state; the [Phase 1 report](docs/OSS_GOVERNANCE_PHASE1.md) records the current governance review.
+Start with the [README](README.md), [configuration](docs/CONFIGURATION.md), and [development guide](docs/DEVELOPMENT.md). Original first-party code is covered by [LICENSE](LICENSE); third-party material retains its own terms, as recorded in [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md). Private vulnerability reporting is enabled; see [SECURITY.md](SECURITY.md). The original [audit](docs/OSS_READINESS_AUDIT.md) is historical; the [Phase 1 report](docs/OSS_GOVERNANCE_PHASE1.md) records current decisions and restrictions.
 
 ## Development workflow
 
@@ -37,7 +37,7 @@ For bugs, include reproduction steps, expected and observed behavior, browser/ru
 
 Keep pull requests focused, describe the user-visible result, list checks and limitations, and update documentation when setup or behavior changes. If an API contract changes, identify the matching backend change and migration/compatibility plan. Discuss breaking changes with the maintainer before implementation.
 
-No review SLA, release schedule, or contributor approval policy is established in the tracked files. Maintainers decide whether to merge and may request changes. Be respectful, reproduce reported problems, and respond to review with evidence. Follow [SECURITY.md](SECURITY.md) for vulnerabilities.
+The maintainer is responsible for issue triage, PR review, merge decisions, releases, and security reporting. Review may require changes; no response-time SLA is promised. Be respectful, reproduce reported problems, and respond to review with evidence. Follow [SECURITY.md](SECURITY.md) for vulnerabilities.
 
 ## Triage, scope, and attribution
 
@@ -49,4 +49,4 @@ Preserve accurate author metadata and upstream notices. Credit collaborators onl
 
 ## Maintenance and releases
 
-No supported release series or backport commitment has been adopted. The default client branch is `master`; that is repository configuration, not a support guarantee. The shared [maintenance proposal](docs/OSS_GOVERNANCE_PHASE1.md#governance-improvements) recommends a reviewed default-branch baseline, explicit support scope, versioned releases, and coordinated client/API release notes. It remains a proposal until the maintainer approves it.
+The maintained client development branch is `master`. No historical release or backport commitment is implied. Future releases follow Semantic Versioning and document compatible client/API versions and breaking changes. Releases occur when reviewed and verified changes are ready, without a fixed schedule. See the adopted [maintenance policy](docs/OSS_GOVERNANCE_PHASE1.md#governance-improvements).
